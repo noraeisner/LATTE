@@ -187,7 +187,7 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 			print ("Running Pyaneti modelling - this could take a while so be patient...")
 	
 			peak_list_model =  ("{}".format(str(np.asarray(peak_list)))[1:-1]) # change the list into a string and get rid of the brackets
-			os.system("python pyaneti_LATTE.py {} {} {}".format(tic, indir, peak_list_model))
+			os.system("python3 pyaneti_LATTE.py {} {} {}".format(tic, indir, peak_list_model))
 	
 	else:
 		print ("Pyaneti has not been installed so you can't model anything yet. Ask Nora or Oscar for the LATTE version of the Pyaneti code.")
@@ -436,7 +436,14 @@ if __name__ == '__main__':
 	# ----------
 
 	#indir = "/Users/Nora/Documents/research/TESS/planethunters/LATTE"  # CHANGE THIS
-	indir = "./LATTE"
+	indir = "./LATTE_output"
+
+	if not os.path.exists("{}".format(indir)):
+		os.makedirs(indir)
+
+	if not os.path.exists("{}/data".format(indir)):
+		os.makedirs("{}/data".format(indir))
+
 	# ----------------
 	# ---- START -----
 	# ----------------
