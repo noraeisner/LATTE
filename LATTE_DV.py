@@ -495,9 +495,8 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 
         #Story.append(PageBreak()) # always start a new page for this analysis
         pyaneti_url = "https://academic.oup.com/mnras/article-abstract/482/1/1017/5094600"
-        pyaneti_link'<link href="%s">Pyaneti</link>' % pyaneti_url
+        pyaneti_link'<link href="{}">Pyaneti</link>'.format(pyaneti_url)
     
-
         model_title = "Modeling"
         model_text = "The modeling of target TIC {} using the open source {} package.".format(tic,pyaneti_link)
         
