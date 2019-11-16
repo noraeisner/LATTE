@@ -191,7 +191,7 @@ def TOI_TCE_files(indir):
     # ------ TCE ------
 
     if not os.path.exists("{}/data/tesscurl_sector_all_dv.sh".format(indir)):
-        with open("{}/data/tesscurl_sector_all_lc.sh".format(indir),'w') as f:
+        with open("{}/data/tesscurl_sector_all_dv.sh".format(indir),'w') as f:
             f.write("#all LC file links")
         first_sec = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re run)
         print ("Will download all of the DV report links for all available sectors starting with sector 1... ")
@@ -433,7 +433,6 @@ def download_data(indir,sector, tic, binfac = 5):
     
     
     if sector == 'all':
-        print ("YAY")
         # locate the file string
         lc_all = np.genfromtxt('{}/data/tesscurl_sector_all_lc.sh'.format(indir), dtype = str)
     
