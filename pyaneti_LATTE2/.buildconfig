@@ -1,0 +1,12 @@
+[default]
+name=Default Configuration
+device=local
+runtime=host
+prefix=/home/oscar/.cache/gnome-builder/install/pyaneti/host
+default=true
+
+[default 2]
+name=Default Configuration Copy
+device=local
+runtime=host
+prefix=/home/oscar/.cache/gnome-builder/install/pyaneti/host
