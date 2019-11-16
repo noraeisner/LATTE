@@ -435,8 +435,8 @@ if __name__ == '__main__':
 	# This is the only thing that needs to be changes in this program to make it link to your own Computer
 	# ----------
 
-	indir = "/Users/Nora/Documents/research/TESS/planethunters/LATTE"  # CHANGE THIS
-	
+	#indir = "/Users/Nora/Documents/research/TESS/planethunters/LATTE"  # CHANGE THIS
+	indir = "./LATTE"
 	# ----------------
 	# ---- START -----
 	# ----------------
