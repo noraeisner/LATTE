@@ -17,8 +17,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Tab
 
 
 
-indir = "/Users/Nora/Documents/research/TESS/planethunters/LATTE"
-peak_list = [1622.49, 2938] 
+indir = "./LATTE_output"
+peak_list = [1622.49] 
 sectors_all = [11]
 target_ra = -99
 target_dec = -99
@@ -104,7 +104,7 @@ class MCLine_color(Flowable):
 def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, bls = False, model = False):
 
 
-	tic = 336732616
+	tic = 55525572
 	# -------------------------------------------
 	# Make a PDF summary file
 	# -------------------------------------------
@@ -129,27 +129,27 @@ def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff,
 	TCE_links = []
 
 	for i in lc_dv:
-	    if str(tic) in str(i[6]):
-	        TCE_links.append(i[6])
+		if str(tic) in str(i[6]):
+			TCE_links.append(i[6])
 
 	if len(TCE_links) == 0:
-	    TCE = " - "
+		TCE = " - "
 	
 	else:
-	    TCE_links = np.sort(TCE_links)
-	    TCE_link = TCE_links[1]  # this link should allow you to acess the MAST DV report
-	    TCE = 'Yes **'
-	    TCE_link = '<link href="%s">HERE</link>' % TCE_link
+		TCE_links = np.sort(TCE_links)
+		TCE_link = TCE_links[1]  # this link should allow you to acess the MAST DV report
+		TCE = 'Yes **'
+		TCE_link = '<link href="%s" color="blue">HERE</link>' % TCE_link
 	
 	# TOI -----
 	TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment = "#")
 	
 	TOIpl = TOI_planets.loc[TOI_planets['TIC'] == float(tic)]
-	    
+		
 	if len(TOIpl) == 0:
-	    TOI = ' -  '
+		TOI = ' -  '
 	else:
-	    TOI = (float(TOIpl["Full TOI ID"]))
+		TOI = (float(TOIpl["Full TOI ID"]))
 
 	
 	print ("Creating plots...")
@@ -304,15 +304,20 @@ def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff,
 	
 	table_count += 1
 
+	exofop_url = "https://exofop.ipac.caltech.edu/tess/target.php?id={}".format(tic)
+	exofop_link = '<link href="%s" color="blue">TIC %s</link>' % (exofop_url, tic)
+
+
 	if TCE == 'Yes **':
-		Stellartable_text = "Table {}. Stellar properties of the target. \
+		Stellartable_text = "Table {}. Stellar properties of {}. \
 			* List of the sectors in which the target will be has been \
-			observed. ** Click {} for the TCE report.".format(table_count, TCE_link)
+			observed. ** Click {} for the TCE report.".format(table_count, exofop_link, TCE_link)
+
 
 	else:
-		Stellartable_text = "Table {}. Stellar properties of the target. \
+		Stellartable_text = "Table {}. Stellar properties of the {}. \
 			* List of the sectors in which the target will be has been \
-			observed.".format(table_count)
+			observed.".format(table_count,exofop_link)
 
 		
 
@@ -468,7 +473,6 @@ def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff,
 	Story.append(Paragraph(ptext, styles["Normal"]))
 	
 
-
 	# ------ BLS -------
 	Story.append(PageBreak()) # always start a new page for this analysis
 	# ------
@@ -501,37 +505,16 @@ def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff,
 		Story.append(Paragraph(ptext, styles["Normal"]))
 		
 
-		#im9._restrictSize(width*0.4, width*0.4)
-		#
-		#Story.append(im9)
-
-		## ------- SECOND BLS PLOT --------
-		#Story.append(Spacer(1, 12))
-		#im10 = Image(bls2)
-		#
-		#im10._restrictSize(width*0.4, width*0.4)
-		#
-		#Story.append(im10)
-		#
-		#bls2_text = "Fig {}. Second iteration of the BLS where the highest detected signal-to-noise transits have been removed. Top panel: log liklihood periodogram. \
-		#				The solid light blue line indicates the peak period and the dashed blue lines show the integer \
-		#				harmonics of this period. Middle panel: Full light curve, unbinned (blue) and binned to 10 minutes (black). \
-		#				The peak period is highlighted by the solid light blue line. Bottom Panel: Phase folded light curve where the found transit-event is fit \
-		#				with a simple box (light blue line).".format(fig_count)
-		#
-		#ptext = '<font size=8>%s</font>' % bls2_text
-		#Story.append(Paragraph(ptext, styles["Normal"]))
-	
 
 		# --------------------
 		# ---- BLS TABLE -----
 
-		data_bls= [['Parameter',  				"bls1",														"bls2"],
-					   ['depth',	 		"{:.5f} ± {:.5f}".format(bls_stats1[0][0],bls_stats1[0][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[0][0],bls_stats2[0][1]) ],
+		data_bls= [['Parameter',				  "bls1",														"bls2"],
+					   ['depth',			 "{:.5f} ± {:.5f}".format(bls_stats1[0][0],bls_stats1[0][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[0][0],bls_stats2[0][1]) ],
 					   ['depth phased',		"{:.5f} ± {:.5f}".format(bls_stats1[1][0],bls_stats1[1][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[1][0],bls_stats2[1][1]) ],
 					   ['depth half',		"{:.5f} ± {:.5f}".format(bls_stats1[2][0],bls_stats1[2][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[2][0],bls_stats2[2][1]) ],
 					   ['depth off',		"{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[3][0],bls_stats2[3][1]) ],
-					   ['depth even',	    "{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[4][0],bls_stats2[4][1]) ],
+					   ['depth even',		"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[4][0],bls_stats2[4][1]) ],
 					   ]
 		
 		table_bls=Table(data_bls)
@@ -587,9 +570,13 @@ def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff,
 	if model == True:
 
 		#Story.append(PageBreak()) # always start a new page for this analysis
+		pyaneti_url = 'https://academic.oup.com/mnras/article/482/1/1017/5094600'
+
+		pyaneti_link = '<link href="%s" color="blue">Pyaneti</link>' % pyaneti_url
+
 
 		model_title = "Modeling"
-		model_text = "The modeling of target TIC {} using the open source Pyaneti package.".format(tic)
+		model_text = "The modeling of target TIC {} using the open source {} package.".format(tic, pyaneti_link)
 		
 		ptext = '<font size=11><b>%s</b></font>' % model_title
 		Story.append(Paragraph(ptext, styles["centre"]))
@@ -703,7 +690,8 @@ def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff,
 
 	doc.build(Story, onFirstPage=addPageNumber, onLaterPages=addPageNumber)
 
-LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, bls = False, model = False)
+
+LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, bls = False, model = True)
 
 
 

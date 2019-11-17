@@ -197,7 +197,7 @@ def interact_LATTE(tic, indir, sectors_all, sectors, noshow):
     ax[1].set_ylabel("Normalised Flux", fontsize = 12)
     ax[1].vlines(allline, minf-0.5,minf-0.5 + height*0.3 , colors = 'r', label = "Momentum Dump")
     
-    plt.text(4.5, -3.15, "(Press Enter, then close window)", fontsize=10, verticalalignment='center')
+    #plt.text(4.5, -3.15, "(Press Enter, then close window)", fontsize=10, verticalalignment='center')
     plt.text(0.05, 1.1, "Binning Factor", fontsize=10, verticalalignment='center')
     
     initial_text = ""
@@ -208,13 +208,13 @@ def interact_LATTE(tic, indir, sectors_all, sectors, noshow):
         ydata = eval(text)
         transit_times.append(ydata)
     
-    axbox = plt.axes([0.25, 0.05, 0.50, 0.03])
+    axbox = plt.axes([0.25, 0.04, 0.50, 0.04])
     text_box = TextBox(axbox, 'Enter transit-event times', initial=initial_text)
     text_box.on_submit(submit)
     
 
-    ebx = plt.axes([0.77, 0.05, 0.13, 0.03])
-    exit = Button(ebx, 'Close')
+    ebx = plt.axes([0.77, 0.04, 0.13, 0.04])
+    exit = Button(ebx, 'Close', color='orange')
 
     def close(event):
         plt.close('all')
