@@ -19,8 +19,241 @@ from astroquery.mast import Catalogs
 from sklearn.decomposition import PCA
 from astropy.coordinates import SkyCoord
 from lightkurve import TessTargetPixelFile
-from matplotlib.ticker import AutoMinorLocator, FormatStrFormatter
 from tess_stars2px import tess_stars2px_function_entry
+from matplotlib.ticker import AutoMinorLocator, FormatStrFormatter
+from matplotlib.widgets import Slider, Button, RadioButtons, TextBox, CheckButtons
+
+# custom modules
+import LATTEbrew as brew
+
+
+# ------ interact -------
+def interact_LATTE(tic, indir, sectors_all, sectors, noshow):
+    '''
+    Function to run the Interactive LATTE code using the matplotlib interactive tool.
+    Calls the plot where the transit-event times can be identifies and the plotting/modeling options specified.
+    
+    Parameters
+    ----------
+    tic  :   str
+        target TIC ID
+    indir  :  str
+        path to directory where all the plots and data will be saved. 
+    sectors_all  :   list
+        all the sectors in which the target has been/ will be observed
+    sectors  :  list
+        the sectors which will be analysed
+
+    Returns
+    -------
+        runs the brew_LATTE code...
+    '''
+
+    def rebin(arr,new_shape):
+        shape = (new_shape[0], arr.shape[0] // new_shape[0],
+            new_shape[1], arr.shape[1] // new_shape[1])
+        return arr.reshape(shape).mean(-1).mean(1)
+    
+
+    print ("Start data download.....", end =" ")
+    alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = download_data(indir, sectors, tic)
+    print ("Done.\n")
+    
+    # -------------------------
+    # Plot the interactive plot
+    # -------------------------
+    
+    fig, ax = plt.subplots(2, 1, figsize=(10,7))
+    plt.tight_layout()
+    
+    # Adjust tbplots region to leave some space for the sliders and buttons
+    fig.subplots_adjust(left=0.24, bottom=0.25)
+    
+    fluxmin = np.nanmin(allflux)
+    fluxmax = np.nanmax(allflux)
+    
+    # Draw the initial plot
+    # The 'line' variable is used for modifying the line later
+    def cutout(transit):
+        mask_binned = (np.array(alltimebinned) > transit-1) & (np.array(alltimebinned) < transit+1)
+        mask = (np.array(alltime) > transit-1) & (np.array(alltime) < transit+1)
+        
+        return [np.array(alltime)[mask], np.array(allflux)[mask], np.array(alltime), np.array(allflux), np.array(alltimebinned)[mask_binned], np.array(allfluxbinned)[mask_binned], np.array(alltimebinned), np.array(allfluxbinned)]
+    
+    def binning(binfac):
+        # binned data
+        N      = len(alltime)
+        n      = int(np.floor(N/binfac)*binfac)
+        X      = np.zeros((2,n))
+        X[0,:]  = alltime[:n]
+        X[1,:]  = allflux[:n]
+        Xb    = rebin(X, (2,int(n/binfac)))
+        
+        time_binned = Xb[0]
+        flux_binned = Xb[1]
+    
+        return [time_binned, flux_binned]
+    
+    transit = np.nanmean(alltimebinned)
+    binfac = 7
+    
+    [line_full] = ax[0].plot(alltime, allflux , marker='o',lw = 0, markersize = 4, color = 'orange', alpha = 0.8, label = 'unbinned', markerfacecolor='white')
+    [line_full_binned] = ax[0].plot(binning(binfac)[0], binning(binfac)[1],marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3, label = 'binning = 7', markerfacecolor='k')
+    
+    [line] =  ax[1].plot(cutout(transit)[0], cutout(transit)[1], marker='o',lw = 0, markersize = 4, color = 'orange', alpha = 0.8, label = 'unbinned', markerfacecolor='white')
+    [line_binned] =  ax[1].plot(cutout(transit)[4], cutout(transit)[5],marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3, label = 'binning = 7', markerfacecolor='k')
+    
+    
+    # Define an axes area and draw a slider in it
+    transit_slider_ax  = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+    transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=transit, color='teal')
+    
+    scale_slider_ax  = fig.add_axes([0.25, 0.15, 0.65, 0.03])
+    scale_slider = Slider(scale_slider_ax, 'Y-Axis Scale', 0.99, 1.01, valinit=1, color='silver')
+
+    
+    ax[0].set_xlim([np.nanmin(alltime), np.nanmax(alltime)])
+    ax[0].set_ylim([fluxmin, fluxmax])
+    
+    ax[1].set_xlim([np.nanmean(alltime)-1, np.nanmean(alltime)+1])
+    ax[1].set_ylim([fluxmin, fluxmax])
+    
+    # Define an action for modifying the line when any slider's value changes
+    def sliders_on_changed(val):
+        line.set_xdata(cutout(transit_slider.val)[0])
+        line.set_ydata(cutout(transit_slider.val)[1])
+    
+        line_binned.set_xdata(cutout(transit_slider.val)[4])
+        line_binned.set_ydata(cutout(transit_slider.val)[5])
+    
+        fig.canvas.draw_idle()
+    
+    lver0 = ax[0].axvline(transit, color = 'r', linewidth = 2)
+    lver1 = ax[1].axvline(transit, color = 'r', linewidth = 2)
+    
+    def update_axis(val):   
+        ax[1].set_xlim([transit_slider.val - 1,transit_slider.val + 1])
+        
+        lver0.set_xdata(transit_slider.val)
+        lver1.set_xdata(transit_slider.val)
+    
+    def update_yaxis(val):  
+    
+        med = 1
+        diff = abs(med - (fluxmin * scale_slider.val))
+    
+        ax[0].set_ylim([med - diff ,med + diff])
+        ax[1].set_ylim([med - diff ,med + diff])
+    
+    
+    transit_slider.on_changed(update_axis)
+    scale_slider.on_changed(update_yaxis)
+    transit_slider.on_changed(sliders_on_changed)
+
+    # Determine whether to save the values the plots or not left, bottom, width, height
+
+    var_ax = fig.add_axes([0.025, 0.3, 0.1, 0.15])
+    save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'model', 'Save', 'DVR'), (False, False, False, True, False))
+    
+    simple = False
+    BLS = False
+    model = False
+    save = True
+    DV = False
+
+    def variables(label):
+        status = save_var.get_status()
+        simple = status[0]
+        BLS = status[1]
+        model = status[2]
+        save = status[3]
+        DV = status[4]
+
+    # Add a set of radio buttons for changing color. slider = [left, bottom, width, height]
+    binning_ax = fig.add_axes([0.025, 0.5, 0.10, 0.15])
+    binning_radios = RadioButtons(binning_ax, ('2', '5', '7', '10'), active=0)
+    
+    def binning_button(label):
+        line_full_binned.set_xdata(binning(int(label))[0])
+        line_full_binned.set_ydata(binning(int(label))[1])
+        fig.canvas.draw_idle()
+    
+    binning_radios.on_clicked(binning_button)
+    
+    minf = np.nanmin(np.array(allflux))
+    maxf = np.nanmax(np.array(allflux))
+    height = maxf - minf
+    
+    ax[0].tick_params(axis="y",direction="inout", labelsize = 12) #, pad= -20)
+    ax[0].tick_params(axis="x",direction="inout", labelsize = 12) #, pad= -17)   
+    ax[0].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
+    ax[0].set_ylabel("Normalised Flux", fontsize = 12)
+    ax[0].vlines(allline, minf-1,minf + height*0.3 , colors = 'r', label = "Momentum Dump")
+    
+    ax[1].tick_params(axis="y",direction="inout", labelsize = 12) #, pad= -20)
+    ax[1].tick_params(axis="x",direction="inout", labelsize = 12) #, pad= -17)   
+    ax[1].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
+    ax[1].set_xlabel("BJD-2457000", fontsize = 12)
+    ax[1].set_ylabel("Normalised Flux", fontsize = 12)
+    ax[1].vlines(allline, minf-0.5,minf-0.5 + height*0.3 , colors = 'r', label = "Momentum Dump")
+    
+    plt.text(4.5, -3.15, "(Press Enter, then close window)", fontsize=10, verticalalignment='center')
+    plt.text(0.05, 1.1, "Binning Factor", fontsize=10, verticalalignment='center')
+    
+    initial_text = ""
+    
+    transit_times = []
+
+    def submit(text):
+        ydata = eval(text)
+        transit_times.append(ydata)
+    
+    axbox = plt.axes([0.25, 0.05, 0.50, 0.03])
+    text_box = TextBox(axbox, 'Enter transit-event times', initial=initial_text)
+    text_box.on_submit(submit)
+    
+
+    ebx = plt.axes([0.77, 0.05, 0.13, 0.03])
+    exit = Button(ebx, 'Close')
+
+    def close(event):
+        plt.close('all')
+
+    exit.on_clicked(close)
+
+    plt.show()
+    
+    end_status = save_var.get_status()
+
+    simple = end_status[0]
+    BLS = end_status[1]
+    model = end_status[2]
+    save = end_status[3]
+    DV = end_status[4]
+
+
+    if len(transit_times) == 0:
+        print ("\n WARNING: You can't continue without entering a transit-time.\n")
+        print ("Exit.\n")
+        sys.exit()
+    
+    if type(transit_times[-1]) == tuple:
+        peak_list = list(transit_times[-1])
+        peak_list = [float(i) for i in peak_list]
+    
+    else:
+        peak_list = [float(i) for i in transit_times]
+        peak_list = [peak_list[-1]] #if you entered it twice
+
+    print ("Transits you have entered:    {}   \n".format(str(peak_list))[1:-1])
+    print ("Check that these are the transits that you want")
+    
+    
+    # END OF INTERACTIVE PART OF CODE
+
+    #  -----  BREW  ------
+    brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, show = noshow)
+
 
 # -----------------------
 # Download the data acess files 
@@ -77,7 +310,7 @@ def data_files(indir):
                 Saving recieved content as a png file in binary format
                 '''
                 f.write(r_LC.content)
-                print("finished adding sector {}".format(sec))
+                print("finished adding files for sector {}".format(sec))
                 #write the contents of the response (r.content)
                 # to a new file in binary mode.    
     
@@ -114,7 +347,6 @@ def data_files(indir):
                 '''
                 f.write(r_TP.content)
 
-
 def nn_files(indir):
     '''
     Function to download all of the TPF data that we want to the local computer.
@@ -147,7 +379,7 @@ def nn_files(indir):
         r_target_list = requests.get(target_list) # create HTTP response object
         
         if r_target_list.status_code == 404:
-            print ("Target lisrs only available up to Sector {} -- try downloading more data later".format(sec))
+            print ("Target lists only available up to Sector {} -- try downloading more data later".format(sec))
             break
         
         
@@ -169,7 +401,6 @@ def nn_files(indir):
                 start = str(r_target_list.content).find('t  Dec')
                 f.write(r_target_list.content[start-3:])
                 print("finished adding TP sector {}".format(sec))
-
 
 def TOI_TCE_files(indir):
     '''
@@ -221,8 +452,6 @@ def TOI_TCE_files(indir):
                 f.write(r_TCE.content)
                 print("finished adding DV links for sector {}".format(sec))
     
-          
-
 
 # -----------------------
 
@@ -256,7 +485,6 @@ def tess_point(indir,tic):
     _, _, _, outSec, _, _, _, _, _ = tess_stars2px_function_entry(tic, ra, dec)
     
     return list(outSec)
-
 
 def peak_sec(in_sec,start_sec, end_sec, peak_list):
     '''
@@ -1315,7 +1543,6 @@ def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binne
         else:
             plt.close()
 
-
 def plot_background(tic, indir,alltime, allfbkg, peak_list, save = False, show = False):
     '''
     LC of the bakcground flux at the time of the transit event. 
@@ -1413,8 +1640,7 @@ def plot_background(tic, indir,alltime, allfbkg, peak_list, save = False, show =
         else:
             plt.close()
 
-
-def plot_TESS_stars(tic, indir,peak_list, peak_sec, save = False, show = False):
+def plot_TESS_stars(tic, indir, peak_list, peak_sec, save = False, show = False):
     '''
     Plot of the field fluxa round the target star showing nearby stars that are brighter than magnitude 15.
     
@@ -1443,6 +1669,7 @@ def plot_TESS_stars(tic, indir,peak_list, peak_sec, save = False, show = False):
     # always check whether the file already exists... as to not waste computer power and time
 
     tpf_all = np.genfromtxt('{}/data/tesscurl_sector_{}_tp.sh'.format(indir,sector), dtype = str)
+
 
     starName = "TIC " + str(tic)
     radSearch = 4/60 #radius in degrees
@@ -1780,9 +2007,6 @@ def plot_full_md(tic, indir, alltime,allflux,allline,alltimebinned,allfluxbinned
 
 def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results,period,duration,t0, in_transit = [0], save = False, show = False):
 
-    print (in_transit)
-    print (in_transit[0])
-
     if len(in_transit) == 1:  # conditions for the first 'round' of plotting
 
         color1 = '#DC143C'
@@ -2035,14 +2259,4 @@ def transit_finder(transit, alltime, allline, allflux,alltimebinned, allfluxbinn
     
     print ("TRANSIT: {}".format(transit))
     plt.show()
-
-
-
-
-
-
-
-
-
-
 
