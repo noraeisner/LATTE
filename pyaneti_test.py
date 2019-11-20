@@ -321,7 +321,6 @@ def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff,
 
 		
 
-
 	ptext = '<font size=8>%s</font>' % Stellartable_text
 	Story.append(Paragraph(ptext, styles["Normal"]))
 

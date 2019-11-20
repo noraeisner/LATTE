@@ -173,9 +173,9 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 	alltime_nn, allflux_nn, allline_nn, alltimebinned_nn, allfluxbinned_nn,outtics,tessmag_list, distance = utils.download_data_neighbours(indir, peak_sec[0], ticids, distance)
 	utils.plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, peak_list, outtics, tessmag_list, distance, save = save, show = show)
 	print ("Nearest neighbour plot... done")
-	
+
 	if BLS == True:
-		print ("running BLS")
+		print ("Running BLS")
 		bls_stats1, bls_stats2 = utils.data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, save = save, show = show)
 		
 

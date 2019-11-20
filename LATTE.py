@@ -37,7 +37,6 @@ if __name__ == '__main__':
 	
 	args = ap.parse_args()
 
-
 	# ------- CHANGE THIS --------
 	#indir = "/Users/Nora/Documents/research/TESS/planethunters/LATTE"  # CHANGE THIS
 	indir = "./LATTE_output"

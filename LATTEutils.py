@@ -235,7 +235,7 @@ def interact_LATTE(tic, indir, sectors_all, sectors, noshow):
     if len(transit_times) == 0:
         print ("\n WARNING: You can't continue without entering a transit-time.\n")
         print ("Exit.\n")
-        sys.exit()
+        exit[0]
     
     if type(transit_times[-1]) == tuple:
         peak_list = list(transit_times[-1])
@@ -1811,8 +1811,11 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         
         plt.tight_layout()
 
-        color = plt.cm.viridis(np.linspace(0, 1,int(np.nanmax(bkg))-int(np.nanmin(bkg))+1))
-    
+        try:
+            color = plt.cm.viridis(np.linspace(0, 1,int(np.nanmax(bkg))-int(np.nanmin(bkg))+1))
+            simplebkg = False
+        except:
+            simplebkg = True
 
         for i in range(0,arrshape[1]):
             print ("{}   out of    {} ".format(i+1,arrshape[1] ))
@@ -1848,16 +1851,23 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
 
                 # create a mask that only looks at the times cut around the transit-event
                 timemask = (time_binned < peak+0.7) & (time_binned > peak-0.7)
+                
+                #timemask = 
                 intr = abs(peak-time_binned) < 0.1
 
-                ax[i, j].set_facecolor(color = color[int(bkg[i,j])-int(np.nanmin(bkg))])
-
-                if int(bkg[i,j])-abs(int(np.nanmin(bkg))) > ((np.nanmax(bkg))-abs(int(np.nanmin(bkg))))/2:
-                    linecolor = 'k'
-                    transitcolor = 'orangered'
-                else:
+                if simplebkg == True:
+                    ax[i, j].set_facecolor(color = 'k')
                     linecolor = 'w'
-                    transitcolor = 'gold'
+                    transitcolor = 'gold'                   
+                else:
+                    ax[i, j].set_facecolor(color = color[int(bkg[i,j])-int(np.nanmin(bkg))])
+
+                    if int(bkg[i,j])-abs(int(np.nanmin(bkg))) > ((np.nanmax(bkg))-abs(int(np.nanmin(bkg))))/2:
+                        linecolor = 'k'
+                        transitcolor = 'orangered'
+                    else:
+                        linecolor = 'w'
+                        transitcolor = 'gold'
                 
 
                 ax[i, j].plot(time_binned[timemask],flux_binned[timemask], color = linecolor, marker = '.', markersize=1, lw = 0) 
