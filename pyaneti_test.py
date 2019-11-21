@@ -104,7 +104,7 @@ class MCLine_color(Flowable):
 def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, bls = False, model = False):
 
 
-	tic = 55525572
+	tic = 94986319
 	# -------------------------------------------
 	# Make a PDF summary file
 	# -------------------------------------------
@@ -137,10 +137,13 @@ def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff,
 	
 	else:
 		TCE_links = np.sort(TCE_links)
-		TCE_link = TCE_links[1]  # this link should allow you to acess the MAST DV report
+		print (TCE_links)
+
+		TCE_link = TCE_links[0]  # this link should allow you to acess the MAST DV report
 		TCE = 'Yes **'
 		TCE_link = '<link href="%s" color="blue">HERE</link>' % TCE_link
-	
+		
+		
 	# TOI -----
 	TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment = "#")
 	
@@ -637,8 +640,8 @@ def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff,
 			param_errs = []
 			param_units= []
 		
-		
 			for st in params:
+				print (st)
 				try:
 					s = (manifest_table[manifest_table['Var']==st])
 					param_vals.append("{:.3f}".format(s['Val'].values[0] ))
@@ -648,7 +651,7 @@ def LATTE_DV(indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff,
 					param_vals.append(-999)
 					param_errs.append(-999)
 					param_units.append(-999)
-		
+			
 			data_params = [['Parameters', 'Value', 'Uncertainty', 'Unit']]
 			for p,v,e,u in zip(params, param_vals, param_errs, param_units):
 				data_params.append([p,v,e,u])

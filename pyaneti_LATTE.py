@@ -59,10 +59,10 @@ exec(open('pyaneti_LATTE/src/default.py').read())
 if len(peak_list) == 1:
 	is_single_transit = True   # TOGGLE
 else:
+	print ("Pyaneti: this is a multi transit so we can constrain the orbital period...")
 	is_single_transit = False 
 
 
-  
 T0b = peak_list[0]        # input variable
 
 el = 100
@@ -71,10 +71,29 @@ min_t0  = [T0b - el*0.0095735]
 max_t0  = [T0b + el*0.0095735]
 
 if is_single_transit == False:
-	Pb  = peak_list[1] - peak_list[0]          # input varibale for period if there is one.
+	Pb  = abs(peak_list[1] - peak_list[0])          # input varibale for period if there is one.
+	print ("Period estimate: {} days".format(Pb))
+	
 	# only if not single transit
-	min_P   = [Pb - el*0.0095735]
-	max_P   = [Pb + el*0.0095735]
+	min_P   = [Pb - el*0.001]
+	max_P   = [Pb + el*0.001]
+
+	print (min_P, max_P)
+
+
+#Define the star parameters to calculate the planet parameters
+#Final values
+mstar_mean  = 0.92 #0.870
+mstar_sigma = 0.1 #0.040
+
+rstar_mean  = 0.860124
+rstar_sigma = 0.1 
+
+vsini_mean = 8.
+
+tstar_mean  = 5320
+tstar_sigma = 150.
+
 
 # ---------------
 #Read input file

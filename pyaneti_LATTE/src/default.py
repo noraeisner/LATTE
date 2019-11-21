@@ -435,16 +435,7 @@ is_seaborn_plot = True
 
 is_print_mode = True
 
-#Define the star parameters to calculate the planet parameters
-#Final values
-mstar_mean  = 1.320 #0.870
-mstar_sigma = 0.063 #0.040
-rstar_mean  = 1.942
-rstar_sigma = 0.1 
-vsini_mean = 8.
-#
-tstar_mean  = 5907.
-tstar_sigma = 150.
+
 #is_clustering = False
 
 #What units do you prefer for your planet parameters?

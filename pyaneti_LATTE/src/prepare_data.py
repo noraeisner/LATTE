@@ -221,9 +221,12 @@ for o in range(0,nplanets):
         fit_a[o] = 'g'
         min_a[o], max_a[o] = pti.get_a_err(mstar_mean,mstar_sigma,rstar_mean,mstar_sigma,(max_P[o]+min_P[o])/2.)
 
+
 #CHECK WHAT WE HAVE TO FIT
 #If we are not going to fit RV or TR data, let us turn off the variables
 #for the given case
+
+
 for o in range(0,nplanets):
     if (fit_tr[o] == False ):
       fit_rp[o] = 'f'

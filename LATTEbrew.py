@@ -113,6 +113,7 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 	# START PLOTTING
 	# --------------
 
+
 	## get the sectors that have a transit marked in them
 	peak_sec = utils.peak_sec(in_sec,start_sec, end_sec, peak_list)
 	
@@ -121,7 +122,7 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 	print ("Centroid and background plots... done")
 	if simple == True:
 		print ("Simple option was selected, therefore end analysis here.")
-		exit([])
+		sys.exit('')
 
 
 	TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l = utils.tpf_data(indir, sectors, tic)

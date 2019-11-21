@@ -16,7 +16,6 @@ from reportlab.lib.enums import TA_RIGHT, TA_JUSTIFY, TA_CENTER
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
 
-
 def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, bls = False, model = False):
 
 	# ---- CHECK WHETHER THE TARGET IS A TCE OR A TOI ----
@@ -35,10 +34,12 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	
 	else:
 		TCE_links = np.sort(TCE_links)
-		TCE_link = TCE_links[1]  # this link should allow you to acess the MAST DV report
+		TCE_link = TCE_links[0]  # this link should allow you to acess the MAST DV report
 		TCE = 'Yes **'
 		TCE_link = '<link href="%s" color="blue">here</link>' % TCE_link
-
+		print ("LINK")
+		print (TCE_link)
+		print ("LINK")
 	# TOI -----
 	TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment = "#")
 	
@@ -560,7 +561,7 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 			manifest_table = pd.read_csv('{}/{}/model_out/{}_parameters.csv'.format(indir, tic, tic))
 		
 			#manifest_table
-			params = ['P0', 'P', 'e', 'w', 'b', 'a/R*', 'rp/R*', 'Rp', 'Tperi', 'i', 'a', 'Insolation', 'rho*', 'g_p', 'Teq', 'T_tot', 'T_full']
+			params = ['T0', 'P', 'e', 'w', 'b', 'a/R*', 'rp/R*', 'Rp', 'Tperi', 'i', 'a', 'Insolation', 'rho*', 'g_p', 'Teq', 'T_tot', 'T_full']
 			elements = []
 		
 			param_vals = []

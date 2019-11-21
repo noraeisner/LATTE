@@ -132,8 +132,8 @@ if __name__ == '__main__':
 			
 			# ---- INPUT PARAMETERS ------
 
-			tic = str(row['TICID'])
-
+			tic = str(int(row['TICID']))
+			print (tic)
 			# Check whether this file already exists
 			if (os.path.exists("{}/{}".format(indir, tic)))  and (args.o != True): 
 				print ("This file already exists therefore SKIP. To overwrite files run this code with --o in the command line.")
@@ -141,6 +141,7 @@ if __name__ == '__main__':
 			# -------------
 
 			# --- WHAT SECTORS IS IT OBSERVED IN? ---
+
 			sectors_all = utils.tess_point(indir, tic) 
 			sectors_in = row['sectors']
 			
@@ -174,7 +175,10 @@ if __name__ == '__main__':
 				peak_list = ast.literal_eval(peak_list_in)
 				
 				# convert the input transit times and sectors into peak_list in the form of a list
-				if type(peak_list) == float:
+				print (peak_list)
+				print (type(peak_list))
+
+				if (type(peak_list) == float) or (type(peak_list) == int):
 					peak_list = [peak_list]
 				else:
 					peak_list = list(peak_list)

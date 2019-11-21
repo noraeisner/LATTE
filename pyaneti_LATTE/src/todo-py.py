@@ -187,7 +187,7 @@ def create_transit_data(time,flux,errs,planet=0,span=0.0):
   if ( span < 1e-5 ):
     #We have to calculate things
     span = 3*tt
-#  else:
+  #else:
     #We have to use the span given by the user
 
   #Let us fold the data to the period

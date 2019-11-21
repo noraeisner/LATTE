@@ -477,6 +477,10 @@ def tess_point(indir,tic):
     header = ['tic', 'ra', 'dec']
     pd_list = pd.DataFrame(target_list, columns=header)
     
+    #print (tic)
+    #print (type(tic))
+    #print("print this valie: {}".format(pd_list.loc[pd_list['tic'] == str(55525572), 'ra']))
+
     ra = pd_list.loc[pd_list['tic'] == str(tic), 'ra'].values[0]
     dec = pd_list.loc[pd_list['tic'] == str(tic), 'dec'].values[0]
     ra = float(ra)
@@ -2122,32 +2126,25 @@ def plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, t
         img_diff = img_oot-img_intr
         
         count += 1
-        plot_1 = (len(T0_list)*100) + (30) + (count)
-
-        plt.subplot(plot_1)
+        plt.subplot(len(T0_list), 3, count)
         plt.axis('off')
         plt.imshow(img_intr)
         plt.colorbar()
         plt.title("t = {} days \n In Transit Flux (e-/candence)".format(T0))
 
         count += 1
-        plot_2 = (len(T0_list)*100) + (30) + (count)
-
-        plt.subplot(plot_2)
+        plt.subplot(len(T0_list), 3, count)
         plt.axis('off')
         plt.imshow(img_oot)
         plt.colorbar()
         plt.title("Out of Transit Flux (e-/candence)")
 
         count += 1
-        plot_3 = (len(T0_list)*100) + (30) + (count)
-
-        plt.subplot(plot_3)
+        plt.subplot(len(T0_list), 3, count)
         plt.axis('off')
         plt.imshow(img_diff)
         plt.colorbar()
         plt.title("Difference Flux (e-/candence)")
-
 
 
     plt.tight_layout()
