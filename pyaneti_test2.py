@@ -77,8 +77,6 @@ if is_single_transit == False:
 	# only if not single transit
 	min_P   = [Pb - el*0.001]
 	max_P   = [Pb + el*0.001]
-	
-	fit_P = ['u']
 
 	print (min_P, max_P)
 
