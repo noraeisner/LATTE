@@ -28,7 +28,7 @@ import LATTEbrew as brew
 
 
 # ------ interact -------
-def interact_LATTE(tic, indir, sectors_all, sectors, noshow):
+def interact_LATTE(tic, indir, sectors_all, mstar, sectors, noshow):
     '''
     Function to run the Interactive LATTE code using the matplotlib interactive tool.
     Calls the plot where the transit-event times can be identifies and the plotting/modeling options specified.
@@ -252,7 +252,7 @@ def interact_LATTE(tic, indir, sectors_all, sectors, noshow):
     # END OF INTERACTIVE PART OF CODE
 
     #  -----  BREW  ------
-    brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, show = noshow)
+    brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, mstar, show = noshow)
 
 
 # -----------------------

@@ -10,6 +10,7 @@ import matplotlib
 import numpy as np
 import pandas as pd
 import tkinter as tk
+from glob import glob
 #import matplotlib.pyplot as plt
 from argparse import ArgumentParser
 
@@ -27,21 +28,21 @@ import LATTEbrew as brew
 warnings.filterwarnings('ignore')
 
 
-
 if __name__ == '__main__':
 	ap = ArgumentParser(description='Lightcurve Analysis Tool for Transiting Exoplanets')
 	ap.add_argument('--new-data', action='store_true')
-	ap.add_argument('--targetlist',type=str, help='the link to the target file list', default='no')
+	ap.add_argument('--targetlist', type=str, help='the link to the target file list', default='no')
 	ap.add_argument('--noshow', action='store_false', help='if you want to NOT show the plots write --noshow in the command line')
 	ap.add_argument('--o', action='store_true', help='if you call this old files will be overwriten in the non-interactive version')
-	
+	ap.add_argument('--mstar', type=float, help='the mass of the star in case it is known', default=1)
+	ap.add_argument('--nickname', type=str, help='give the target a memorable name', default='no')
+
 	args = ap.parse_args()
 
 	# ------- CHANGE THIS --------
 	#indir = "/Users/Nora/Documents/research/TESS/planethunters/LATTE"  # CHANGE THIS
 	indir = "./LATTE_output"
 	# ----------------------------
-
 
 	if not os.path.exists("{}".format(indir)):
 		os.makedirs(indir)
@@ -111,7 +112,7 @@ if __name__ == '__main__':
 	
 	
 
-		utils.interact_LATTE(tic, indir, sectors_all, sectors, args.noshow)  # the argument of whether to shos the images or not 
+		utils.interact_LATTE(tic, indir, sectors_all, args.mstar, sectors, args.noshow)  # the argument of whether to shos the images or not 
 		
 		# Done
 
@@ -133,11 +134,13 @@ if __name__ == '__main__':
 			# ---- INPUT PARAMETERS ------
 
 			tic = str(int(row['TICID']))
-			print (tic)
+
+			existing_files = glob("{}/*{}*".format(indir, tic))
 			# Check whether this file already exists
-			if (os.path.exists("{}/{}".format(indir, tic)))  and (args.o != True): 
+			if (len(existing_files) > 0)  and (args.o != True): 
 				print ("This file already exists therefore SKIP. To overwrite files run this code with --o in the command line.")
 				continue
+
 			# -------------
 
 			# --- WHAT SECTORS IS IT OBSERVED IN? ---
@@ -166,8 +169,7 @@ if __name__ == '__main__':
 
 			# ---- IF NO TRANSIT MARKED RUN WITH INTERFACE ----
 			if type(row['transits']) == float:
-				utils.interact_LATTE(tic, indir, sectors_all, sectors, args.noshow)
-
+				utils.interact_LATTE(tic, indir, sectors_all, args.mstar, sectors, args.noshow)
 
 
 			else:
@@ -214,8 +216,12 @@ if __name__ == '__main__':
 				#	  START BREWING ....
 				# --------------------------
 	
-				brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, show = False)
+				brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, args.mstar, show = False)
 
+	# end by changing the name of the folder to include the nicknane if so defined in the input functions
+	# this allows users to keep track of their targets more easily. We name our candidates after pastries. 
+	if not args.nickname == 'no':
+		os.system("mv {}/{} {}/{}_{}".format(indir, tic, indir, tic, args.nickname))
 
 # End.
 

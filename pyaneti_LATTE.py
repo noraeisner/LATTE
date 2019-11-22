@@ -28,9 +28,16 @@ tic = str(sys.argv[1])
 star = tic  # confusing but some places require the star to be called the tic and vice versa...
 
 indir = str(sys.argv[2])
+
+mstar = str(sys.argv[3])
+
+teff = str(sys.argv[4])
+
+srad = str(sys.argv[5])
+
 peak_list = []
 
-for i in range(3,len(sys.argv)): # the first agrument is the name of the program, the second is the tic ID and the third the directory
+for i in range(6,len(sys.argv)): # the first agrument is the name of the program, the second is the tic ID, the third the directory, the fourth mstar, fifth teff and sixth rad
 	peak_list.append(float(sys.argv[i]))
 
 
@@ -85,15 +92,15 @@ if is_single_transit == False:
 
 #Define the star parameters to calculate the planet parameters
 #Final values
-mstar_mean  = 0.92 #0.870
+mstar_mean  = mstar #0.870
 mstar_sigma = 0.1 #0.040
 
-rstar_mean  = 0.860124
+rstar_mean  = srad
 rstar_sigma = 0.1 
 
 vsini_mean = 8.
 
-tstar_mean  = 5320
+tstar_mean  = teff
 tstar_sigma = 150.
 
 

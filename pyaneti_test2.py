@@ -3,7 +3,6 @@
 #                     Main pyaneti file
 #                   Barragan O, March 2016
 #-----------------------------------------------------------
-
 #Load libraries
 from __future__ import print_function, division, absolute_import
 import numpy as np
@@ -11,7 +10,6 @@ import matplotlib.pyplot as plt
 import sys
 import os
 import sys
-
 sys.path.append('pyaneti_LATTE/')
 import pyaneti as pti #FORTRAN module
 
@@ -78,6 +76,7 @@ if is_single_transit == False:
 	min_P   = [Pb - el*0.001]
 	max_P   = [Pb + el*0.001]
 
+	fit_P = ['u']
 	print (min_P, max_P)
 
 

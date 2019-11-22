@@ -25,7 +25,7 @@ warnings.filterwarnings('ignore')
 
 
 
-def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, show = False):
+def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, mstar, show = False):
 	'''
 	This function that runs LATTE - makes the plots, saves them, runs the BLS model and the pyaneti model before 
 	making a PHT DV report (if told to do so.)
@@ -189,7 +189,7 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 			print ("Running Pyaneti modelling - this could take a while so be patient...")
 	
 			peak_list_model =  ("{}".format(str(np.asarray(peak_list)))[1:-1]) # change the list into a string and get rid of the brackets
-			os.system("python3 pyaneti_LATTE.py {} {} {}".format(tic, indir, peak_list_model))
+			os.system("python3 pyaneti_LATTE.py {} {} {} {} {} {}".format(tic, indir, mstar, teff, srad, peak_list_model))
 	
 	else:
 		print ("Pyaneti has not been installed so you can't model anything yet. Ask Nora or Oscar for the LATTE version of the Pyaneti code.")
