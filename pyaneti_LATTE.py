@@ -92,17 +92,19 @@ if is_single_transit == False:
 
 #Define the star parameters to calculate the planet parameters
 #Final values
-mstar_mean  = mstar #0.870
+mstar_mean  = float(mstar) #0.870
 mstar_sigma = 0.1 #0.040
 
-rstar_mean  = srad
+rstar_mean  = float(srad)
 rstar_sigma = 0.1 
 
 vsini_mean = 8.
 
-tstar_mean  = teff
+tstar_mean  = float(teff)
 tstar_sigma = 150.
 
+print ("VALUE")
+print (mstar_mean, rstar_mean, tstar_mean)
 
 # ---------------
 #Read input file
