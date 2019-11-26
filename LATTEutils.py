@@ -235,7 +235,8 @@ def interact_LATTE(tic, indir, sectors_all, mstar, sectors, noshow):
     if len(transit_times) == 0:
         print ("\n WARNING: You can't continue without entering a transit-time.\n")
         print ("Exit.\n")
-        exit[0]
+        raise SystemExit
+        #exit[0]
     
     if type(transit_times[-1]) == tuple:
         peak_list = list(transit_times[-1])
@@ -690,7 +691,8 @@ def download_data(indir,sector, tic, binfac = 5):
     
     if len(dwload_link) == 0:
         print ("This TIC was not observed in Sector(s):   {}   .Try again with different sectors.".format(sector))
-        exit[0]
+        raise SystemExit
+        #exit[0]
 
     alltimebinned = []
     allfluxbinned = []

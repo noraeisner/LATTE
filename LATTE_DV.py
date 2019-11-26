@@ -37,9 +37,7 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 		TCE_link = TCE_links[0]  # this link should allow you to acess the MAST DV report
 		TCE = 'Yes **'
 		TCE_link = '<link href="%s" color="blue">here</link>' % TCE_link
-		print ("LINK")
-		print (TCE_link)
-		print ("LINK")
+	
 	# TOI -----
 	TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment = "#")
 	
@@ -185,7 +183,11 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	# --------------------------------------
 	# ------ stellar parameters table ------
 	# --------------------------------------
-
+	try:
+		srad = float(srad)
+	except:
+		srad = -999
+		
 	data_stellar= [['Parameter',  "Value", "Unit"],
 				   ['TIC ID',	 tic, ],
 				   ['RA',		 ra, "degrees"],
