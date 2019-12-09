@@ -26,7 +26,6 @@ from matplotlib.widgets import Slider, Button, RadioButtons, TextBox, CheckButto
 # custom modules
 import LATTEbrew as brew
 
-
 # ------ interact -------
 def interact_LATTE(tic, indir, sectors_all, mstar, sectors, noshow):
     '''
@@ -452,7 +451,6 @@ def TOI_TCE_files(indir):
                 '''
                 f.write(r_TCE.content)
                 print("finished adding DV links for sector {}".format(sec))
-    
 
 # -----------------------
 
@@ -590,7 +588,6 @@ def nn_ticids(indir, peak_sec, tic):
     distance = closest_tic['dist'].tolist()
 
     return ticids, distance, target_ra, target_dec
-
 
 # -----------------------
 # download the data 
@@ -1240,7 +1237,7 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, save = 
     stats2_depth_even = model2.compute_stats(period2, duration2, t0)['depth_even']
     
     return [stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [stats2_depth, stats2_depth_phased, stats2_depth_half, stats2_depth_odd, stats2_depth_even]
-    
+
 
 # -----------------------
 # plots

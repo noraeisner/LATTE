@@ -155,7 +155,7 @@ if __name__ == '__main__':
 				else:
 					sectors_in = list(sectors_in) 
 				
-				# Sucessfully enteredt sectors
+				# Sucessfully entered sectors
 				# check that the target was actually observed in the stated sector
 				sectors = list(set(sectors_in) & set(sectors_all))
 				if len(sectors) == 0:
