@@ -31,17 +31,22 @@ warnings.filterwarnings('ignore')
 if __name__ == '__main__':
 	ap = ArgumentParser(description='Lightcurve Analysis Tool for Transiting Exoplanets')
 	ap.add_argument('--new-data', action='store_true')
+	ap.add_argument('--tic', type=str, help='the target TIC id, if blank will be prompted to enter', default = 'no')
+	ap.add_argument('--sector', type=str, help='the sector(s) to look at', default = 'no')
 	ap.add_argument('--targetlist', type=str, help='the link to the target file list', default='no')
 	ap.add_argument('--noshow', action='store_false', help='if you want to NOT show the plots write --noshow in the command line')
 	ap.add_argument('--o', action='store_true', help='if you call this old files will be overwriten in the non-interactive version')
-	ap.add_argument('--mstar', type=float, help='the mass of the star in case it is known', default=1)
+	#ap.add_argument('--mstar', type=float, help='the mass of the star in case it is known', default=1)
 	ap.add_argument('--nickname', type=str, help='give the target a memorable name', default='no')
+	ap.add_argument('--FFI', action='store_true', help='is this an FIIs?')
 
 	args = ap.parse_args()
 
 	# ------- CHANGE THIS --------
 	#indir = "/Users/Nora/Documents/research/TESS/planethunters/LATTE"  # CHANGE THIS
+	
 	indir = "./LATTE_output"
+
 	# ----------------------------
 
 	if not os.path.exists("{}".format(indir)):
@@ -63,6 +68,7 @@ if __name__ == '__main__':
 		utils.data_files(indir)
 		utils.nn_files(indir)
 		utils.TOI_TCE_files(indir)
+		utils.momentum_dumps_info(indir)
 		# ----
 	
 	# ------  INTERACTIVE VERSION -------
@@ -74,27 +80,53 @@ if __name__ == '__main__':
 	'''
 	
 	if args.targetlist == 'no': 
+		#if both the sectors and the tic ID are already entered then TKinter does not need to be loaded
+		if args.tic != 'no' and args.sector != 'no':
+			tic = str(args.tic)
+			sectors = str(args.sector)
 
+			if args.FFI == True:
+				newpath = '{}/{}'.format(indir,tic)
+				# if this folder doesn't exist then create it...
+				if not exists(newpath):
+					os.makedirs(newpath)
 
-		# make a GUI interface with TKinter
-		ROOT = tk.Tk()
-		ROOT.withdraw()
+			sectors_all, ra, dec = utils.tess_point(indir, tic) 
 		
-	
-		# first prompt window which asks for TIC ID	
-		tic = simpledialog.askstring(title="TIC",
-										  prompt="Enter TIC ID:")
+		else:
+			# make a GUI interface with TKinter
+			ROOT = tk.Tk()
+			ROOT.withdraw()
+			
+			# has the tic already been defined?
+			if args.tic == 'no':
+
+				# first prompt window which asks for TIC ID	
+				tic = simpledialog.askstring(title="TIC",
+												  prompt="Enter TIC ID:")
+			else:
+				tic = str(args.tic)
+
+			if args.FFI == True:
+				newpath = '{}/{}'.format(indir,tic)
+				# if this folder doesn't exist then create it...
+				if not exists(newpath):
+					os.makedirs(newpath)
+
+			# has the sector already been defined? 
+			if args.sector == 'no':
+				# returns all of the sectors in which TESS observed the given TIC id - this uses TESS-point
+				sectors_all, ra, dec = utils.tess_point(indir, tic) 
 		
-		# returns all of the sectors in which TESS observed the given TIC id - this uses TESS-point
-		sectors_all = utils.tess_point(indir, tic) 
-		
-	
-		#  Ask to define the sectors
-		sectors = simpledialog.askstring(title="Sectors",
-										  prompt="TIC {} was observed in sector(s):\n {}. \n Enter the ones you wish to look at (e.g. 1,4) or 'all' for all of them.".format(tic, sectors_all))
-		
-		ROOT.quit()
-		ROOT.destroy()
+				#  Ask to define the sectors
+				sectors = simpledialog.askstring(title="Sectors",
+												  prompt="TIC {} was observed in sector(s):\n {}. \n Enter the ones you wish to look at (e.g. 1,4) or 'all' for all of them.".format(tic, sectors_all))
+			else:
+				sectors_all, ra, dec = utils.tess_point(indir, tic) 
+				sectors = str(args.sector)
+
+			ROOT.quit()
+			ROOT.destroy()
 		
 		if len(sectors) == 0:
 			sectors = 'all'
@@ -110,12 +142,12 @@ if __name__ == '__main__':
 		else:
 			print ("Will look at available sectors: {} \n".format(sectors))
 	
-	
-
-		utils.interact_LATTE(tic, indir, sectors_all, args.mstar, sectors, args.noshow)  # the argument of whether to shos the images or not 
+		if args.FFI == False:
+			utils.interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args.noshow)  # the argument of whether to shos the images or not 
+		else:
+			utils.interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args.noshow)
 		
 		# Done
-
 
 	# --------------------------------
 	#		RUN WITH INPUT FILE
@@ -169,7 +201,7 @@ if __name__ == '__main__':
 
 			# ---- IF NO TRANSIT MARKED RUN WITH INTERFACE ----
 			if type(row['transits']) == float:
-				utils.interact_LATTE(tic, indir, sectors_all, args.mstar, sectors, args.noshow)
+				utils.interact_LATTE(tic, indir, sectors_all, sectors, args.noshow)
 
 
 			else:
@@ -205,7 +237,6 @@ if __name__ == '__main__':
 				save = True  # always save the files - no point running this if you're not going to save them
 				DV = True   # we'll make a DV report for all of them
 				
-
 				# -------------------
 				# DOWNLOAD DATA 
 				# -------------------
@@ -216,12 +247,19 @@ if __name__ == '__main__':
 				#	  START BREWING ....
 				# --------------------------
 	
-				brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, args.mstar, show = False)
+				brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, show = False)
 
 	# end by changing the name of the folder to include the nicknane if so defined in the input functions
 	# this allows users to keep track of their targets more easily. We name our candidates after pastries. 
-	if not args.nickname == 'no':
-		os.system("mv {}/{} {}/{}_{}".format(indir, tic, indir, tic, args.nickname))
+	
+	if (not args.nickname == 'no') and (args.FFI == True):
+		os.system("mv {}/{} {}/FFI_{}_{}".format(indir, tic, indir, tic, args.nickname))
 
+	elif not args.nickname == 'no':
+		os.system("mv {}/{} {}/{}_{}".format(indir, tic, indir, tic, args.nickname))
+	
+	elif args.FFI == True:
+		os.system("mv {}/{} {}/FFI_{}".format(indir, tic, indir, tic))
+	
 # End.
 

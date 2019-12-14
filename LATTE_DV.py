@@ -16,7 +16,9 @@ from reportlab.lib.enums import TA_RIGHT, TA_JUSTIFY, TA_CENTER
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
 
-def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, bls = False, model = False):
+
+def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI, bls = False, model = False):
+
 
 	# ---- CHECK WHETHER THE TARGET IS A TCE OR A TOI ----
 	
@@ -120,6 +122,7 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 
 	fig_count = 0
 	table_count = 0
+	
 	# title
 	title = "PHT Data Validation Report"
 	subheading = "TIC {}".format(tic)
@@ -280,30 +283,32 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	ptext = '<font size=8>%s</font>' % background_text
 	Story.append(Paragraph(ptext, styles["Normal"]))
 	
-
+	
 	# --------------------------------------------
 	# Centroid Position
 	# --------------------------------------------
-	Story.append(Spacer(1, 12))
-	im3 = Image(centroid_positions_name)
-	print (len(peak_list))
-	if len(peak_list) == 1:
-		im3._restrictSize(width*0.5, width*0.5)
-	else:
-		im3._restrictSize(width*0.8, width*0.8)
-
-	Story.append(im3)
 	
-	fig_count += 1
-	centroid_text = "Fig {}. The x and y centroid positions around the time of each transit-like event. The black points shows the CCD column and row position of the target’s flux-weighted centroid. \
-		The red shows the CCD column and row local motion differential velocity aberration (DVA), pointing drift, and thermal effects. \
-		The vertical orange line indicates the time of the transit-like event".format(fig_count)
+	if FFI == False:
+		Story.append(Spacer(1, 12))
+		im3 = Image(centroid_positions_name)
+		print (len(peak_list))
+		if len(peak_list) == 1:
+			im3._restrictSize(width*0.5, width*0.5)
+		else:
+			im3._restrictSize(width*0.8, width*0.8)
 	
-	ptext = '<font size=8>%s</font>' % centroid_text
-	Story.append(Paragraph(ptext, styles["Normal"]))
+		Story.append(im3)
+		
+		fig_count += 1
+		centroid_text = "Fig {}. The x and y centroid positions around the time of each transit-like event. The black points shows the CCD column and row position of the target’s flux-weighted centroid. \
+			The red shows the CCD column and row local motion differential velocity aberration (DVA), pointing drift, and thermal effects. \
+			The vertical orange line indicates the time of the transit-like event".format(fig_count)
+		
+		ptext = '<font size=8>%s</font>' % centroid_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
+		
 	
-
-	Story.append(PageBreak()) # always start a new page for this analysis
+		Story.append(PageBreak()) # always start a new page for this analysis
 
 	# --------------------------------------------
 	# Flux Aperture
@@ -371,19 +376,19 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	# nearest neighbours
 	# --------------------------------------------
 	#Story.append(PageBreak()) # always start a new page for this analysis
-	im7 = Image(nearest_neighbour_name)
+	if FFI == False:
+		im7 = Image(nearest_neighbour_name)
+		
+		im7._restrictSize(width*0.8, width*0.8)
 	
-	im7._restrictSize(width*0.8, width*0.8)
-
-	Story.append(im7)
-	fig_count += 1
-	Story.append(Spacer(1, 10))
-	nn_text = "Fig {}. Lightcurves of the six closest stars to target {} (top pannel). \
-		The distances to the target star and the TESS magnitudes are shown for each star. Only ever shown for one sector.".format(fig_count,tic)
-	
-	ptext = '<font size=8>%s</font>' % nn_text
-	Story.append(Paragraph(ptext, styles["Normal"]))
-	
+		Story.append(im7)
+		fig_count += 1
+		Story.append(Spacer(1, 10))
+		nn_text = "Fig {}. Lightcurves of the six closest stars to target {} (top pannel). \
+			The distances to the target star and the TESS magnitudes are shown for each star. Only ever shown for one sector.".format(fig_count,tic)
+		
+		ptext = '<font size=8>%s</font>' % nn_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
 	
 
 	# --------------------------------------------
@@ -442,11 +447,13 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 		# ---- BLS TABLE -----
 
 		data_bls= [['Parameter',				  "bls1",														"bls2"],
-					   ['depth',			 "{:.5f} ± {:.5f}".format(bls_stats1[0][0],bls_stats1[0][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[0][0],bls_stats2[0][1]) ],
-					   ['depth phased',		"{:.5f} ± {:.5f}".format(bls_stats1[1][0],bls_stats1[1][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[1][0],bls_stats2[1][1]) ],
-					   ['depth half',		"{:.5f} ± {:.5f}".format(bls_stats1[2][0],bls_stats1[2][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[2][0],bls_stats2[2][1]) ],
-					   ['depth off',		"{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[3][0],bls_stats2[3][1]) ],
-					   ['depth even',		"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[4][0],bls_stats2[4][1]) ],
+					   ['period',			    "{:.3f}".format(bls_stats1[0]),	         						 "{:.3f}".format(bls_stats2[0])],
+					   ['t0',			        "{:.2f}".format(bls_stats1[1]),	         						 "{:.2f}".format(bls_stats2[1])],
+					   ['depth',			    "{:.5f} ± {:.5f}".format(bls_stats1[2][0],bls_stats1[2][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[2][0],bls_stats2[2][1]) ],
+					   ['depth phased',			"{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[3][0],bls_stats2[3][1]) ],
+					   ['depth half',			"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[4][0],bls_stats2[4][1]) ],
+					   ['depth off',			"{:.5f} ± {:.5f}".format(bls_stats1[5][0],bls_stats1[5][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[5][0],bls_stats2[5][1]) ],
+					   ['depth even',			"{:.5f} ± {:.5f}".format(bls_stats1[6][0],bls_stats1[6][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[6][0],bls_stats2[6][1]) ],
 					   ]
 		
 		table_bls=Table(data_bls)
@@ -458,7 +465,7 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	
 
 
-		# ------ ADD A LINE TO SEPERATE SECTIONS -----
+		# ------ ADD A LINE TO SEPERATE SECTIONS -------
 		
 		Story.append(Spacer(1, 20))
 		line = MCLine(width*0.77)

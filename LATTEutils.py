@@ -7,6 +7,8 @@ import pandas as pd
 import seaborn as sb
 
 import requests
+import lightkurve as lk
+from os.path import exists
 import astropy.io.fits as pf
 import matplotlib.pyplot as plt
 from astropy.stats import BoxLeastSquares
@@ -17,17 +19,21 @@ from astropy.io import fits
 from astropy import units as u
 from astroquery.mast import Catalogs
 from sklearn.decomposition import PCA
+from scipy.interpolate import interp1d
 from astropy.coordinates import SkyCoord
+from matplotlib.patches import Rectangle
 from lightkurve import TessTargetPixelFile
+
 from tess_stars2px import tess_stars2px_function_entry
 from matplotlib.ticker import AutoMinorLocator, FormatStrFormatter
 from matplotlib.widgets import Slider, Button, RadioButtons, TextBox, CheckButtons
 
 # custom modules
+import filters
 import LATTEbrew as brew
 
 # ------ interact -------
-def interact_LATTE(tic, indir, sectors_all, mstar, sectors, noshow):
+def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, noshow):
     '''
     Function to run the Interactive LATTE code using the matplotlib interactive tool.
     Calls the plot where the transit-event times can be identifies and the plotting/modeling options specified.
@@ -101,7 +107,6 @@ def interact_LATTE(tic, indir, sectors_all, mstar, sectors, noshow):
     
     [line] =  ax[1].plot(cutout(transit)[0], cutout(transit)[1], marker='o',lw = 0, markersize = 4, color = 'orange', alpha = 0.8, label = 'unbinned', markerfacecolor='white')
     [line_binned] =  ax[1].plot(cutout(transit)[4], cutout(transit)[5],marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3, label = 'binning = 7', markerfacecolor='k')
-    
     
     # Define an axes area and draw a slider in it
     transit_slider_ax  = fig.add_axes([0.25, 0.1, 0.65, 0.03])
@@ -252,13 +257,411 @@ def interact_LATTE(tic, indir, sectors_all, mstar, sectors, noshow):
     # END OF INTERACTIVE PART OF CODE
 
     #  -----  BREW  ------
-    brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, mstar, show = noshow)
+    brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, show = noshow)
+
+def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, noshow):
+
+    alltime_list, allline, start_sec, end_sec, in_sec, X1_list, X1flux_list,  X4_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = download_data_FFI_interact(indir, sectors, sectors_all, tic, save = False)
+    
+    def close(event):
+        plt.close('all')
+    
+
+    def extract_LC(aperture):
+        ax[0].cla()
+        flux = X4[:,aperture.flatten()].sum(axis=1)
+        m = np.nanmedian(flux)
+        return t, flux/m
+          
+
+    allfbkg = []
+    allfbkg_t = []
+
+    allflux = []
+    allflux_flat = []
+    allflux_small = []
+    apmask_list = []
 
 
-# -----------------------
+    for i, X4 in enumerate(X4_list): 
+        tpf = tpf_list[i]
+        t = t_list[i]
+        X1 = X1flux_list[i]
+        sec = sectors[i]
+
+        global mask
+        global aperture
+
+        mask = []
+        
+        def onclick(event):
+            global mask
+            global aperture
+        
+            [p.remove() for p in reversed(ax[1].patches)]
+        
+            events = ((int(event.xdata+0.5), int(event.ydata+0.5)))
+        
+            if (len(mask) > 0) and (events in list(mask)): 
+                mask = [x for x in mask if x != events] 
+            else:
+                mask.append(events)
+        
+            sqcol = '#ffffee'
+            alpha = 0.5
+        
+            for pixel in mask:
+                m = int(pixel[0])
+                n = int(pixel[1])
+                r = Rectangle((float(m)-0.5, float(n)-0.5), 1., 1., edgecolor='white', facecolor=sqcol, alpha = 0.5)
+                ax[1].add_patch(r)
+            
+            fig.canvas.draw()
+        
+            #update the extraction aperture
+            aperture = np.array(np.zeros_like(X1.sum(axis=0)), dtype=bool)
+            for coord in mask:
+                aperture[coord] = True
+        
+            [LC] = ax[0].plot(extract_LC(aperture)[0], extract_LC(aperture)[1],marker='o',color = '#054950', alpha = 0.9, lw = 0, markersize = 3, markerfacecolor='#054950')
+            ax[0].set_xlabel("Time")
+            ax[0].set_ylabel("Normalized Flux")
+        
+            fig.canvas.draw_idle()
+        
+            plt.draw()
+        
+        
+        fig, ax = plt.subplots(1,2, figsize=(10,3), gridspec_kw={'width_ratios': [3, 1]})
+        
+        fig.subplots_adjust(left=0.55, bottom=0.35)
+        
+        plt.tight_layout()
+        
+        ax[1].set_axis_off()
+        
+        showflux = (X1).mean(axis = 0)
+        
+        im = ax[1].imshow(X1.mean(axis = 0))
+        ax[0].set_title("Sector {}".format(sec))
+        ax[0].set_xlabel("Time")
+        ax[0].set_ylabel("Normalized Flux")
+        
+        fig.canvas.mpl_connect('button_press_event', onclick)
+        
+        ebx = plt.axes([0.81, 0.04, 0.13, 0.06])
+        exit = Button(ebx, 'Close', color='orange')
+        exit.on_clicked(close)
+        
+        plt.show()
+        
+        # --------------
+        # have now chosen an aperture size - now need to extract the LC for the smaller aperture size
+        
+        aperture = np.array(np.zeros_like(X1.sum(axis=0)), dtype=bool)
+        for coord in mask[:-1]:
+            aperture[coord] = True
+
+        apmask_list.append(aperture)
+
+        target_mask_small = aperture 
+        target_mask = aperture 
+    
+
+        mask_plot = tpf.plot(aperture_mask=target_mask.T, mask_color='k')
+        plt.savefig('{}/{}/{}_mask.png'.format(indir, tic, tic), format='png')
+        plt.close('all')
+
+        mask_plot = tpf.plot(aperture_mask=target_mask_small.T, mask_color='k')
+        plt.savefig('{}/{}/{}_mask_small.png'.format(indir, tic, tic), format='png')
+        plt.close('all')
+
+        flux = X4[:,target_mask.flatten()].sum(axis=1) 
+        flux_small = X4[:,target_mask_small.flatten()].sum(axis=1)
+        
+        m = np.nanmedian(flux)
+        m_small = np.nanmedian(flux_small)
+        
+        # normalize by dividing by the median value
+        flux = flux/m
+        flux_small = flux_small/m_small
+        
+        print ("Done.\n")
+    
+        # -------- flatten the normal lighcurve --------
+        print ("Flatten LC...", end =" ")
+    
+        l = np.isfinite(flux/m)
+    
+        fr_inj = flux/m
+        alltime  = t
+    
+        T_dur = 0.01  #may need to change!!
+        
+        nmed = int(720*3*T_dur)
+        nmed = 2*int(nmed/2)+1 # make it an odd number 
+        ff = filters.NIF(np.array(fr_inj),nmed,10,fill=True,verbose=True)
+        # first number is three time transit durations, the second quite small (10,20 )
+    
+        l = np.isfinite(ff)
+        
+        g = interp1d(alltime[l],ff[l],bounds_error=False,fill_value=np.nan)
+        ff = g(alltime)
+        fr = fr_inj / ff
+    
+        plt.figure(figsize=(16,5))
+        plt.plot(alltime,fr_inj + 0.95,'.')
+        plt.plot(alltime,ff + 0.95,'.')
+        plt.plot(alltime,fr,'o', color = 'r')
+    
+        plt.savefig('{}/{}/{}_fit_test.png'.format(indir, tic, tic), format='png')
+        plt.clf()
+        plt.close()
+    
+        # ---------------------------------------------
+        print ("Done.\n")
+        
+        print ("Extract background...", end =" ")
+        # -------- extract the backrgound flux -----------
+        background_mask = ~tpf.create_threshold_mask(threshold=0.001, reference_pixel=None)
+        n_background_pixels = background_mask.sum()
+    
+        background_lc_per_pixel = tpf.to_lightcurve(aperture_mask=background_mask) / n_background_pixels
+        n_target_pixels = target_mask.sum()
+        background_estimate_lc = background_lc_per_pixel * n_target_pixels
+    
+        allfbkg.append(background_estimate_lc.flux) # uncorrected background
+        allfbkg_t.append(background_estimate_lc.time) 
+
+        print ("Done.\n")
+         # ------------------------------------------------
+    
+        # add all the information to lists that are returned at the end. y
+        allflux_flat.append(list(fr))
+        allflux.append(list(flux))
+        allflux_small.append(list(flux_small))
+
+    allflux_flat = [val for sublist in allflux_flat for val in sublist]
+    allflux_small = [val for sublist in allflux_small for val in sublist]
+    allflux = [val for sublist in allflux for val in sublist]
+    allfbkg = [val for sublist in allfbkg for val in sublist]
+    allfbkg_t = [val for sublist in allfbkg_t for val in sublist]
+ 
+    # we're not back to where the same place as with interact_LATTE_FFI
+
+    return alltime, allflux, allflux_small, allflux_flat, allline, allfbkg,allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
+
+# ------ interact FFI -------
+def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, noshow, FFIap = True):
+    '''
+    Function to run the Interactive LATTE code using the matplotlib interactive tool.
+    Calls the plot where the transit-event times can be identifies and the plotting/modeling options specified.
+    
+    Parameters
+    ----------
+    tic  :   str
+        target TIC ID
+    indir  :  str
+        path to directory where all the plots and data will be saved. 
+    sectors_all  :   list
+        all the sectors in which the target has been/ will be observed
+    sectors  :  list
+        the sectors which will be analysed
+
+    Returns
+    -------
+        runs the brew_LATTE code...
+    '''
+    if FFIap == True:
+        alltime, allflux_list, allflux_small, allflux, allline, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, noshow)
+    
+    else:
+        print ("Start data download.....", end =" ")
+        alltime, allflux_list, allflux_small, allflux, allline, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = download_data_FFI(indir, sectors, sectors_all, tic, save = True)
+        print ("Done.\n")
+        
+    # -------------------------
+    # Plot the interactive plot
+    # -------------------------
+    # allflux is the corrected one - these arent actually binned but they are 30 mins cadence.
+    
+    alltimebinned = alltime
+    allfluxbinned = allflux
+
+    fig, ax = plt.subplots(2, 1, figsize=(10,7))
+    plt.tight_layout()
+    
+    # Adjust tbplots region to leave some space for the sliders and buttons
+    fig.subplots_adjust(left=0.24, bottom=0.25)
+    
+    fluxmin = np.nanmin(allfluxbinned)
+    fluxmax = np.nanmax(allfluxbinned)
+    
+    # Draw the initial plot
+    # The 'line' variable is used for modifying the line later
+    def cutout(transit):
+        mask_binned = (np.array(alltimebinned) > transit-2) & (np.array(alltimebinned) < transit+2)
+        mask = (np.array(alltime) > transit-2) & (np.array(alltime) < transit+2)
+        
+        return [np.array(alltime)[mask], np.array(allflux)[mask], np.array(alltime), np.array(allflux), np.array(alltimebinned)[mask_binned], np.array(allfluxbinned)[mask_binned], np.array(alltimebinned), np.array(allfluxbinned)]
+    
+    transit = np.nanmean(alltimebinned)
+    binfac = 7
+    
+    [line_full] = ax[0].plot(alltime, allflux , marker='o',lw = 0, markersize = 4, color = '#003941', alpha = 0.8, label = 'unbinned', markerfacecolor='#003941')
+    #[line_full_binned] = ax[0].plot(binning(binfac)[0], binning(binfac)[1],marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3, label = 'binning = 7', markerfacecolor='k')
+    
+    [line] =  ax[1].plot(cutout(transit)[0], cutout(transit)[1], marker='o',lw = 0, markersize = 4, color = '#003941', alpha = 0.8, label = 'unbinned', markerfacecolor='#003941')
+    #[line_binned] =  ax[1].plot(cutout(transit)[4], cutout(transit)[5],marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3, label = 'binning = 7', markerfacecolor='k')
+    
+    # Define an axes area and draw a slider in it
+    transit_slider_ax  = fig.add_axes([0.25, 0.1, 0.65, 0.03])
+    transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=transit, color='teal')
+    
+    scale_slider_ax  = fig.add_axes([0.25, 0.15, 0.65, 0.03])
+    scale_slider = Slider(scale_slider_ax, 'Y-Axis Scale', 0.99, 1.01, valinit=1, color='silver')
+
+    
+    ax[0].set_xlim([np.nanmin(alltime), np.nanmax(alltime)])
+    ax[0].set_ylim([fluxmin, fluxmax])
+    
+    ax[1].set_xlim([np.nanmean(alltime)-2, np.nanmean(alltime)+2])
+    ax[1].set_ylim([fluxmin, fluxmax])
+    
+    # Define an action for modifying the line when any slider's value changes
+    def sliders_on_changed(val):
+        line.set_xdata(cutout(transit_slider.val)[0])
+        line.set_ydata(cutout(transit_slider.val)[1])
+    
+        line_binned.set_xdata(cutout(transit_slider.val)[4])
+        line_binned.set_ydata(cutout(transit_slider.val)[5])
+    
+        fig.canvas.draw_idle()
+    
+    lver0 = ax[0].axvline(transit, color = 'r', linewidth = 2)
+    lver1 = ax[1].axvline(transit, color = 'r', linewidth = 2)
+    
+    def update_axis(val):   
+        ax[1].set_xlim([transit_slider.val - 2,transit_slider.val + 2])
+        
+        lver0.set_xdata(transit_slider.val)
+        lver1.set_xdata(transit_slider.val)
+    
+    def update_yaxis(val):  
+    
+        med = 1
+        diff = abs(med - (fluxmin * scale_slider.val))
+    
+        ax[0].set_ylim([med - diff ,med + diff])
+        ax[1].set_ylim([med - diff ,med + diff])
+    
+    
+    transit_slider.on_changed(update_axis)
+    scale_slider.on_changed(update_yaxis)
+    transit_slider.on_changed(sliders_on_changed)
+
+    # Determine whether to save the values the plots or not left, bottom, width, height
+
+    var_ax = fig.add_axes([0.025, 0.3, 0.1, 0.15])
+    save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'model', 'Save', 'DVR'), (False, False, False, True, False))
+    
+    simple = False
+    BLS = False
+    model = False
+    save = True
+    DV = False
+
+    def variables(label):
+        status = save_var.get_status()
+        simple = status[0]
+        BLS = status[1]
+        model = status[2]
+        save = status[3]
+        DV = status[4]
+
+
+    minf = np.nanmin(np.array(allflux))
+    maxf = np.nanmax(np.array(allflux))
+    height = maxf - minf
+    
+    ax[0].tick_params(axis="y",direction="inout", labelsize = 12) #, pad= -20)
+    ax[0].tick_params(axis="x",direction="inout", labelsize = 12) #, pad= -17)   
+    ax[0].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
+    ax[0].set_ylabel("Normalised Flux", fontsize = 12)
+    ax[0].vlines(allline, minf-1,minf + height*0.3 , colors = 'r', label = "Momentum Dump")
+    
+    ax[1].tick_params(axis="y",direction="inout", labelsize = 12) #, pad= -20)
+    ax[1].tick_params(axis="x",direction="inout", labelsize = 12) #, pad= -17)   
+    ax[1].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
+    ax[1].set_xlabel("BJD-2457000", fontsize = 12)
+    ax[1].set_ylabel("Normalised Flux", fontsize = 12)
+    ax[1].vlines(allline, minf-0.5,minf-0.5 + height*0.3 , colors = 'r', label = "Momentum Dump")
+    
+    #plt.text(4.5, -3.15, "(Press Enter, then close window)", fontsize=10, verticalalignment='center')
+    #plt.text(0.05, 1.1, "Binning Factor", fontsize=10, verticalalignment='center')
+    
+    initial_text = ""
+    
+    transit_times = []
+
+    def submit(text):
+        ydata = eval(text)
+        transit_times.append(ydata)
+    
+    axbox = plt.axes([0.25, 0.04, 0.50, 0.04])
+    text_box = TextBox(axbox, 'Enter transit-event times', initial=initial_text)
+    text_box.on_submit(submit)
+    
+
+    ebx = plt.axes([0.77, 0.04, 0.13, 0.04])
+    exit = Button(ebx, 'Close', color='orange')
+
+    def close(event):
+        plt.close('all')
+
+    exit.on_clicked(close)
+
+    plt.show()
+    
+    end_status = save_var.get_status()
+
+    simple = end_status[0]
+    BLS = end_status[1]
+    model = end_status[2]
+    save = end_status[3]
+    DV = end_status[4]
+
+
+    if len(transit_times) == 0:
+        print ("\n WARNING: You can't continue without entering a transit-time.\n")
+        print ("Exit.\n")
+        raise SystemExit
+        #exit[0]
+    
+    if type(transit_times[-1]) == tuple:
+        peak_list = list(transit_times[-1])
+        peak_list = [float(i) for i in peak_list]
+    
+    else:
+        peak_list = [float(i) for i in transit_times]
+        peak_list = [peak_list[-1]] #if you entered it twice
+
+    print ("Transits you have entered:    {}   \n".format(str(peak_list))[1:-1])
+    print ("Check that these are the transits that you want")
+    
+
+    # END OF INTERACTIVE PART OF CODE
+
+    #  -----  BREW  ------
+
+    brew.brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_list, allflux_small, allflux, allline, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, show = noshow)
+
+
+# -----------------------------
 # Download the data acess files 
-# -----------------------
+# -----------------------------
 # The Functions needed to get the files that know how to acess the data
+
 def data_files(indir):
     '''
     Function to download all of the data that we want to the local computer.
@@ -293,7 +696,6 @@ def data_files(indir):
         
         first_sec_tp = int(string.split('-')[5][2:]) # this is the last imported sector 0 start from here
             
-    
     
     for sec in range(first_sec+1,27): # 26 because that's how many TESS sectors there will be in total
     
@@ -346,6 +748,7 @@ def data_files(indir):
                 Saving recieved content as a png file in binary format
                 '''
                 f.write(r_TP.content)
+
 
 def nn_files(indir):
     '''
@@ -452,6 +855,53 @@ def TOI_TCE_files(indir):
                 f.write(r_TCE.content)
                 print("finished adding DV links for sector {}".format(sec))
 
+def momentum_dumps_info(indir):
+    '''
+    function to the create a list of all of the momentum dump times for each sector - only needed in the FFIs
+    '''
+    print ("store the times of the momentum dumps for each sector - only needed when looking at the FFIs")
+
+    if not os.path.exists("{}/data/tess_mom_dumps.txt".format(indir)):
+        with open("{}/data/tess_mom_dumps.txt".format(indir),'w') as f:
+            writer = csv.writer(f, delimiter='\t')
+            writer.writerow(['sec', 'time'])
+        first_sec = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re run)
+        print ("Will determine the times of the momentum dumps for all sectors and store them... ")
+        
+    else:
+        os.system('tail -n 1 {0}/data/tess_mom_dumps.txt > {0}/data/temp.txt'.format(indir))
+        
+        with open("{}/data/temp.txt".format(indir), 'r') as f:
+            string = f.readlines()[-1]
+            first_sec = int(string[0:2])
+            
+    for sec in range(first_sec+1,27): # 27 because that's how many TESS sectors there will be in total
+        
+        try:
+            lc_sec = np.genfromtxt('{}/data/tesscurl_sector_{}_lc.sh'.format(indir, str(sec)), dtype = str)
+            lcfile = (lc_sec[0][6])
+            
+            response = requests.get(lcfile)
+            lchdu  = pf.open(response.url) # this needs to be a URL - not a file
+            
+                                   #Open and view columns in lightcurve extension
+            lcdata = lchdu[1].data                 
+            quality = lcdata['QUALITY']
+            time    = lcdata['TIME']
+        
+            mom_dump_mask = np.bitwise_and(quality, 2**5) >= 1                               
+            
+            momdump = (list(time[mom_dump_mask]))
+            sector = list([sec] * len(momdump))
+                                   
+            with open("{}/data/tess_mom_dumps.txt".format(indir), 'a') as f:
+                writer = csv.writer(f, delimiter='\t')
+                writer.writerows(zip(sector,momdump))
+            
+        except:
+            continue
+
+
 # -----------------------
 
 def tess_point(indir,tic):
@@ -472,22 +922,30 @@ def tess_point(indir,tic):
 
     '''
 
-    target_list = np.genfromtxt("{}/data/all_targets_list.txt".format(indir), dtype = str, usecols = (0,4,5)) 
-    header = ['tic', 'ra', 'dec']
-    pd_list = pd.DataFrame(target_list, columns=header)
-    
-    #print (tic)
-    #print (type(tic))
-    #print("print this valie: {}".format(pd_list.loc[pd_list['tic'] == str(55525572), 'ra']))
+    #target_list = np.genfromtxt("{}/data/all_targets_list.txt".format(indir), dtype = str, usecols = (0,4,5)) 
+    #header = ['tic', 'ra', 'dec']
+    #pd_list = pd.DataFrame(target_list, columns=header)
+    #
+    ##print (tic)
+    ##print (type(tic))
+    ##print("print this valie: {}".format(pd_list.loc[pd_list['tic'] == str(55525572), 'ra']))
 
-    ra = pd_list.loc[pd_list['tic'] == str(tic), 'ra'].values[0]
-    dec = pd_list.loc[pd_list['tic'] == str(tic), 'dec'].values[0]
-    ra = float(ra)
-    dec = float(dec)
+    #ra = pd_list.loc[pd_list['tic'] == str(tic), 'ra'].values[0]
+    #dec = pd_list.loc[pd_list['tic'] == str(tic), 'dec'].values[0]
+    #ra = float(ra)
+    #dec = float(dec)
     
-    _, _, _, outSec, _, _, _, _, _ = tess_stars2px_function_entry(tic, ra, dec)
+    #_, _, _, outSec, _, _, _, _, _ = tess_stars2px_function_entry(tic, ra, dec)
     
-    return list(outSec)
+    if not exists('{}/tesspoint'.format(indir)):
+        os.makedirs('{}/tesspoint'.format(indir))    
+
+    os.system('python3 -m tess_stars2px -t {} > {}/tesspoint/{}_tesspoint.txt'.format(tic,indir,tic))
+
+    df = pd.read_csv('{}/tesspoint/{}_tesspoint.txt'.format(indir,tic), comment = '#', delimiter = '|', names = ['TIC','RA','Dec','EclipticLong','EclipticLat','Sector','Camera','Ccd','ColPix', 'RowPix'])
+
+    return list(df['Sector']), float(df['RA'][0]), float(df['Dec'][0])
+
 
 def peak_sec(in_sec,start_sec, end_sec, peak_list):
     '''
@@ -661,7 +1119,6 @@ def download_data(indir,sector, tic, binfac = 5):
     
     dwload_link = []
     
-    
     if sector == 'all':
         # locate the file string
         lc_all = np.genfromtxt('{}/data/tesscurl_sector_all_lc.sh'.format(indir), dtype = str)
@@ -765,16 +1222,15 @@ def download_data(indir,sector, tic, binfac = 5):
         time_binned    = Xb[0]
         flux_binned    = Xb[1]
 
-        bad_bits = np.array([1,2,3,4,5,6,8,10,12])
-        value = 0
-        for v in bad_bits:
-            value = value + 2**(v-1)
+        #bad_bits = np.array([1,2,3,4,5,6,8,10,12])
+        #value = 0
+        #for v in bad_bits:
+        #    value = value + 2**(v-1)
 
-        bad_data = np.bitwise_and(quality, value) >= 1
+        #bad_data = np.bitwise_and(quality, value) >= 1
 
-        fluxcent_col = lcdata['MOM_CENTR1']
-        fluxcent_row = lcdata['MOM_CENTR2']
-
+        #fluxcent_col = lcdata['MOM_CENTR1']
+        #fluxcent_row = lcdata['MOM_CENTR2']
 
         mom_dump = np.bitwise_and(quality, 2**5) >= 1
 
@@ -815,6 +1271,503 @@ def download_data(indir,sector, tic, binfac = 5):
     allfbkg = [val for sublist in allfbkg for val in sublist]
    
     return alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltimel2, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad
+
+
+def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
+    '''
+    Download the LCs for the target star for all the indicated sectors from the FFIs. This uses the lighkurve package.
+    
+    Parameters
+    ----------
+    indir : str
+        path to where the files will be saved.
+    sector  :  list or str
+        list of the sectors that we want to analyse. If 'all', all the sectors in whic the target appears will be downloaded.
+    tic : str
+        TIC (Tess Input Catalog) ID of the target
+    binfac  :  int
+        The factor by which the data should be binned. Default = 5 (which is what is shown on PHT)
+
+    Returns
+    -------
+    alltime  :  list
+        times (not binned)
+    allflux  :  list
+        normalized flux (not binned)
+    allflux_err  :  list
+        normalized flux errors (not binned)
+    allline  :  list
+        times of the momentum dumps
+    alltimebinned  :  list
+        binned time
+    allfluxbinned  :  list
+        normalized binned flux
+    allx1  :  list
+        CCD column position of target’s flux-weighted centroid. In x direction
+    allx2  :  list
+        The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In x direction
+    ally1  :  list
+        CCD column position of target’s flux-weighted centroid. In y direction
+    ally2  :  list
+        The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In y direction
+    alltimel2  :  list
+        time used for the x and y centroid position plottin
+    allfbkg  :  list
+        background flux
+    start_sec  :  list
+        times of the start of the sector
+    end_sec  :  list
+        times of the end of the sector
+    in_sec  :  list
+        the sectors for which data was downloaded
+    tessmag  :  list
+        TESS magnitude of the target star
+    teff  :  list
+        effective temperature of the tagret star (K)
+    srad  :  list
+        radius of the target star (solar radii)
+
+    '''
+
+    future_sectors = list(set(sectors_all) - set(sector))
+
+    # dowload the data 
+
+    searchtic = 'TIC' + tic
+
+    
+    start_sec = []
+    end_sec = []
+    in_sec = []
+    
+    alltime_list = []
+    allline = []
+
+    X1_list = []
+    X1flux_list = []
+    X4_list = []
+    apmask_list = []
+    arrshape_list = []
+    tpf_filt_list = []
+    t_list = []
+    bkg_list = []
+    tpf_list = []
+
+    if len(sector) > 1:
+        print ("Warning: Downloading data from multiple FFI sectors may take a while to run.")
+    
+    # open file which shows the momentum dumps
+    momentum_dumps_list = "{}/data/tess_mom_dumps.txt".format(indir)
+    mom_df = pd.read_csv(momentum_dumps_list, comment = '#', delimiter = '\t')
+
+    for sec in sector:
+
+        # import the data
+        print ("Importing FFI data sector {}...".format(sec), end =" ")
+        search_result = lk.search_tesscut(searchtic, sector=sec)
+        tpf = search_result.download(cutout_size=15)
+        
+        # get rid of the 'bad' quality data - use the data flags and only take data where the quality = 0. 
+        quality = tpf.quality
+        tpf = tpf[quality == 0]
+
+
+        tpf_list.append(tpf)
+
+        print ("Done.\n")
+
+        # extract the information and perform PCA
+        print ("Start PCA analysis...", end =" ")
+        
+        X1 = tpf.flux
+        X1flux_list.append(X1)
+
+        arrshape_list.append(X1.shape)
+        
+        bkg = X1
+        bkg = bkg.mean(axis = 0)
+
+        bkg_list.append(bkg)
+
+        # reshape the array in order to perform PCA on it.
+        s = X1.shape
+        X1 = X1.reshape(s[0],s[1]*s[2])
+        
+        lkeep = np.isfinite(X1.sum(axis=1)) * (X1.sum(axis=1)>0)
+        X1 = X1[lkeep,:]
+        
+        X2 = np.zeros_like(X1)
+        M = np.zeros(X1.shape[1])
+        S = np.zeros(X1.shape[1])
+        
+        for n in range(X1.shape[1]):
+            a = X1[:,n]
+            x, m, s = norm(a)
+            X2[:,n]=x
+            M[n] = m
+            S[n] = s
+        
+        ncomp = 5
+        pca = PCA(n_components=ncomp)
+        trends = pca.fit_transform(X2)
+        weights = pca.components_
+        
+        X3 = np.copy(X2)
+        for n in range(X2.shape[1]):
+            for m in range(ncomp):
+                X3[:,n] -= trends[:,m] * weights[m,n]
+        
+        X4 = np.zeros_like(X3)
+        for n in range(X2.shape[1]):
+            x = X3[:,n]
+            a = unnorm(x, M[n], S[n])
+            X4[:,n] = a
+        
+        t=tpf.time[lkeep]
+        
+        alltime = t
+
+         # ------------------------------------------------
+
+        # add all the information to lists that are returned at the end. 
+        tpf_filt_list.append(X4.reshape(tpf.flux[lkeep,:,:].shape))
+
+        in_sec.append(sec)
+
+        alltime_list.append(list(alltime))
+
+        allline.append(list((mom_df.loc[mom_df['sec'] == int(sec)])['time']))
+        
+        start_sec.append([alltime[0]])
+        end_sec.append([alltime[-1]])
+    
+        X1_list.append(X1) #  not corrected
+        X4_list.append(X4) #  PCA corrected
+        t_list.append(np.array(alltime))  # add it here because this list isn't flattened but the other one is
+
+
+    alltime_list = [val for sublist in alltime_list for val in sublist]
+    allline = [val for sublist in allline for val in sublist]
+
+    del mom_df
+
+    return alltime_list, allline, start_sec, end_sec, in_sec, X1_list, X1flux_list,  X4_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
+
+
+def download_data_FFI(indir,sector, sectors_all, tic, save = False):
+    '''
+    Download the LCs for the target star for all the indicated sectors from the FFIs. This uses the lighkurve package.
+    
+    Parameters
+    ----------
+    indir : str
+        path to where the files will be saved.
+    sector  :  list or str
+        list of the sectors that we want to analyse. If 'all', all the sectors in whic the target appears will be downloaded.
+    tic : str
+        TIC (Tess Input Catalog) ID of the target
+    binfac  :  int
+        The factor by which the data should be binned. Default = 5 (which is what is shown on PHT)
+
+    Returns
+    -------
+    alltime  :  list
+        times (not binned)
+    allflux  :  list
+        normalized flux (not binned)
+    allflux_err  :  list
+        normalized flux errors (not binned)
+    allline  :  list
+        times of the momentum dumps
+    alltimebinned  :  list
+        binned time
+    allfluxbinned  :  list
+        normalized binned flux
+    allx1  :  list
+        CCD column position of target’s flux-weighted centroid. In x direction
+    allx2  :  list
+        The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In x direction
+    ally1  :  list
+        CCD column position of target’s flux-weighted centroid. In y direction
+    ally2  :  list
+        The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In y direction
+    alltimel2  :  list
+        time used for the x and y centroid position plottin
+    allfbkg  :  list
+        background flux
+    start_sec  :  list
+        times of the start of the sector
+    end_sec  :  list
+        times of the end of the sector
+    in_sec  :  list
+        the sectors for which data was downloaded
+    tessmag  :  list
+        TESS magnitude of the target star
+    teff  :  list
+        effective temperature of the tagret star (K)
+    srad  :  list
+        radius of the target star (solar radii)
+
+    '''
+
+    future_sectors = list(set(sectors_all) - set(sector))
+
+    # dowload the data 
+
+    searchtic = 'TIC' + tic
+
+    allfbkg = []
+    allfbkg_t = []
+    
+    start_sec = []
+    end_sec = []
+    in_sec = []
+    
+    alltime_list = []
+    allflux = []
+    allflux_flat = []
+    allflux_small = []
+    allline = []
+
+    X1_list = []
+    X4_list = []
+    apmask_list = []
+    arrshape_list = []
+    tpf_filt_list = []
+    t_list = []
+    bkg_list = []
+    tpf_list = []
+
+    if len(sector) > 1:
+        print ("Warning: Downloading data from multiple FFI sectors may take a while to run.")
+    
+    # open file which shows the momentum dumps
+    momentum_dumps_list = "{}/data/tess_mom_dumps.txt".format(indir)
+    mom_df = pd.read_csv(momentum_dumps_list, comment = '#', delimiter = '\t')
+
+    for sec in sector:
+
+        # import the data
+        print ("Importing FFI data sector {}...".format(sec), end =" ")
+        search_result = lk.search_tesscut(searchtic, sector=sec)
+        tpf = search_result.download(cutout_size=15)
+        
+        # get rid of the 'bad' quality data - use the data flags and only take data where the quality = 0. 
+        quality = tpf.quality
+        tpf = tpf[quality == 0]
+
+        tpf_list.append(tpf)
+
+        print ("Done.\n")
+
+        # extract the information and perform PCA
+        print ("Start PCA analysis...", end =" ")
+        X1 = tpf.flux
+        arrshape_list.append(X1.shape)
+
+        #identify the target mask - this will need to be imporved - a bit 'hacky' at the moment. 
+
+        val = 1
+        for i in range(0,50):
+            
+            target_mask = tpf.create_threshold_mask(threshold=val, reference_pixel='center')
+            #print (np.sum(target_mask))
+            #print ("val {}".format(val))
+            if (np.sum(target_mask) < 9) and (np.sum(target_mask) > 7):
+                threshhold = val
+                break 
+            else:
+                if np.sum(target_mask) < 6:
+                    if val < 1:
+                        val -= 0.05
+                    else:
+                        val -= 0.5
+                elif np.sum(target_mask) > 9:
+                    if val > 20:
+                        val += 5
+                    elif val > 50:
+                        val += 20
+                    else:
+                        val += 0.5
+               
+        tpf.plot(aperture_mask=target_mask, mask_color='k')
+        
+        val_small = val
+        
+        for i in range(0,40):
+            
+            target_mask_small = tpf.create_threshold_mask(threshold=val_small, reference_pixel='center')
+            
+            if (np.sum(target_mask_small) < 4) and (np.sum(target_mask_small) > 2):
+                threshhold = val_small
+                break 
+            else:
+                #print (np.sum(target_mask))
+                
+                if np.sum(target_mask_small) < 2:
+        
+                    if val_small < 1:
+                        val_small -= 0.05
+                    else:
+                        val_small -= 0.5
+                elif np.sum(target_mask_small) > 4:
+        
+                    if val_small > 20:
+                        val_small += 5
+                    elif val_small > 50:
+                        val_small += 20
+                    else:
+                        val_small += 0.5
+        
+        plt.figure(figsize=(5,5))
+        mask_plot = tpf.plot(aperture_mask=target_mask, mask_color='k')
+        plt.savefig('{}/{}/{}_mask.png'.format(indir, tic, tic), format='png')
+        plt.clf()
+
+        plt.figure(figsize=(5,5))
+        mask_plot = tpf.plot(aperture_mask=target_mask_small, mask_color='k')
+        plt.savefig('{}/{}/{}_mask_small.png'.format(indir, tic, tic), format='png')
+        plt.clf()
+
+        bkg = X1
+        bkg = bkg.mean(axis = 0)
+        bkg_list.append(bkg)
+
+        # -----
+        apmask_list.append(target_mask)  # store the target mask used. 
+        # -----
+
+        # reshape the array in order to perform PCA on it.
+        s = X1.shape
+        X1 = X1.reshape(s[0],s[1]*s[2])
+        
+        lkeep = np.isfinite(X1.sum(axis=1)) * (X1.sum(axis=1)>0)
+        X1 = X1[lkeep,:]
+        
+        X2 = np.zeros_like(X1)
+        M = np.zeros(X1.shape[1])
+        S = np.zeros(X1.shape[1])
+        
+        for n in range(X1.shape[1]):
+            a = X1[:,n]
+            x, m, s = norm(a)
+            X2[:,n]=x
+            M[n] = m
+            S[n] = s
+        
+        ncomp = 5
+        pca = PCA(n_components=ncomp)
+        trends = pca.fit_transform(X2)
+        weights = pca.components_
+        
+        X3 = np.copy(X2)
+        for n in range(X2.shape[1]):
+            for m in range(ncomp):
+                X3[:,n] -= trends[:,m] * weights[m,n]
+        
+        X4 = np.zeros_like(X3)
+        for n in range(X2.shape[1]):
+            x = X3[:,n]
+            a = unnorm(x, M[n], S[n])
+            X4[:,n] = a
+        
+        t=tpf.time[lkeep]
+        
+        flux = X4[:,target_mask.flatten()].sum(axis=1) 
+        flux_small = X4[:,target_mask_small.flatten()].sum(axis=1)
+        
+        m = np.nanmedian(flux)
+        m_small = np.nanmedian(flux_small)
+        
+        # normalize by dividing by the median value
+        flux = flux/m
+        flux_small = flux_small/m_small
+        
+        print ("Done.\n")
+
+        # -------- flatten the normal lighcurve --------
+        print ("Flatten LC...", end =" ")
+
+        l = np.isfinite(flux/m)
+
+        fr_inj = flux/m
+        alltime  = t
+
+        T_dur = 0.01  #may need to change!!
+        
+        nmed = int(720*3*T_dur)
+        nmed = 2*int(nmed/2)+1 # make it an odd number 
+        ff = filters.NIF(np.array(fr_inj),nmed,10,fill=True,verbose=True)
+        # first number is three time transit durations, the second quite small (10,20 )
+
+        l = np.isfinite(ff)
+        
+        g = interp1d(alltime[l],ff[l],bounds_error=False,fill_value=np.nan)
+        ff = g(alltime)
+        fr = fr_inj / ff
+
+        if save == True:
+
+            plt.figure(figsize=(16,5))
+            plt.plot(alltime,fr_inj + 0.95,'.')
+            plt.plot(alltime,ff + 0.95,'.')
+            plt.plot(alltime,fr,'o', color = 'r')
+
+            plt.savefig('{}/{}/{}_fit_test.png'.format(indir, tic, tic), format='png')
+            plt.clf()
+            plt.close()
+
+        # ---------------------------------------------
+
+        print ("Done.\n")
+
+        print ("Extract background...", end =" ")
+        # -------- extract the backrgound flux -----------
+        background_mask = ~tpf.create_threshold_mask(threshold=0.001, reference_pixel=None)
+        n_background_pixels = background_mask.sum()
+
+        background_lc_per_pixel = tpf.to_lightcurve(aperture_mask=background_mask) / n_background_pixels
+        n_target_pixels = target_mask.sum()
+        background_estimate_lc = background_lc_per_pixel * n_target_pixels
+
+        allfbkg.append(background_estimate_lc.flux) # uncorrected background
+        allfbkg_t.append(background_estimate_lc.time)
+
+        print ("Done.\n")
+         # ------------------------------------------------
+
+        # add all the information to lists that are returned at the end. 
+        tpf_filt_list.append(X4.reshape(tpf.flux[lkeep,:,:].shape))
+
+        in_sec.append(sec)
+
+        alltime_list.append(list(alltime))
+        allflux_flat.append(list(fr))
+        allflux.append(list(flux))
+        allflux_small.append(list(flux_small))
+
+        allline.append(list((mom_df.loc[mom_df['sec'] == int(sec)])['time']))
+        
+        start_sec.append([alltime[0]])
+        end_sec.append([alltime[-1]])
+    
+        X1_list.append(X1) #  not corrected
+        X4_list.append(X4) #  PCA corrected
+        t_list.append(np.array(alltime))  # add it here because this list isn't flattened but the other one is
+
+
+    alltime_list = [val for sublist in alltime_list for val in sublist]
+    allflux_flat = [val for sublist in allflux_flat for val in sublist]
+    allflux_small = [val for sublist in allflux_small for val in sublist]
+    allflux = [val for sublist in allflux for val in sublist]
+    allline = [val for sublist in allline for val in sublist]
+    allfbkg = [val for sublist in allfbkg for val in sublist]
+    allfbkg_t = [val for sublist in allfbkg_t for val in sublist]
+   
+    del mom_df
+
+    return alltime_list, allflux, allflux_small, allflux_flat, allline, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
+
 
 def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
     
@@ -908,15 +1861,15 @@ def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
         time_binned    = Xb[0]
         flux_binned    = Xb[1]
     
-        bad_bits = np.array([1,2,3,4,5,6,8,10,12])
-        value = 0
-        for v in bad_bits:
-            value = value + 2**(v-1)
-    
-        bad_data = np.bitwise_and(quality, value) >= 1
-    
-        fluxcent_col = lcdata['MOM_CENTR1']
-        fluxcent_row = lcdata['MOM_CENTR2']
+        #bad_bits = np.array([1,2,3,4,5,6,8,10,12])
+        #value = 0
+        #for v in bad_bits:
+        #    value = value + 2**(v-1)
+    #
+        #bad_data = np.bitwise_and(quality, value) >= 1
+    #
+        #fluxcent_col = lcdata['MOM_CENTR1']
+        #fluxcent_row = lcdata['MOM_CENTR2']
     
         mom_dump = np.bitwise_and(quality, 2**5) >= 1
     
@@ -1023,7 +1976,6 @@ def tpf_data(indir, sector, tic):
             small_binned_l.append(small_binned.flux)
         
         except:
-
             continue
         
         #small_binned_t2 = small_binned2.time
@@ -1146,8 +2098,7 @@ def download_data_tpf(indir, peak_sec, peak_list, tic):
                     M[n] = m
                     S[n] = s
                 
-
-                ncomp = 10
+                ncomp = 4
                 pca = PCA(n_components=ncomp)
                 trends = pca.fit_transform(X2)
                 weights = pca.components_
@@ -1182,6 +2133,7 @@ def download_data_tpf(indir, peak_sec, peak_list, tic):
 
     return X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list
 
+
 def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, save = False, show = False):
     
     # make sure that there are no nan value sin the data - they cause everything to crash
@@ -1206,6 +2158,8 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, save = 
     # call the first round of plotting
     plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results,period,duration,t0, save = save, show = show)
     
+    stats_period = period
+    stats_t0 = t0
     stats_depth = model.compute_stats(period, duration, t0)['depth']
     stats_depth_phased = model.compute_stats(period, duration, t0)['depth_phased']
     stats_depth_half = model.compute_stats(period, duration, t0)['depth_half']
@@ -1229,15 +2183,73 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, save = 
     
     # call the second round of plotting - once the intitial transit has been removed
     plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model2, results2,period2,duration2,t02, in_transit = in_transit, save = save, show = show)
-    
+
+    stats2_period = period2
+    stats2_t0 = t02
     stats2_depth = model2.compute_stats(period2, duration2, t0)['depth']
     stats2_depth_phased = model2.compute_stats(period2, duration2, t0)['depth_phased']
     stats2_depth_half = model2.compute_stats(period2, duration2, t0)['depth_half']
     stats2_depth_odd = model2.compute_stats(period2, duration2, t0)['depth_odd']
     stats2_depth_even = model2.compute_stats(period2, duration2, t0)['depth_even']
     
-    return [stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [stats2_depth, stats2_depth_phased, stats2_depth_half, stats2_depth_odd, stats2_depth_even]
+    return [stats2_period, stats2_t0, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [stats_period, stats_t0, stats2_depth, stats2_depth_phased, stats2_depth_half, stats2_depth_odd, stats2_depth_even]
 
+
+def data_bls_FFI(tic, indir, alltime, allflux, save = False, show = False):
+    
+    # make sure that there are no nan value sin the data - they cause everything to crash
+
+    mask = np.isfinite(alltime) * np.isfinite(allflux)
+    
+    alltime = np.array(alltime)[mask]
+    allflux = np.array(allflux)[mask]
+    
+    durations = np.linspace(0.05, 0.2, 10)
+    model = BoxLeastSquares(alltime, allflux)
+    results = model.autopower(durations, frequency_factor=5.0)
+
+    index = np.argmax(results.power)
+    period = results.period[index]
+    t0 = results.transit_time[index]
+    duration = results.duration[index]
+    
+    # call the first round of plotting
+    plot_bls_FFI(tic, indir, alltime, allflux, model, results, period, duration, t0, save = save, show = show)
+    
+    stats_period = period
+    stats_t0 = t0
+    stats_depth = model.compute_stats(period, duration, t0)['depth']
+    stats_depth_phased = model.compute_stats(period, duration, t0)['depth_phased']
+    stats_depth_half = model.compute_stats(period, duration, t0)['depth_half']
+    stats_depth_odd = model.compute_stats(period, duration, t0)['depth_odd']
+    stats_depth_even = model.compute_stats(period, duration, t0)['depth_even']
+
+    # Find the in-transit points using a longer duration as a buffer to avoid ingress and egress
+    in_transit = model.transit_mask(alltime, period, 2*duration, t0)
+
+    
+    # Re-run the algorithm, and plot the results
+    model2 = BoxLeastSquares(alltime[~in_transit], allflux[~in_transit])
+    results2 = model2.autopower(durations, frequency_factor=5.0)
+    
+    # Extract the parameters of the best-fit model
+    index = np.argmax(results2.power)
+    period2 = results2.period[index]
+    t02 = results2.transit_time[index]
+    duration2 = results2.duration[index]
+    
+    # call the second round of plotting - once the intitial transit has been removed
+    plot_bls_FFI(tic, indir, alltime, allflux, model2, results2,period2,duration2,t02, in_transit = in_transit, save = save, show = show)
+
+    stats2_period = period2
+    stats2_t0 = t02
+    stats2_depth = model2.compute_stats(period2, duration2, t0)['depth']
+    stats2_depth_phased = model2.compute_stats(period2, duration2, t0)['depth_phased']
+    stats2_depth_half = model2.compute_stats(period2, duration2, t0)['depth_half']
+    stats2_depth_odd = model2.compute_stats(period2, duration2, t0)['depth_odd']
+    stats2_depth_even = model2.compute_stats(period2, duration2, t0)['depth_even']
+    
+    return [stats2_period, stats2_t0, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [stats_period, stats_t0, stats2_depth, stats2_depth_phased, stats2_depth_half, stats2_depth_odd, stats2_depth_even]
 
 # -----------------------
 # plots
@@ -1320,6 +2332,7 @@ def plot_cutout(image):
            vmin = np.percentile(image, 5))
 
     plt.grid(axis = 'both',color = 'white', ls = 'solid')
+
 
 def plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, peak_list, save = False, show = False):
     '''
@@ -1421,7 +2434,7 @@ def plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, peak_list, s
 
     #206361691
     
-def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, peak_list, save = False, show = False):
+def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, peak_list, save = False, show = False, FFI = False):
     '''
     LC plot around the time of transit-event extracted in two different aperture sizes. The LC is not corrected for any systematics. 
 
@@ -1454,7 +2467,12 @@ def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binne
         The time of the transit event is indicated by the vertical line. 
     
     '''
-    
+    if FFI == True:
+        frame_width = 1
+    else:
+        frame_width = 0.5
+
+
     gs = len(peak_list)
 
     if gs == 1:
@@ -1463,24 +2481,33 @@ def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binne
         plt.tight_layout()
         for g,peak in enumerate(peak_list):
         
-            mask_unb = (np.array(TESS_unbinned_t_l) < peak+0.7) & (np.array(TESS_unbinned_t_l) > peak-0.7)
-            mask_bin = (np.array(TESS_binned_t_l) < peak+0.7) & (np.array(TESS_binned_t_l) > peak-0.7)
-            mask_small = (np.array(small_binned_t_l) < peak+0.7) & (np.array(small_binned_t_l) > peak-0.7)
+            mask_unb = (np.array(TESS_unbinned_t_l) < peak+frame_width) & (np.array(TESS_unbinned_t_l) > peak-frame_width)
+            mask_bin = (np.array(TESS_binned_t_l) < peak+frame_width) & (np.array(TESS_binned_t_l) > peak-frame_width)
+            mask_small = (np.array(small_binned_t_l) < peak+frame_width) & (np.array(small_binned_t_l) > peak-frame_width)
         
-            minf = np.nanmin(np.array(TESS_unbinned_l)[mask_unb])
-            maxf = np.nanmax(np.array(TESS_unbinned_l)[mask_unb])
+            if FFI == False:
+                minf = np.nanmin(np.array(TESS_unbinned_l)[mask_unb])
+                maxf = np.nanmax(np.array(TESS_unbinned_l)[mask_unb])
+            else:
+                minf = np.nanmin(np.array(TESS_binned_l)[mask_bin]) 
+                maxf = np.nanmax(np.array(TESS_binned_l)[mask_bin])
+                diff = maxf - minf
+                minf = minf - (diff * 0.01)
+                maxf = maxf + (diff * 0.01)
 
-            plt.scatter(TESS_unbinned_t_l, TESS_unbinned_l, s = 3, marker = 's',alpha = 0.4, color = 'black', label = 'TESS unbinned')
+            if FFI == False:
+                plt.scatter(TESS_unbinned_t_l, TESS_unbinned_l, s = 3, marker = 's',alpha = 0.4, color = 'black', label = 'TESS unbinned')
+            
             plt.scatter(TESS_binned_t_l, TESS_binned_l, s = 11,  marker = 'o', alpha = 1, color = 'blue', label = 'TESS ap')
             plt.scatter(small_binned_t_l, small_binned_l, s = 12, marker = '>', alpha =1, color = 'red', label = 'Small ap')
-          
+            
             plt.title("Detrended LC with various aperture sizes for TIC {}".format(tic), fontsize = 12)
             plt.tick_params(axis="y",direction="inout", labelsize = 12) #, pad= -20)
             plt.tick_params(axis="x",direction="inout", labelsize = 12) #, pad= -17)   
             plt.tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
             
             #plt.plot(np.array(alltime)[mask_dd], np.array(allfbkg)[mask_dd], 'o', markersize = 2, color = 'blue', alpha = 0.7,label='centroid', markerfacecolor='white')
-            plt.xlim(peak-0.7, peak+0.7)
+            plt.xlim(peak-frame_width, peak+frame_width)
             plt.axvline(peak, color = 'orange', linestyle = '--')
             plt.ylim(minf,maxf)
             plt.xlabel('Time (BJD-2457000)')
@@ -1506,20 +2533,29 @@ def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binne
         plt.figure(figsize=(gs*6,4))
 
         for g,peak in enumerate(peak_list):
-    
-            mask_unb = (np.array(TESS_unbinned_t_l) < peak+0.5) & (np.array(TESS_unbinned_t_l) > peak-0.5)
-            mask_bin = (np.array(TESS_binned_t_l) < peak+0.5) & (np.array(TESS_binned_t_l) > peak-0.5)
-            mask_small = (np.array(small_binned_t_l) < peak+0.5) & (np.array(small_binned_t_l) > peak-0.5)
-    
+            
+
+            mask_unb = (np.array(TESS_unbinned_t_l) < peak+frame_width) & (np.array(TESS_unbinned_t_l) > peak-frame_width)
+            mask_bin = (np.array(TESS_binned_t_l) < peak+frame_width) & (np.array(TESS_binned_t_l) > peak-frame_width)
+            mask_small = (np.array(small_binned_t_l) < peak+frame_width) & (np.array(small_binned_t_l) > peak-frame_width)
+            
             if np.sum(mask_unb) != 0:
     
+                if FFI == False:
+                    minf = np.nanmin(np.array(TESS_unbinned_l)[mask_unb])
+                    maxf = np.nanmax(np.array(TESS_unbinned_l)[mask_unb])
+                else:
+                    minf = np.nanmin(np.array(TESS_binned_l)[mask_bin]) 
+                    maxf = np.nanmax(np.array(TESS_binned_l)[mask_bin])
+                    diff = maxf - minf
+                    minf = minf - (diff * 0.01)
+                    maxf = maxf + (diff * 0.01)
 
-                minf = np.nanmin(np.array(TESS_unbinned_l)[mask_unb])
-                maxf = np.nanmax(np.array(TESS_unbinned_l)[mask_unb])
 
                 plt.subplot(1,gs,g+1)
-    
-                plt.scatter(TESS_unbinned_t_l, TESS_unbinned_l, s = 3, marker = 's',alpha = 0.4, color = 'black', label = 'TESS Aperture unbinned')
+                
+                if FFI == False:
+                    plt.scatter(TESS_unbinned_t_l, TESS_unbinned_l, s = 3, marker = 's',alpha = 0.4, color = 'black', label = 'TESS Aperture unbinned')
                 plt.scatter(TESS_binned_t_l, TESS_binned_l, s = 11,  marker = 'o', alpha = 1, color = 'blue', label = 'TESS Aperture binned')
                 plt.scatter(small_binned_t_l, small_binned_l, s = 12, marker = '>', alpha =1, color = 'red', label = 'Small Aperture binned')
 
@@ -1531,7 +2567,7 @@ def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binne
                 plt.tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
                 
                 plt.tight_layout()
-                plt.xlim(peak-0.7, peak+0.7)
+                plt.xlim(peak-frame_width, peak+frame_width)
                 plt.axvline(peak, color = 'darkorange', linestyle = '--')
                 plt.ylim(minf,maxf)
                 plt.xlabel('Time (BJD-2457000)')
@@ -1547,6 +2583,7 @@ def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binne
             plt.close()
 
 def plot_background(tic, indir,alltime, allfbkg, peak_list, save = False, show = False):
+    
     '''
     LC of the bakcground flux at the time of the transit event. 
 
@@ -1575,7 +2612,6 @@ def plot_background(tic, indir,alltime, allfbkg, peak_list, save = False, show =
       
 
     gs = len(peak_list) # the grid size
-
 
     if len(peak_list) == 1:
         plt.figure(figsize=(7,4))
@@ -1678,6 +2714,8 @@ def plot_TESS_stars(tic, indir, peak_list, peak_sec, save = False, show = False)
     radSearch = 4/60 #radius in degrees
 
     catalogData = Catalogs.query_object(starName, radius = radSearch, catalog = "TIC")
+    
+    # ra and dec of the target not the red
     ra = catalogData[0]['ra']
     dec = catalogData[0]['dec']
 
@@ -1688,7 +2726,8 @@ def plot_TESS_stars(tic, indir, peak_list, peak_sec, save = False, show = False)
     bright = catalogData['Tmag'] < 15
 
     # Make it a list of Ra, Dec pairs of the bright ones. This is now a list of nearby bright stars.
-    nearbyStars = list( map( lambda x,y:[x,y], catalogData[bright]['ra'], catalogData[bright]['dec'] ) )
+    #nearbyStars = list( map( lambda x,y:[x,y], catalogData[bright]['ra'], catalogData[bright]['dec'] ) )
+
 
     start = [np.float64(peak_list[0]) - 0.2]
     end = [np.float64(peak_list[0]) + 0.2]
@@ -1698,7 +2737,6 @@ def plot_TESS_stars(tic, indir, peak_list, peak_sec, save = False, show = False)
     for i in tpf_all:
         if str(tic) in str(i[6]):
             dwload_link_tp.append(i[6])
-
 
     peak = peak_list[0]
 
@@ -1715,10 +2753,7 @@ def plot_TESS_stars(tic, indir, peak_list, peak_sec, save = False, show = False)
 
         if (start > np.nanmin(lc.time) and start < np.nanmax(lc.time)):
 
-            try:
-                sector =  (int(file[-34:-32]))
-            except:
-                sector = int(8)
+            sector =  tpf0.header['SECTOR']
 
             hdu2 = astropy.io.fits.open(file)
 
@@ -1726,18 +2761,19 @@ def plot_TESS_stars(tic, indir, peak_list, peak_sec, save = False, show = False)
 
             wcs = WCS(hdu2[2].header)
         
-            plt.subplot(projection = wcs)
+            ax = plt.subplot(projection= wcs)
+            #plt.subplot(projection = wcs)
 
             #fig.add_subplot(111, projection = wcs)
             plot_cutout(firstImage)
 
-            starloc = wcs.all_world2pix([[ra,dec]],0)  #Second is origin
-            plt.scatter(starloc[0,0], starloc[0,1],s = 200, marker = '*', color = 'red')
+            ra_stars, dec_stars = catalogData[bright]['ra'], catalogData[bright]['dec']
+            s = np.maximum((19 - catalogData[bright]['Tmag'])*5, 0)
+            plt.scatter(ra_stars, dec_stars, s=s, transform=ax.get_transform('icrs'), color='orange', zorder=100)
 
-            # Plot nearby stars as well, which we created using our Catalog call above.
-            nearbyLoc = wcs.all_world2pix(nearbyStars[1:],0)
-            plt.scatter(nearbyLoc[1:, 0], nearbyLoc[1:, 1],
-                        s = 90, color = 'orange')
+            # plot the target
+            plt.scatter(ra, dec, s= 200, transform=ax.get_transform('icrs'), marker = '*', color='red', zorder=100)
+
 
             plt.title("Sector {}".format(sector), fontsize = 12)
 
@@ -1752,7 +2788,98 @@ def plot_TESS_stars(tic, indir, peak_list, peak_sec, save = False, show = False)
         else:
             plt.close()
 
-def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, peak_list, save = False, show = False):
+    return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], catalogData['mass'][0]
+
+
+def plot_TESS_stars_FFI(tic,indir,peak_list, peak_sec, bkg, t_list, tpf_list, save = False, show = False):
+    
+    '''
+    Plot of the field fluxa round the target star showing nearby stars that are brighter than magnitude 15.
+    
+    Parameters
+    ----------
+    tic : str
+        TIC (Tess Input Catalog) ID of the target
+    indir : str
+        path to where the files will be saved.
+    peak_list   :  list
+        list of the marked transit events
+    peak_sec  :  list or str
+        list of the sectors that are being analyse.
+    save (default = False)
+        if save = True, the figure is saved in the directory which has the name of the TIC ID
+  
+    Returns
+    -------
+        Plot of the averaged flux per pixel around the target. The red star indicated the location of the target.
+        The orange circles show the location of nearby stars with magnitudes brighter than 15 mag.
+
+    '''
+
+    # always check whether the file already exists... as to not waste computer power and time
+    sector = str(peak_sec[0])
+
+    starName = "TIC " + str(tic)
+    radSearch = 4/60 #radius in degrees
+
+    catalogData = Catalogs.query_object(starName, radius = radSearch, catalog = "TIC")
+    
+    # ra and dec of the target star
+    ra = catalogData[0]['ra']
+    dec = catalogData[0]['dec']
+
+    # Print out the first row in the table
+    #print( catalogData[:5]['ID', 'Tmag', 'Jmag', 'ra', 'dec', 'objType'] )
+
+    # Create a list of nearby bright stars (tess magnitude less than 14) from the rest of the data for later.
+    bright = catalogData['Tmag'] < 17
+
+    start = [np.float64(peak_list[0]) - 0.2]
+    end = [np.float64(peak_list[0]) + 0.2]
+
+    peak = peak_list[0]
+
+    #background is just the array of the flux of all the pixels (used for backrgoudn in pixel level LC plot so mildly confusing and should change)
+    for i, fluxfile in enumerate(bkg):
+
+        tpf = tpf_list[i]
+        # plt.subplot(row column number)
+        fig, ax = plt.subplots(figsize=(5,5))
+        plt.tight_layout()
+
+        if (start > np.nanmin(t_list[i]) and start < np.nanmax(t_list[i])):
+
+            sector =  tpf.header['SECTOR']
+
+            ax = plt.subplot(projection=tpf.wcs)
+
+            plot_cutout(tpf.flux[0])
+
+            ra_stars, dec_stars = catalogData[bright]['ra'], catalogData[bright]['dec']
+            s = np.maximum((19 - catalogData[bright]['Tmag'])*5, 0)
+            plt.scatter(ra_stars, dec_stars, s=s, transform=ax.get_transform('icrs'), color='orange', zorder=100)
+
+            # plot the target
+            plt.scatter(ra, dec, s= 200, transform=ax.get_transform('icrs'), marker = '*', color='red', zorder=100)
+
+            plt.title("Sector {}".format(sector), fontsize = 12)
+
+            plt.xlim(-0.5,10.5)
+            plt.ylim(-0.5,10.5)
+
+
+        if save == True:
+            plt.savefig('{}/{}/{}_star_field.png'.format(indir, tic, tic), format='png')
+
+        if show == True:
+            plt.show()
+        else:
+            plt.close()
+
+    return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], catalogData['mass'][0]
+
+
+def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, peak_list, save = False, show = False, FFI = False):
     
     '''
     Plot the LC for each pixel around the time of the transit like event. 
@@ -1839,18 +2966,25 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
                 f1 = normalizedflux
                 time = t
 
-                binfac = 5
-
-                N       = len(time)
-                n       = int(np.floor(N/binfac)*binfac)
-                X       = np.zeros((2,n))
-                X[0,:]  = time[:n]
-                X[1,:]  = f1[:n]
-                Xb      = rebin(X, (2,int(n/binfac)))
+                if FFI == False:
+                    binfac = 5
     
-                # binned data
-                time_binned    =    np.array(Xb[0])
-                flux_binned  =   np.array(Xb[1])
+                    N       = len(time)
+                    n       = int(np.floor(N/binfac)*binfac)
+                    X       = np.zeros((2,n))
+                    X[0,:]  = time[:n]
+                    X[1,:]  = f1[:n]
+                    Xb      = rebin(X, (2,int(n/binfac)))
+        
+                    # binned data
+                    time_binned    =    np.array(Xb[0])
+                    flux_binned  =   np.array(Xb[1])
+
+                else:
+                    # binned data -
+                    time_binned    =    np.array(time)
+                    flux_binned  =   np.array(flux)
+    
 
                 # create a mask that only looks at the times cut around the transit-event
                 timemask = (time_binned < peak+0.7) & (time_binned > peak-0.7)
@@ -2103,6 +3237,88 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
     else:
         plt.close()
 
+
+def plot_bls_FFI(tic, indir, alltime, allflux, model, results,period,duration,t0, in_transit = [0], save = False, show = False):
+
+    if len(in_transit) == 1:  # conditions for the first 'round' of plotting
+
+        color1 = 'navy'
+        color2 = 'orangered'
+
+        title = 'Initial BLS'
+        name = '{}_bls_first.png'.format(tic)
+
+    else:  # conditions for the second 'round' of plotting once the first event has been removed
+        color1 = 'deepskyblue'
+        color2 = '#4682B4'
+        title = 'Initial event removed'
+        name = '{}_bls_second.png'.format(tic)
+        
+    fig, axes = plt.subplots(3, 1, figsize=(5, 7))
+    
+    # Highlight the harmonics of the peak period
+    ax = axes[0]
+    ax.axvline(period, alpha=0.4, lw=5, color = color1)
+    for n in range(2, 15):
+        ax.axvline(n*period, alpha=0.4, lw=2, linestyle="dashed", color = color2)
+        ax.axvline(period / n, alpha=0.4, lw=2, linestyle="dashed", color = color2)
+    
+    # Plot the periodogram
+    ax.plot(results.period, results.power, "k", lw=0.5, label = 'P = %.3f T0 = %.3f' % (period,t0))
+    
+    ax.set_title(title)
+    ax.set_xlim(results.period.min(), results.period.max())
+    ax.set_xlabel("period (days)")
+    ax.set_ylabel("log likelihood")
+    ax.legend(fontsize = 10, loc = 1)
+    
+    # Plot the light curve and best-fit model
+    ax = axes[1]
+    
+    if len(in_transit) == 1:
+        ax.plot(alltime, allflux, marker =".", alpha = 0.9, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
+    else:
+        ax.plot(alltime, allflux, marker =".", alpha = 0.9, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
+
+    x = np.linspace(alltime.min(), alltime.max(), 3*len(alltime))
+    f = model.model(x, period, duration, t0)
+    ax.plot(x, f, lw=2, color = color1)
+    ax.set_xlim(alltime.min(), alltime.max())
+    ax.set_xlabel("time (days)")
+    ax.set_ylabel("de-trended flux (ppt)");
+    
+    ax = axes[2]
+    if len(in_transit) == 1: 
+        x = (alltime - t0 + 0.5*period) % period - 0.5*period
+    else:
+        x = (alltime - t0 + 0.5*period) % period - 0.5*period
+    
+    m = np.abs(x) < 0.5 
+    
+    if len(in_transit) == 1: 
+        ax.plot(x[m], allflux[m],marker =".", alpha = 0.9, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
+
+    else:
+        ax.plot(x[m], allflux[m],marker =".", alpha = 0.9, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
+
+
+    x = np.linspace(-0.5, 0.5, 1000)
+    f = model.model(x + t0, period, duration, t0)
+    ax.plot(x, f, lw=2, color = color1)
+    ax.set_xlim(-0.5, 0.5)
+    ax.set_xlabel("time since transit (days)")
+    ax.set_ylabel("de-trended flux (ppt)");
+    plt.tight_layout()
+
+    if save == True:
+        plt.savefig('{}/{}/{}'.format(indir, tic, name), format='png')
+    
+    if show == True:
+        plt.show()
+    else:
+        plt.close()
+
+
 def plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, save = False, show = False):
     
 
@@ -2181,7 +3397,6 @@ def unnorm(x,m,s):
     y = x * s
     a = y + m
     return a
-
 
 # -----------------------
 # only used for the Jupyter Notebook version
