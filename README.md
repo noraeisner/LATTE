@@ -8,31 +8,42 @@ email: *nora.eisner@new.ox.ac.uk*
 
 --------
 
-The aim of this code is to provide a series of diagnostic tests which are used in order to determine the nature of events found in TESS lightcurves. 
-
-The tests:
-
+*The aim of this code is to provide a series of diagnostic tests which are used in order to determine the nature of events found in TESS lightcurves.*
 
 
 **Figures:**
 - Full lightcurve with the times of the momentum dumps marked. 
+
 - Background flux around the times of the marked transit event(s).
+
 - Centroid positions around the time of the marked transit event(s).
+
 - The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
+
 - The average flux in and out of the marked event(s) and the differences between the two.
+
 - The average flux of the target pixel file with the locatiosn of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
+
 - The lightcurves of the 6 closest stars that were also observed by TESS (TP files).
+
 - A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
+
 - (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
+
 - (optional) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
+
 - **FFI Mode**The FFI mode currently does not plot the nearby stars lightcurves (will be implemented soon)
+
 - Saves the extracted apertures used
+
 - Saves the corrected and the uncorrected lightcurves to verify that the detrending is workign correctly - there's are nt stored in the DV reports. 
 
 
 **Tables:**
 - Stellar parameters summarized, as well as information to whether the target has been flagged as a TCE or a TOI. The table links to the relevant reports (if applicable) as well as to the exofop page on the star.
+
 - (optional) Summary of the BLS results. 
+
 - (optional) Fitting parameters with uncertainties from the modelling. 
 
 
