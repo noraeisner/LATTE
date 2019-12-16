@@ -290,7 +290,7 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 						writer.writerows(zip(alltime_ar[pyaneti_mask],allflux_ar[pyaneti_mask],allflux_err_ar[pyaneti_mask]))
 
 
-		utils.plot_full_md(tic, indir, alltime,allflux,allline,alltime,allflux, peak_list)
+		utils.plot_full_md(tic, indir, alltime,allflux,allline,alltime,allflux, peak_list, FFI = True)
 
 
 	# --------------
