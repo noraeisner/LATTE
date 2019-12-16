@@ -25,7 +25,6 @@ The tests:
 	- A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
 	- (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
 	- (optional) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
-
 	**FFI Mode**
 	- The FFI mode currently does not plot the nearby stars lightcurves (will be implemented soon)
 	- Saves the extracted apertures used
