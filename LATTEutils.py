@@ -264,8 +264,12 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, nosho
     alltime_list, allline, start_sec, end_sec, in_sec, X1_list, X1flux_list,  X4_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = download_data_FFI_interact(indir, sectors, sectors_all, tic, save = False)
     
     def close(event):
-        plt.close('all')
-    
+        if (np.sum(aperture) > 0 ) * (np.sum(aperture2) > 0 ):
+            plt.close('all')
+        else:
+            print ("Must select at least one pixel per aperture!")
+            ax[2].text(1.1,-0.29, "Select at least one pixel per aperture!", color = 'red', size=9, ha="center", transform=ax[1].transAxes)
+            fig.canvas.draw()
 
     def extract_LC(aperture):
         ax[0].cla()
@@ -273,6 +277,11 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, nosho
         m = np.nanmedian(flux)
         return t, flux/m
           
+    def extract_LC2(aperture):
+        flux = X4[:,aperture.flatten()].sum(axis=1)
+        m = np.nanmedian(flux)
+        return t, flux/m
+
 
     allfbkg = []
     allfbkg_t = []
@@ -290,66 +299,134 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, nosho
         sec = sectors[i]
 
         global mask
+        global mask2
         global aperture
+        global aperture2
 
         mask = []
+        mask2 = []
+
+        aperture = np.array(np.zeros_like(X1.sum(axis=0)), dtype=bool)
+        aperture2 = np.array(np.zeros_like(X1.sum(axis=0)), dtype=bool)
         
+        # place a random aperture in the centre to start off with - just as an example.
+        for i in range(int(len(aperture)/2 -1), int(len(aperture)/2 + 1)):
+            for j in range(int(len(aperture)/2 -1), int(len(aperture)/2 + 1)):
+                mask.append((i,j))
+
         def onclick(event):
             global mask
+            global mask2
             global aperture
-        
-            [p.remove() for p in reversed(ax[1].patches)]
-        
+            global aperture2
+
             events = ((int(event.xdata+0.5), int(event.ydata+0.5)))
-        
-            if (len(mask) > 0) and (events in list(mask)): 
-                mask = [x for x in mask if x != events] 
-            else:
-                mask.append(events)
-        
-            sqcol = '#ffffee'
-            alpha = 0.5
-        
-            for pixel in mask:
-                m = int(pixel[0])
-                n = int(pixel[1])
-                r = Rectangle((float(m)-0.5, float(n)-0.5), 1., 1., edgecolor='white', facecolor=sqcol, alpha = 0.5)
-                ax[1].add_patch(r)
+
+            if event.inaxes in [ax[1]]:
+                [p.remove() for p in reversed(ax[1].patches)]
+
+                if (len(mask) > 0) and (events in list(mask)): # if the square has already been selected, get rid of it. 
+                    mask = [x for x in mask if x != events] 
+                else:
+                    mask.append(events) # otherwise it's a new event and it should be added.
             
-            fig.canvas.draw()
-        
-            #update the extraction aperture
+                sqcol = '#ffffee'
+                alpha = 0.5
+
+                for pixel in mask:
+                    m = int(pixel[0])
+                    n = int(pixel[1])
+                    r = Rectangle((float(m)-0.5, float(n)-0.5), 1., 1., edgecolor='white', facecolor=sqcol, alpha = 0.5)
+                    ax[1].add_patch(r)
+
+                fig.canvas.draw()
+
+            if event.inaxes in [ax[2]]:
+                [p.remove() for p in reversed(ax[2].patches)]
+            
+                if (len(mask2) > 0) and (events in list(mask2)): 
+                    mask2 = [x for x in mask2 if x != events] 
+                else:
+                    mask2.append(events)
+            
+                sqcol = '#ffffee'
+                alpha = 0.5
+            
+                for pixel2 in mask2:
+                    m = int(pixel2[0])
+                    n = int(pixel2[1])
+                    r2 = Rectangle((float(m)-0.5, float(n)-0.5), 1., 1., edgecolor='#c33c7d', facecolor='#e7b1cb', alpha = 0.6)
+                    ax[2].add_patch(r2)
+                
+                fig.canvas.draw()
+                
+                # update the extraction aperture
+
             aperture = np.array(np.zeros_like(X1.sum(axis=0)), dtype=bool)
+            aperture2 = np.array(np.zeros_like(X1.sum(axis=0)), dtype=bool)
+
             for coord in mask:
                 aperture[coord] = True
-        
-            [LC] = ax[0].plot(extract_LC(aperture)[0], extract_LC(aperture)[1],marker='o',color = '#054950', alpha = 0.9, lw = 0, markersize = 3, markerfacecolor='#054950')
+
+            for coord2 in mask2:
+                aperture2[coord2] = True
+
+            ax[0].plot(extract_LC(aperture)[0], extract_LC(aperture)[1],marker='o',color = '#054950', alpha = 0.9, lw = 0, markersize = 3, markerfacecolor='#054950')
+            ax[0].plot(extract_LC2(aperture2)[0], extract_LC2(aperture2)[1],marker='x',color = '#c94f8a', alpha = 0.9, lw = 0, markersize = 3, markerfacecolor='#c94f8a')
+    
             ax[0].set_xlabel("Time")
             ax[0].set_ylabel("Normalized Flux")
-        
+            
             fig.canvas.draw_idle()
-        
+            
             plt.draw()
-        
-        
-        fig, ax = plt.subplots(1,2, figsize=(10,3), gridspec_kw={'width_ratios': [3, 1]})
-        
-        fig.subplots_adjust(left=0.55, bottom=0.35)
-        
+
+        fig, ax = plt.subplots(1,3, figsize=(10,3), gridspec_kw={'width_ratios': [3, 1, 1]})
+
+        sqcol = '#ffffee'
+        alpha = 0.5
+
+
+        # ----------
+        # start off with the plotting of the larger aperture
+        for pixel in mask:
+            m = int(pixel[0])
+            n = int(pixel[1])
+            r = Rectangle((float(m)-0.5, float(n)-0.5), 1., 1., edgecolor='white', facecolor=sqcol, alpha = 0.5)
+            ax[1].add_patch(r)
+
+        aperture = np.array(np.zeros_like(X1.sum(axis=0)), dtype=bool)
+
+        for coord in mask:
+            aperture[coord] = True
+
+        ax[0].plot(extract_LC(aperture)[0], extract_LC(aperture)[1],marker='o',color = '#054950', alpha = 0.9, lw = 0, markersize = 3, markerfacecolor='#054950')
+    
+        # ----------
+
         plt.tight_layout()
         
+        ax[0].set_title("Sector {}".format(sec))
         ax[1].set_axis_off()
-        
-        showflux = (X1).mean(axis = 0)
+        ax[2].set_axis_off()
         
         im = ax[1].imshow(X1.mean(axis = 0))
-        ax[0].set_title("Sector {}".format(sec))
+        im2 = ax[2].imshow(X1.mean(axis = 0))
+
+        
         ax[0].set_xlabel("Time")
         ax[0].set_ylabel("Normalized Flux")
         
+        ax[1].set_title("Large Aperture")
+        ax[2].set_title("Small Aperture")
         fig.canvas.mpl_connect('button_press_event', onclick)
         
-        ebx = plt.axes([0.81, 0.04, 0.13, 0.06])
+        fig.subplots_adjust(left=0.08, bottom=0.2, top=0.90, wspace = 0.1)
+
+        ax[1].text(1.1,-0.2, "Select the pixels for the large and small apertures by \n clicking on the two images", size=9, ha="center", transform=ax[1].transAxes)
+        ax[0].set_title("Sector {}".format(sec))
+        
+        ebx = plt.axes([0.73, 0.025, 0.13, 0.06])
         exit = Button(ebx, 'Close', color='orange')
         exit.on_clicked(close)
         
@@ -364,10 +441,16 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, nosho
 
         apmask_list.append(aperture)
 
-        target_mask_small = aperture 
-        target_mask = aperture 
-    
+        if (np.sum(aperture2) == 0):
+            target_mask_small = aperture
+        else:
+            target_mask_small = aperture2
 
+        if (np.sum(aperture2 == 0)) * (np.sum(aperture == 0)):
+            print ("WARNIGN: you have not selected any apertures!")
+
+        target_mask = aperture 
+        
         mask_plot = tpf.plot(aperture_mask=target_mask.T, mask_color='k')
         plt.savefig('{}/{}/{}_mask.png'.format(indir, tic, tic), format='png')
         plt.close('all')
@@ -387,37 +470,58 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, nosho
         flux_small = flux_small/m_small
         
         print ("Done.\n")
-    
+        
         # -------- flatten the normal lighcurve --------
         print ("Flatten LC...", end =" ")
-    
+        
         l = np.isfinite(flux/m)
-    
+        
         fr_inj = flux/m
         alltime  = t
-    
-        T_dur = 0.01  #may need to change!!
         
-        nmed = int(720*3*T_dur)
+        T_dur = 0.7  #The transit duration - may need to change!! 
+        
+        nmed = int(48*3*T_dur)
         nmed = 2*int(nmed/2)+1 # make it an odd number 
         ff = filters.NIF(np.array(fr_inj),nmed,10,fill=True,verbose=True)
-        # first number is three time transit durations, the second quite small (10,20 )
-    
+        # first number (nmed) is three time transit durations, the second quite small (10,20 )
+        
         l = np.isfinite(ff)
         
         g = interp1d(alltime[l],ff[l],bounds_error=False,fill_value=np.nan)
         ff = g(alltime)
+        
         fr = fr_inj / ff
-    
-        plt.figure(figsize=(16,5))
-        plt.plot(alltime,fr_inj + 0.95,'.')
-        plt.plot(alltime,ff + 0.95,'.')
-        plt.plot(alltime,fr,'o', color = 'r')
-    
+        
+        from astropy.stats import median_absolute_deviation
+        
+        MAD = median_absolute_deviation(fr)
+        madrange = (5 * MAD * 1.456)
+        
+        ymask = (fr < 1 + madrange) * (fr > 1 - madrange) 
+        
+        fix, ax = plt.subplots(3,1,figsize=(16,12))
+        
+        ax[0].plot(alltime,fr_inj, '.',label = 'Uncorrected')
+        ax[0].plot(alltime,ff,'.',label = 'Model fit')
+        ax[0].legend(fontsize = 16, loc = 1)
+        
+        ax[1].plot(alltime[~ymask],fr[~ymask], 'k.', markersize = 10, label = 'Clipped')
+        ax[1].plot(alltime[ymask],fr[ymask], 'r.',label = 'Corrected')
+        ax[1].legend(fontsize = 16, loc = 1)
+        
+        ax[2].plot(alltime[ymask],fr[ymask], '.', color = 'navy', label = 'Clipped + corrected')
+        ax[2].legend(fontsize = 16, loc = 1)
+        
+        ax[2].set_xlabel("Time", fontsize = 16)
+        ax[0].set_ylabel("Flux", fontsize = 16)
+        ax[1].set_ylabel("Flux", fontsize = 16)
+        ax[2].set_ylabel("Flux", fontsize = 16)
+        
         plt.savefig('{}/{}/{}_fit_test.png'.format(indir, tic, tic), format='png')
         plt.clf()
         plt.close()
-    
+        
         # ---------------------------------------------
         print ("Done.\n")
         
@@ -425,7 +529,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, nosho
         # -------- extract the backrgound flux -----------
         background_mask = ~tpf.create_threshold_mask(threshold=0.001, reference_pixel=None)
         n_background_pixels = background_mask.sum()
-    
+        
         background_lc_per_pixel = tpf.to_lightcurve(aperture_mask=background_mask) / n_background_pixels
         n_target_pixels = target_mask.sum()
         background_estimate_lc = background_lc_per_pixel * n_target_pixels
@@ -450,6 +554,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, nosho
     # we're not back to where the same place as with interact_LATTE_FFI
 
     return alltime, allflux, allflux_small, allflux_flat, allline, allfbkg,allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
+
 
 # ------ interact FFI -------
 def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, noshow, FFIap = True):
@@ -636,7 +741,6 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, noshow, FFIap 
         print ("\n WARNING: You can't continue without entering a transit-time.\n")
         print ("Exit.\n")
         raise SystemExit
-        #exit[0]
     
     if type(transit_times[-1]) == tuple:
         peak_list = list(transit_times[-1])
@@ -656,11 +760,11 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, noshow, FFIap 
 
     brew.brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_list, allflux_small, allflux, allline, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, show = noshow)
 
-
 # -----------------------------
 # Download the data acess files 
 # -----------------------------
 # The Functions needed to get the files that know how to acess the data
+
 
 def data_files(indir):
     '''
@@ -748,7 +852,6 @@ def data_files(indir):
                 Saving recieved content as a png file in binary format
                 '''
                 f.write(r_TP.content)
-
 
 def nn_files(indir):
     '''
@@ -1046,6 +1149,7 @@ def nn_ticids(indir, peak_sec, tic):
     distance = closest_tic['dist'].tolist()
 
     return ticids, distance, target_ra, target_dec
+
 
 # -----------------------
 # download the data 
@@ -1693,26 +1797,49 @@ def download_data_FFI(indir,sector, sectors_all, tic, save = False):
         fr_inj = flux/m
         alltime  = t
 
-        T_dur = 0.01  #may need to change!!
+
+        T_dur = 0.7  #The transit duration - may need to change!! 
         
-        nmed = int(720*3*T_dur)
+        nmed = int(48*3*T_dur)
         nmed = 2*int(nmed/2)+1 # make it an odd number 
         ff = filters.NIF(np.array(fr_inj),nmed,10,fill=True,verbose=True)
-        # first number is three time transit durations, the second quite small (10,20 )
-
+        # first number (nmed) is three time transit durations, the second quite small (10,20 )
+        
         l = np.isfinite(ff)
         
         g = interp1d(alltime[l],ff[l],bounds_error=False,fill_value=np.nan)
         ff = g(alltime)
+        
         fr = fr_inj / ff
+        
+        from astropy.stats import median_absolute_deviation
+        
+        MAD = median_absolute_deviation(fr)
+        madrange = (5 * MAD * 1.456)
+        
+        ymask = (fr < 1 + madrange) * (fr > 1 - madrange) 
+        
 
         if save == True:
 
-            plt.figure(figsize=(16,5))
-            plt.plot(alltime,fr_inj + 0.95,'.')
-            plt.plot(alltime,ff + 0.95,'.')
-            plt.plot(alltime,fr,'o', color = 'r')
-
+            fix, ax = plt.subplots(3,1,figsize=(16,12))
+            
+            ax[0].plot(alltime,fr_inj, '.',label = 'Uncorrected')
+            ax[0].plot(alltime,ff,'.',label = 'Model fit')
+            ax[0].legend(fontsize = 16, loc = 1)
+            
+            ax[1].plot(alltime[~ymask],fr[~ymask], 'k.', markersize = 10, label = 'Clipped')
+            ax[1].plot(alltime[ymask],fr[ymask], 'r.',label = 'Corrected')
+            ax[1].legend(fontsize = 16, loc = 1)
+            
+            ax[2].plot(alltime[ymask],fr[ymask], '.', color = 'navy', label = 'Clipped + corrected')
+            ax[2].legend(fontsize = 16, loc = 1)
+            
+            ax[2].set_xlabel("Time", fontsize = 16)
+            ax[0].set_ylabel("Flux", fontsize = 16)
+            ax[1].set_ylabel("Flux", fontsize = 16)
+            ax[2].set_ylabel("Flux", fontsize = 16)
+            
             plt.savefig('{}/{}/{}_fit_test.png'.format(indir, tic, tic), format='png')
             plt.clf()
             plt.close()
@@ -1933,12 +2060,14 @@ def tpf_data(indir, sector, tic):
     TESS_unbinned_l= []
     TESS_binned_l= []
     small_binned_l= []
-    
+    tpf_list = []
+ 
     dwload_link_tp = dwload_link
     
     for idx,file in enumerate(dwload_link_tp):
 
         tpf = TessTargetPixelFile(file) # dowload the Target Pixel File
+        tpf_list.append(tpf)
 
         try:
 
@@ -1989,7 +2118,9 @@ def tpf_data(indir, sector, tic):
     TESS_binned_l = [val for sublist in TESS_binned_l for val in sublist]
     small_binned_l = [val for sublist in small_binned_l for val in sublist]
     
-    return TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l
+
+    return TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list
+
 
 # without Lightkurve
 def download_data_tpf(indir, peak_sec, peak_list, tic):
@@ -2053,7 +2184,6 @@ def download_data_tpf(indir, peak_sec, peak_list, tic):
             if str(tic) in str(i[6]):
                 dwload_link_tp.append(i[6])
     
-
     # download each file (i.e. each sector)
 
     for file in dwload_link_tp:
@@ -2679,119 +2809,8 @@ def plot_background(tic, indir,alltime, allfbkg, peak_list, save = False, show =
         else:
             plt.close()
 
-def plot_TESS_stars(tic, indir, peak_list, peak_sec, save = False, show = False):
-    '''
-    Plot of the field fluxa round the target star showing nearby stars that are brighter than magnitude 15.
-    
-    Parameters
-    ----------
-    tic : str
-        TIC (Tess Input Catalog) ID of the target
-    indir : str
-        path to where the files will be saved.
-    peak_list   :  list
-        list of the marked transit events
-    peak_sec  :  list or str
-        list of the sectors that are being analyse.
-    save (default = False)
-        if save = True, the figure is saved in the directory which has the name of the TIC ID
-  
-    Returns
-    -------
-        Plot of the averaged flux per pixel around the target. The red star indicated the location of the target.
-        The orange circles show the location of nearby stars with magnitudes brighter than 15 mag.
 
-    '''
-    # always check whether the file already exists... as to not waste computer power and time
-    sector = str(peak_sec[0])
-
-    # always check whether the file already exists... as to not waste computer power and time
-
-    tpf_all = np.genfromtxt('{}/data/tesscurl_sector_{}_tp.sh'.format(indir,sector), dtype = str)
-
-
-    starName = "TIC " + str(tic)
-    radSearch = 4/60 #radius in degrees
-
-    catalogData = Catalogs.query_object(starName, radius = radSearch, catalog = "TIC")
-    
-    # ra and dec of the target not the red
-    ra = catalogData[0]['ra']
-    dec = catalogData[0]['dec']
-
-    # Print out the first row in the table
-    #print( catalogData[:5]['ID', 'Tmag', 'Jmag', 'ra', 'dec', 'objType'] )
-
-    # Create a list of nearby bright stars (tess magnitude less than 14) from the rest of the data for later.
-    bright = catalogData['Tmag'] < 15
-
-    # Make it a list of Ra, Dec pairs of the bright ones. This is now a list of nearby bright stars.
-    #nearbyStars = list( map( lambda x,y:[x,y], catalogData[bright]['ra'], catalogData[bright]['dec'] ) )
-
-
-    start = [np.float64(peak_list[0]) - 0.2]
-    end = [np.float64(peak_list[0]) + 0.2]
-
-    dwload_link_tp = []
-    
-    for i in tpf_all:
-        if str(tic) in str(i[6]):
-            dwload_link_tp.append(i[6])
-
-    peak = peak_list[0]
-
-    for i, file in enumerate(dwload_link_tp):
-
-        tpf0 = TessTargetPixelFile(file)
-        
-        lc = tpf0.to_lightcurve()
-    
-        # plt.subplot(row column number)
-        fig, ax = plt.subplots(figsize=(5,5))
-
-        plt.tight_layout()
-
-        if (start > np.nanmin(lc.time) and start < np.nanmax(lc.time)):
-
-            sector =  tpf0.header['SECTOR']
-
-            hdu2 = astropy.io.fits.open(file)
-
-            firstImage = hdu2[1].data['FLUX'][0]
-
-            wcs = WCS(hdu2[2].header)
-        
-            ax = plt.subplot(projection= wcs)
-            #plt.subplot(projection = wcs)
-
-            #fig.add_subplot(111, projection = wcs)
-            plot_cutout(firstImage)
-
-            ra_stars, dec_stars = catalogData[bright]['ra'], catalogData[bright]['dec']
-            s = np.maximum((19 - catalogData[bright]['Tmag'])*5, 0)
-            plt.scatter(ra_stars, dec_stars, s=s, transform=ax.get_transform('icrs'), color='orange', zorder=100)
-
-            # plot the target
-            plt.scatter(ra, dec, s= 200, transform=ax.get_transform('icrs'), marker = '*', color='red', zorder=100)
-
-
-            plt.title("Sector {}".format(sector), fontsize = 12)
-
-            plt.xlim(-0.5,10.5)
-            plt.ylim(-0.5,10.5)
-
-        if save == True:
-            plt.savefig('{}/{}/{}_star_field.png'.format(indir, tic, tic), format='png')
-
-        if show == True:
-            plt.show()
-        else:
-            plt.close()
-
-    return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], catalogData['mass'][0]
-
-
-def plot_TESS_stars_FFI(tic,indir,peak_list, peak_sec, bkg, t_list, tpf_list, save = False, show = False):
+def plot_TESS_stars(tic,indir,peak_list, peak_sec, tpf_list, save = False, show = False):
     
     '''
     Plot of the field fluxa round the target star showing nearby stars that are brighter than magnitude 15.
@@ -2815,6 +2834,7 @@ def plot_TESS_stars_FFI(tic,indir,peak_list, peak_sec, bkg, t_list, tpf_list, sa
         The orange circles show the location of nearby stars with magnitudes brighter than 15 mag.
 
     '''
+
 
     # always check whether the file already exists... as to not waste computer power and time
     sector = str(peak_sec[0])
@@ -2840,14 +2860,13 @@ def plot_TESS_stars_FFI(tic,indir,peak_list, peak_sec, bkg, t_list, tpf_list, sa
     peak = peak_list[0]
 
     #background is just the array of the flux of all the pixels (used for backrgoudn in pixel level LC plot so mildly confusing and should change)
-    for i, fluxfile in enumerate(bkg):
+    for i, tpf in enumerate(tpf_list):
 
-        tpf = tpf_list[i]
         # plt.subplot(row column number)
         fig, ax = plt.subplots(figsize=(5,5))
         plt.tight_layout()
 
-        if (start > np.nanmin(t_list[i]) and start < np.nanmax(t_list[i])):
+        if (start > np.nanmin(tpf.time) and start < np.nanmax(tpf.time)):
 
             sector =  tpf.header['SECTOR']
 
@@ -3151,6 +3170,7 @@ def plot_full_md(tic, indir, alltime,allflux,allline,alltimebinned,allfluxbinned
     plt.savefig("{}/{}/{}_fullLC_md.png".format(indir,tic,tic), format='png', bbox_inches = 'tight')
     
     plt.close()
+
 
 def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results,period,duration,t0, in_transit = [0], save = False, show = False):
 
@@ -3480,4 +3500,6 @@ def transit_finder(transit, alltime, allline, allflux,alltimebinned, allfluxbinn
     
     print ("TRANSIT: {}".format(transit))
     plt.show()
+
+
 

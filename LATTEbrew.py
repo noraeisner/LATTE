@@ -112,7 +112,6 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 	# START PLOTTING
 	# --------------
 
-
 	## get the sectors that have a transit marked in them
 	peak_sec = utils.peak_sec(in_sec,start_sec, end_sec, peak_list)
 	
@@ -124,11 +123,13 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 		sys.exit('')
 
 
-	TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l = utils.tpf_data(indir, sectors, tic)
+	TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.tpf_data(indir, sectors, tic)
+	
 	utils.plot_aperturesize(tic,indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, peak_list, save = save, show = show)
+	
 	print ("Aperture size plots... done")
 	# nearby stars
-	_, _, _, mstar = utils.plot_TESS_stars(tic,indir,peak_list, peak_sec, save = save, show = show)
+	_, _, _, mstar = utils.plot_TESS_stars(tic,indir, peak_list, peak_sec, tpf_list, save = save, show = show)
 
 	print ("Star Aperture plots... done")
 	# plot the phase folded
@@ -298,7 +299,7 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 
 	## get the sectors that have a transit marked in them
 	peak_sec = utils.peak_sec(in_sec,start_sec, end_sec, peak_list)
-	
+
 	utils.plot_background(tic, indir, allfbkg_t, allfbkg, peak_list, save = save, show = show)
 	print ("Centroid and background plots... done")
 	if simple == True:
@@ -311,7 +312,7 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 
 	print ("Aperture size plots... done")
 	# nearby stars
-	tessmag, teff, srad, mstar = utils.plot_TESS_stars_FFI(tic,indir,peak_list, peak_sec, bkg_list, t_list, tpf_list, save = save, show = show)
+	tessmag, teff, srad, mstar = utils.plot_TESS_stars(tic,indir,peak_list, peak_sec, tpf_list, save = save, show = show)
 
 	print ("Star Aperture plots... done")
 	# plot the phase folded
