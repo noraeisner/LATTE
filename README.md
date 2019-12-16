@@ -1,6 +1,6 @@
 # LATTE
 
-Written by Nora Eisner
+Written by Nora L. Eisner
 
 email: *nora.eisner@new.ox.ac.uk*
 
@@ -93,10 +93,7 @@ Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-chosen
 
 	python3 LATTE.py --nickname=example     
 
-
-
-
-
+![LATTE logo which is still a working progress...](https://github.com/noraeisner/LATTE/blob/master/LATTE_imgs/LATTE_logo.jpg)
 
 
 

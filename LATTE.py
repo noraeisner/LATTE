@@ -216,7 +216,6 @@ if __name__ == '__main__':
 				else:
 					peak_list = list(peak_list)
 				
-				mv ./LATTE_output/55525572 ./LATTE_output/FFI_55525572
 				BLS_in = row['BLS']
 				model_in = row['model']
 	
