@@ -11,20 +11,14 @@ import numpy as np
 import pandas as pd
 import tkinter as tk
 from glob import glob
-#import matplotlib.pyplot as plt
+
+from os.path import exists
+from tkinter import simpledialog
 from argparse import ArgumentParser
 
-#froms from standards
-from tkinter import simpledialog
-#from matplotlib.ticker import AutoMinorLocator
-#from matplotlib.ticker import FormatStrFormatter
-
-#froms from non-standards
-from os.path import exists
-
 #custom modules to import
+import LATTEbrew as brew 
 import LATTEutils as utils
-import LATTEbrew as brew  
 warnings.filterwarnings('ignore')
 
 
@@ -39,12 +33,12 @@ if __name__ == '__main__':
 	ap.add_argument('--auto', action='store_false', help='automatic aperture selection')
 	ap.add_argument('--nickname', type=str, help='give the target a memorable name', default='no')
 	ap.add_argument('--FFI', action='store_true', help='is this an FIIs?')
-
+	ap.add_argument('--save', help='is this an FIIs?', default = True)
+	ap.add_argument('--north', action='store_true', help='write "north" if you want all the images to be aligned North')
+	
 	args = ap.parse_args()
 
-	# ------- CHANGE THIS --------
-	#indir = "/Users/Nora/Documents/research/TESS/planethunters/LATTE"  # CHANGE THIS
-	
+	# State the imput director - change this if you want to store the data elsewhere. 
 	indir = "./LATTE_output"
 
 	# ----------------------------
@@ -55,9 +49,9 @@ if __name__ == '__main__':
 	if not os.path.exists("{}/data".format(indir)):
 		os.makedirs("{}/data".format(indir))
 
-	# ----------------
-	# ---- START -----
-	# ----------------
+	# ------------------------------------------------
+	# -------------------- START ---------------------
+	# ------------------------------------------------
 
 	if args.new_data != False: 
 		# This checks to download the data reference files
@@ -71,8 +65,8 @@ if __name__ == '__main__':
 		utils.momentum_dumps_info(indir)
 		# ----
 	
-	# ------  INTERACTIVE VERSION -------
-	# -----------------------------------
+	# -----------  INTERACTIVE VERSION ------------
+	# ---------------------------------------------
 	'''
 	NOTE: this requires you to have Tkinter installed. Tkinter does not work with certain new Mac operating systems.
 	In order to run LATTE with an input list and not interatcively, state the path to the csv file when running the program.
@@ -143,15 +137,17 @@ if __name__ == '__main__':
 			print ("Will look at available sectors: {} \n".format(sectors))
 	
 		if args.FFI == False:
-			utils.interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args.noshow)  # the argument of whether to shos the images or not 
+			utils.interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args)  # the argument of whether to shos the images or not 
 		else:
-			utils.interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args.noshow, args.auto)
+			utils.interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args)
 		
 		# Done
 
-	# --------------------------------
-	#		RUN WITH INPUT FILE
-	# --------------------------------
+
+	# ---------------------------------------
+	# ---------------------------------------
+	#		    RUN WITH INPUT FILE
+	# ---------------------------------------
 	
 	else:
 
@@ -173,9 +169,8 @@ if __name__ == '__main__':
 				print ("This file already exists therefore SKIP. To overwrite files run this code with --o in the command line.")
 				continue
 
-			# -------------
 
-			# --- WHAT SECTORS IS IT OBSERVED IN? ---
+			# --- WHAT SECTORS WAS IT OBSERVED IN? ---
 
 			sectors_all = utils.tess_point(indir, tic) 
 			sectors_in = row['sectors']
@@ -235,17 +230,17 @@ if __name__ == '__main__':
 				save = True  # always save the files - no point running this if you're not going to save them
 				DV = True   # we'll make a DV report for all of them
 				
-				# -------------------
-				# DOWNLOAD DATA 
-				# -------------------
+				# ----------------------------------------
+				#             DOWNLOAD DATA 
+				# ----------------------------------------
 				
 				alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir, sectors, tic)
 				
-				# --------------------------
-				#	  START BREWING ....
-				# --------------------------
+				# ----------------------------------------
+				#	           START BREWING ....
+				# ----------------------------------------
 				
-				brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, show = False)
+				brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 
 	# end by changing the name of the folder to include the nicknane if so defined in the input functions
 	# this allows users to keep track of their targets more easily. We name our candidates after pastries. 

@@ -24,10 +24,10 @@ import LATTEutils as utils
 warnings.filterwarnings('ignore')
 
 
-def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, show = False):
+def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args):
 	'''
 	This function that runs LATTE - makes the plots, saves them, runs the BLS model and the pyaneti model before 
-	making a PHT DV report (if told to do so.)
+	making a PHT DV report (if told to do so.) 
 	
 	Parameters
 	----------
@@ -56,9 +56,11 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 	-------
 		runs the brew_LATTE code...
 	'''
+
 	# -------------------
 	# SAVE THE DATA FILES 
 	# -------------------
+	show = args.noshow
 
 	if (save == True) or (DV == True):
 		save = True
@@ -105,33 +107,33 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 						writer.writerows(zip(alltime_ar[pyaneti_mask],allflux_ar[pyaneti_mask],allflux_err_ar[pyaneti_mask]))
 
 
-		utils.plot_full_md(tic, indir, alltime,allflux,allline,alltimebinned,allfluxbinned, peak_list)
+		utils.plot_full_md(tic, indir, alltime,allflux,allline,alltimebinned,allfluxbinned, peak_list, args)
 
 
-	# --------------
-	# START PLOTTING
-	# --------------
+	# -----------------------------------
+	#            START PLOTTING
+	# -----------------------------------
 
 	## get the sectors that have a transit marked in them
 	peak_sec = utils.peak_sec(in_sec,start_sec, end_sec, peak_list)
 	
-	utils.plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, peak_list, save = save, show = show)
-	utils.plot_background(tic, indir,alltime, allfbkg, peak_list, save = save, show = show)
-	print ("Centroid and background plots... done")
+	utils.plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, peak_list, args)
+	utils.plot_background(tic, indir,alltime, allfbkg, peak_list, args)
+	print ("Centroid and background plots... done.")
 	if simple == True:
 		print ("Simple option was selected, therefore end analysis here.")
 		sys.exit('')
 
 
-	TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.tpf_data(indir, sectors, tic)
+	TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.tpf_data(indir, peak_list, sectors, tic)
 	
-	utils.plot_aperturesize(tic,indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, peak_list, save = save, show = show)
+	utils.plot_aperturesize(tic,indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, peak_list, args)
 	
-	print ("Aperture size plots... done")
+	print ("Aperture size plots... done.")
 	# nearby stars
-	_, _, _, mstar = utils.plot_TESS_stars(tic,indir, peak_list, peak_sec, tpf_list, save = save, show = show)
+	_, _, _, mstar = utils.plot_TESS_stars(tic,indir, peak_list, peak_sec, tpf_list, args)
 
-	print ("Star Aperture plots... done")
+	print ("Star Aperture plots... done.")
 	# plot the phase folded
 	if len (peak_list) > 1:
 
@@ -153,7 +155,7 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 		if show == True:
 			plt.show()
 
-		print ("Phase folded plot... done")
+		print ("Phase folded plot... done.")
 
 	else:
 		print ("\n Only one transit marked - therefore can't be phase folded. \n")
@@ -161,24 +163,30 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 	
 	X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_data_tpf(indir, peak_sec, peak_list, tic)
 	
-
 	# plot the in and out of transit flux comparison
-	utils.plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, save = save, show = show)
-	print ("In and out of aperture flux comparison... done")
+	# orient the images to be aligned north - required reprojecting so takes longer which is why this is not the default.
+	if args.north == True:
+		utils.plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, tpf_list, args)
+		print ("In and out of aperture flux comparison with reprojection... done. ")
+
+	else:
+		utils.plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, args)
+		print ("In and out of aperture flux comparison... done.")
+	
 
 	# plot one lightcurve for each pixel extracted around the time of the transit
-	utils.plot_pixel_level_LC(tic, indir,X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, save = save, show = show, FFI = False)
-	print ("Pixel level LCs plot... done")
+	utils.plot_pixel_level_LC(tic, indir,X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, args)
+	print ("Pixel level LCs plot... done.")
 
 	# nearest neighbour light curve comparison plot
 	ticids, distance, target_ra, target_dec = utils.nn_ticids(indir, peak_sec, tic)
 	alltime_nn, allflux_nn, allline_nn, alltimebinned_nn, allfluxbinned_nn,outtics,tessmag_list, distance = utils.download_data_neighbours(indir, peak_sec[0], ticids, distance)
-	utils.plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, peak_list, outtics, tessmag_list, distance, save = save, show = show)
-	print ("Nearest neighbour plot... done")
+	utils.plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, peak_list, outtics, tessmag_list, distance, args)
+	print ("Nearest neighbour plot... done.")
 
 	if BLS == True:
 		print ("Running BLS")
-		bls_stats1, bls_stats2 = utils.data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, save = save, show = show)
+		bls_stats1, bls_stats2 = utils.data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args)
 		
 
 	# run pyaneti - this takes a while to run so carefully cnosider whether you want to run this
@@ -207,7 +215,7 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 
 
 
-def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, allline, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, show = False):
+def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, allline, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):
 	
 	'''
 	This function that runs LATTE - makes the plots, saves them, runs the BLS model and the pyaneti model before 
@@ -240,9 +248,10 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 	-------
 		runs the brew_LATTE code...
 	'''
-	# -------------------
-	# SAVE THE DATA FILES 
-	# -------------------
+	# ----------------------------------------
+	#           SAVE THE DATA FILES 
+	# ----------------------------------------
+	show = args.noshow
 
 	if (save == True) or (DV == True):
 		save = True
@@ -290,31 +299,31 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 						writer.writerows(zip(alltime_ar[pyaneti_mask],allflux_ar[pyaneti_mask],allflux_err_ar[pyaneti_mask]))
 
 
-		utils.plot_full_md(tic, indir, alltime,allflux,allline,alltime,allflux, peak_list, FFI = True)
+		utils.plot_full_md(tic, indir, alltime,allflux,allline,alltime,allflux, peak_list, args)
 
 
-	# --------------
-	# START PLOTTING
-	# --------------
+	# ------------------------------------------
+	#               START PLOTTING
+	# ------------------------------------------
 
 	## get the sectors that have a transit marked in them
 	peak_sec = utils.peak_sec(in_sec,start_sec, end_sec, peak_list)
 
-	utils.plot_background(tic, indir, allfbkg_t, allfbkg, peak_list, save = save, show = show)
-	print ("Centroid and background plots... done")
+	utils.plot_background(tic, indir, allfbkg_t, allfbkg, peak_list, args)
+	print ("Centroid and background plots... done.")
 	if simple == True:
 		print ("Simple option was selected, therefore end analysis here.")
 		sys.exit('')
 
 
-	utils.plot_aperturesize(tic,indir,alltime, alltime, alltime, allflux_normal, allflux_normal, allflux_small, peak_list, save = save, show = show, FFI = True)
+	utils.plot_aperturesize(tic,indir,alltime, alltime, alltime, allflux_normal, allflux_normal, allflux_small, peak_list, args)
 	
 
-	print ("Aperture size plots... done")
+	print ("Aperture size plots... done.")
 	# nearby stars
-	tessmag, teff, srad, mstar = utils.plot_TESS_stars(tic,indir,peak_list, peak_sec, tpf_list, save = save, show = show)
+	tessmag, teff, srad, mstar = utils.plot_TESS_stars(tic,indir,peak_list, peak_sec, tpf_list, args)
 
-	print ("Star Aperture plots... done")
+	print ("Star Aperture plots... done.")
 	# plot the phase folded
 	if len (peak_list) > 1:
 
@@ -336,13 +345,12 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 		if show == True:
 			plt.show()
 
-		print ("Phase folded plot... done")
+		print ("Phase folded plot... done.")
 
 	else:
 		print ("\n Only one transit marked - therefore can't be phase folded. \n")
 		
 	
-	# X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_data_tpf(indir, peak_sec, peak_list, tic)
 	# calculate the oot_list and intr_list and T0_list
 
 	oot_list = []
@@ -356,19 +364,23 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 				intr_list.append(abs(T0-np.array(t)) < 0.1)
 				T0_list.append(T0)
 
-	# plot the in and out of transit flux comparison
-	utils.plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, save = save, show = show)
+	# orient the images to be aligned north - required reprojecting so takes longer which is why this is not the default.
+	if args.north == True:
+		utils.plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, tpf_list, args)
+		print ("In and out of aperture flux comparison with reprojection... done. ")
+
+	else:
+		# plot the in and out of transit flux comparison
+		utils.plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, args)
+		print ("In and out of aperture flux comparison... done.")
 	
-	print ("In and out of aperture flux comparison... done")
-
 	# plot one lightcurve for each pixel extracted around the time of the transit
-	utils.plot_pixel_level_LC(tic, indir,X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, save = save, show = show, FFI = True)
-	print ("Pixel level LCs plot... done")
-
+	utils.plot_pixel_level_LC(tic, indir,X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, args)
+	print ("Pixel level LCs plot... done.")
 
 	if BLS == True:
 		print ("Running BLS")
-		bls_stats1, bls_stats2 = utils.data_bls_FFI(tic, indir, alltime, allflux, save = save, show = show)
+		bls_stats1, bls_stats2 = utils.data_bls_FFI(tic, indir, alltime, allflux, args)
 	
 	# run pyaneti - this takes a while to run so carefully cnosider whether you want to run this
 	# first check if Pyaneti is even installed...
