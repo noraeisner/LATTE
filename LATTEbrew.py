@@ -343,7 +343,6 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 		
 	
 	# X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_data_tpf(indir, peak_sec, peak_list, tic)
-	
 	# calculate the oot_list and intr_list and T0_list
 
 	oot_list = []
@@ -357,7 +356,6 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 				intr_list.append(abs(T0-np.array(t)) < 0.1)
 				T0_list.append(T0)
 
-	print (T0_list)
 	# plot the in and out of transit flux comparison
 	utils.plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, save = save, show = show)
 	
@@ -366,12 +364,6 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 	# plot one lightcurve for each pixel extracted around the time of the transit
 	utils.plot_pixel_level_LC(tic, indir,X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, save = save, show = show, FFI = True)
 	print ("Pixel level LCs plot... done")
-
-	#nearest neighbour light curve comparison plot
-	#ticids, distance, target_ra, target_dec = utils.nn_ticids_FFI(indir, peak_sec, tic)
-	#alltime_nn, allflux_nn, allline_nn, alltimebinned_nn, allfluxbinned_nn,outtics,tessmag_list, distance = utils.download_data_neighbours(indir, peak_sec[0], ticids, distance)
-	#utils.plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, peak_list, outtics, tessmag_list, distance, save = save, show = show)
-	#print ("Nearest neighbour plot... done")
 
 
 	if BLS == True:

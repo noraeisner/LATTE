@@ -1,0 +1,29 @@
+{
+   "module":"mDiff",
+
+   "function":"mDiff",
+
+   "desc" : "mDiff subtracts one image from another (both already in the same projection).",
+
+   "arguments":
+   [
+      {"type":"string",                    "name":"input_file1",   "desc":"First input file for differencing."},
+      {"type":"string",                    "name":"input_file2",   "desc":"Second input file for differencing.  Files have to already have the same projection."},
+      {"type":"string",                    "name":"output_file",   "desc":"Output difference image."},
+      {"type":"string",                    "name":"template_file", "desc":"FITS header file used to define the desired output."},
+      {"type":"boolean", "default":false,  "name":"noAreas",       "desc":"Do not look for or create area images as part of the differencing."},
+      {"type":"double",  "default":1.0,    "name":"factor",        "desc":"Optional scale factor to apply to the second image before subtracting."},
+      {"type":"int",     "default":0,      "name":"debug",         "desc":"Debugging output level."} 
+   ],
+
+   "return":
+   [
+      {"type":"int",                       "name":"status",        "desc":"Return status (0: OK, 1:ERROR)."},
+      {"type":"string",                    "name":"msg",           "desc":"Return message (for errors)."},
+      {"type":"double",                    "name":"time",          "desc":"Total processing time (sec)."},
+      {"type":"double",                    "name":"min_pixel",     "desc":"Smallest pixel value in either input."},
+      {"type":"double",                    "name":"max_pixel",     "desc":"Largest pixel value in either input."},
+      {"type":"double",                    "name":"min_diff",      "desc":"Smallest difference pixel (absolute)."},
+      {"type":"double",                    "name":"max_diff",      "desc":"Largest difference pixel (absolute)."}
+   ]
+}

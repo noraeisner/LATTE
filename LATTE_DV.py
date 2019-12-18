@@ -90,7 +90,7 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	
 	tess_stars_name = '{}/{}/{}_star_field.png'.format(indir, tic, tic)
 	
-	SDSS_stars_name = '{}/{}/{}_SDSSstar_field.png'.format(indir, tic, tic)
+	#SDSS_stars_name = '{}/{}/{}_SDSSstar_field.png'.format(indir, tic, tic)
 
 	nearest_neighbour_name = '{}/{}/{}_nearest_neighbours.png'.format(indir, tic, tic)
 	
@@ -363,23 +363,23 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	
 	Story.append(Spacer(1, 12))
 
-	FOV1 = Image(tess_stars_name)
-	FOV2 = Image(SDSS_stars_name)
-
-	FOV1._restrictSize(width*0.3, width*0.3)
-	FOV2._restrictSize(width*0.35, width*0.35)
-
-	FOV_table = (Table([[FOV1, FOV2]],
-					colWidths=[width * 0.45], rowHeights=[width * 0.45]))
-	
-	FOV_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTRE'),('VALIGN', (0, 0), (-1,-1), 'MIDDLE')]))
-	
-	Story.append(FOV_table)
-
-	#im6 = Image(tess_stars_name)
+	#FOV1 = Image(tess_stars_name)
+	#FOV2 = Image(SDSS_stars_name)
+#
+	#FOV1._restrictSize(width*0.3, width*0.3)
+	#FOV2._restrictSize(width*0.35, width*0.35)
+#
+	#FOV_table = (Table([[FOV1, FOV2]],
+	#				colWidths=[width * 0.45], rowHeights=[width * 0.45]))
 	#
-	#im6._restrictSize(width*0.3, width*0.3)
-	#Story.append(im6)
+	#FOV_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTRE'),('VALIGN', (0, 0), (-1,-1), 'MIDDLE')]))
+	#
+	#Story.append(FOV_table)
+
+	im6 = Image(tess_stars_name)
+	
+	im6._restrictSize(width*0.7, width*0.5)
+	Story.append(im6)
 
 	fig_count += 1
 	tess_stars_text = "Fig {}. Left: The locations of nearby GAIA DR2 stars with mag < 15 (orange circle) within the Tess \
@@ -469,15 +469,15 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 					   ['depth',			    "{:.5f} ± {:.5f}".format(bls_stats1[2][0],bls_stats1[2][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[2][0],bls_stats2[2][1]) ],
 					   ['depth phased',			"{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[3][0],bls_stats2[3][1]) ],
 					   ['depth half',			"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[4][0],bls_stats2[4][1]) ],
-					   ['depth off',			"{:.5f} ± {:.5f}".format(bls_stats1[5][0],bls_stats1[5][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[5][0],bls_stats2[5][1]) ],
+					   ['depth odd',			"{:.5f} ± {:.5f}".format(bls_stats1[5][0],bls_stats1[5][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[5][0],bls_stats2[5][1]) ],
 					   ['depth even',			"{:.5f} ± {:.5f}".format(bls_stats1[6][0],bls_stats1[6][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[6][0],bls_stats2[6][1]) ],
 					   ]
 		
 		table_bls=Table(data_bls)
 		table_bls=Table(data_bls,colWidths=width * 0.2, style=[
 							('LINEABOVE',(0,1),(-1,1),1,colors.black),
-							('LINEABOVE',(0,6),(-1,6),1,colors.black),
-							('FONTSIZE', (0,0),(-1,5), 8),
+							('LINEABOVE',(0,8),(-1,8),1,colors.black),
+							('FONTSIZE', (0,0),(-1,7), 8),
 							])
 	
 

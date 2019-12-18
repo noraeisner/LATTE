@@ -251,13 +251,13 @@ if __name__ == '__main__':
 	# this allows users to keep track of their targets more easily. We name our candidates after pastries. 
 				
 	if (not args.nickname == 'no') and (args.FFI == True):
-		os.system("mv {}/{} FFI_{}_{}".format(indir, tic, tic, args.nickname))
+		os.system("mv {}/{} {}/FFI_{}_{}".format(indir, tic, indir, tic, args.nickname))
 
 	elif not args.nickname == 'no':
-		os.system("mv {}/{} {}_{}".format(indir, tic, tic, args.nickname))
+		os.system("mv {}/{} {}/{}_{}".format(indir, tic, indir, tic, args.nickname))
 	
 	elif args.FFI == True:
-		os.system("mv {}/{} FFI_{}".format(indir, tic, tic))
+		os.system("mv {}/{} {}/FFI_{}".format(indir, tic,indir, tic))
 	
 # End.
 

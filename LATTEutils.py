@@ -27,7 +27,10 @@ from astropy.coordinates import SkyCoord
 from matplotlib.patches import Rectangle
 from lightkurve import TessTargetPixelFile
 
+
 from tess_stars2px import tess_stars2px_function_entry
+from reproject import reproject_interp, reproject_exact
+from reproject.mosaicking import find_optimal_celestial_wcs
 from matplotlib.ticker import AutoMinorLocator, FormatStrFormatter
 from matplotlib.widgets import Slider, Button, RadioButtons, TextBox, CheckButtons
 
@@ -481,14 +484,12 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, nosho
         # -------- flatten the normal lighcurve --------
         print ("Flatten LC...", end =" ")
         
-        l = np.isfinite(flux/m)
-        
-        fr_inj = flux/m
+        fr_inj = flux
         alltime  = t
         
         T_dur = 0.7  #The transit duration - may need to change!! 
         
-        nmed = int(48*3*T_dur)
+        nmed = int(48*3*T_dur)  # 144 because the data is binned to 10 minutes and 24 hours / 10 mins = 144 data points
         nmed = 2*int(nmed/2)+1 # make it an odd number 
         ff = filters.NIF(np.array(fr_inj),nmed,10,fill=True,verbose=True)
         # first number (nmed) is three time transit durations, the second quite small (10,20 )
@@ -499,7 +500,6 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, nosho
         ff = g(alltime)
         
         fr = fr_inj / ff
-        
         
         # --- do some sigma clipping to make the LC look better ---- 
         MAD = median_absolute_deviation(fr)
@@ -530,6 +530,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, nosho
         plt.clf()
         plt.close()
         
+
         # ---------------------------------------------
         print ("Done.\n")
         
@@ -1816,9 +1817,9 @@ def download_data_FFI(indir,sector, sectors_all, tic, save = False):
         # -------- flatten the normal lighcurve --------
         print ("Flatten LC...", end =" ")
 
-        l = np.isfinite(flux/m)
+        l = np.isfinite(flux)
 
-        fr_inj = flux/m
+        fr_inj = flux
         alltime  = t
 
 
@@ -2016,9 +2017,9 @@ def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
         #value = 0
         #for v in bad_bits:
         #    value = value + 2**(v-1)
-    #
+
         #bad_data = np.bitwise_and(quality, value) >= 1
-    #
+
         #fluxcent_col = lcdata['MOM_CENTR1']
         #fluxcent_row = lcdata['MOM_CENTR2']
     
@@ -2031,7 +2032,6 @@ def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
         alltimebinned.append(list(time_binned))
         allfluxbinned.append(list(flux_binned))
         
-
         start_sec.append([time[0]])
         end_sec.append([time[-1]])
         tessmag_list.append(tessmag)
@@ -2144,7 +2144,6 @@ def tpf_data(indir, sector, tic):
     
 
     return TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list
-
 
 # without Lightkurve
 def download_data_tpf(indir, peak_sec, peak_list, tic):
@@ -2299,6 +2298,55 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, save = 
     alltime = np.array(alltime)[mask]
     allflux = np.array(allflux)[mask]
     
+    # -------------------
+
+    # detrend the data before running the BLS
+    print ("Detrend data prior to BLS analysis...", end =" ")
+
+    fr_inj = allfluxbinned
+
+    T_dur = 0.7  #The transit duration - may need to change!! Larger means it corrects less which is probably better. 
+    
+    nmed = int(144*3*T_dur) # 144 because the data is binned to 10 minutes and 24 hours / 10 mins = 144 data points
+    nmed = 2*int(nmed/2)+1 # make it an odd number 
+    ff = filters.NIF(np.array(fr_inj),nmed,10,fill=True,verbose=True)
+    # first number (nmed) is three time transit durations, the second quite small (10,20 )
+
+    l = np.isfinite(ff)
+    g = interp1d(alltimebinned[l],ff[l],bounds_error=False,fill_value=np.nan)
+    ff = g(alltimebinned)
+    
+    allfluxbinned = fr_inj / ff
+
+    print ("Done.")
+
+    # -------------------
+    if save == True:
+        fix, ax = plt.subplots(2,1,figsize=(16,12))
+        
+        ax[0].plot(alltimebinned,fr_inj, '.',label = 'Uncorrected')
+        ax[0].plot(alltimebinned,ff,'.',label = 'Model fit')
+        ax[0].legend(fontsize = 16, loc = 1)
+        
+        ax[1].plot(alltimebinned,allfluxbinned, '.', color = 'navy', label = 'Clipped + corrected')
+        ax[1].legend(fontsize = 16, loc = 1)
+        
+        ax[1].set_xlabel("Time", fontsize = 16)
+        ax[0].set_ylabel("Flux", fontsize = 16)
+        ax[1].set_ylabel("Flux", fontsize = 16)
+        ax[1].set_ylabel("Flux", fontsize = 16)
+        
+        plt.savefig('{}/{}/{}_fit_test.png'.format(indir, tic, tic), format='png')
+        plt.clf()
+        plt.close()
+
+
+    # get rid of nans again...
+    mask_binned = np.isfinite(alltimebinned) * np.isfinite(allfluxbinned)
+    alltimebinned = np.array(alltimebinned)[mask_binned]
+    allfluxbinned = np.array(allfluxbinned)[mask_binned]
+    # -----------------------
+
     durations = np.linspace(0.05, 0.2, 10)
     model = BoxLeastSquares(alltimebinned, allfluxbinned)
     results = model.autopower(durations, frequency_factor=5.0)
@@ -2323,7 +2371,7 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, save = 
 
     # Find the in-transit points using a longer duration as a buffer to avoid ingress and egress
     in_transit = model.transit_mask(alltimebinned, period, 2*duration, t0)
-
+    in_transit_notbinned = model.transit_mask(alltime, period, 2*duration, t0)
     
     # Re-run the algorithm, and plot the results
     model2 = BoxLeastSquares(alltimebinned[~in_transit], allfluxbinned[~in_transit])
@@ -2336,7 +2384,7 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, save = 
     duration2 = results2.duration[index]
     
     # call the second round of plotting - once the intitial transit has been removed
-    plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model2, results2,period2,duration2,t02, in_transit = in_transit, save = save, show = show)
+    plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model2, results2,period2,duration2,t02, in_transit = in_transit, in_transit_notbinned = in_transit_notbinned, save = save, show = show)
 
     stats2_period = period2
     stats2_t0 = t02
@@ -2380,8 +2428,6 @@ def data_bls_FFI(tic, indir, alltime, allflux, save = False, show = False):
 
     # Find the in-transit points using a longer duration as a buffer to avoid ingress and egress
     in_transit = model.transit_mask(alltime, period, 2*duration, t0)
-
-    
     # Re-run the algorithm, and plot the results
     model2 = BoxLeastSquares(alltime[~in_transit], allflux[~in_transit])
     results2 = model2.autopower(durations, frequency_factor=5.0)
@@ -2447,7 +2493,8 @@ def plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_n
     plt.tight_layout()
 
     colors = ['r', 'darkorange', 'gold', 'seagreen', 'royalblue', 'navy','magenta' ]
-    
+    colors2 = ['k', 'k', 'k', 'k', 'k', 'grey','k' ]
+
     for i in range(0,len(alltime_nn)):
     
         for line in (peak_list):
@@ -2458,7 +2505,7 @@ def plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_n
         else:
             ax[i].plot(alltime_nn[i], np.array(allflux_nn[i]), color = colors[i], label = "{}  Tmag = {:3f}   d = {:3f} arcsecs".format(outtics[i], tessmag_list[i], distance[i]), marker = '.', ms = 2, linewidth = 0)
         
-        ax[i].plot(alltimebinned_nn[i], np.array(allfluxbinned_nn[i]), color = 'k', marker = '.', ms = 1, linewidth = 0)
+        ax[i].plot(alltimebinned_nn[i], np.array(allfluxbinned_nn[i]), color = colors2[i], marker = '.', ms = 1, linewidth = 0)
               
         ax[i].legend(loc = 1)
     
@@ -2466,12 +2513,14 @@ def plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_n
     ax[0].set_title("LCs of Nearby Stars")
     ax[len(alltime_nn) - 1].set_xlabel("Time (BJD-2457000)")
     ax[int(len(alltime_nn)/2)].set_ylabel("Normalised Flux")
-
-    if save == True:
-        plt.savefig('{}/{}/{}_nearest_neighbours.png'.format(indir, tic, tic), format='png')
+    ax[0].set_xlim(np.nanmin(alltime_nn), np.nanmax(alltime_nn))
 
     plt.xlim(np.nanmin(alltime_nn), np.nanmax(alltime_nn))
 
+    if save == True:
+        plt.savefig('{}/{}/{}_nearest_neighbours.png'.format(indir, tic, tic), format='png', bbox_inches='tight')
+
+    
     if show == True:
         plt.show()
     else:
@@ -2836,7 +2885,142 @@ def plot_background(tic, indir,alltime, allfbkg, peak_list, save = False, show =
             plt.close()
 
 
+
 def plot_TESS_stars(tic,indir,peak_list, peak_sec, tpf_list, save = False, show = False):
+    
+    '''
+    Plot of the field of view round the target star showing nearby stars that are brighter than magnitude 17 as well as the SDSS cutout. 
+    Both images are projected and oriented North for easy comparison. 
+    
+    Parameters
+    ----------
+    tic : str
+        TIC (Tess Input Catalog) ID of the target
+    indir : str
+        path to where the files will be saved.
+    peak_list   :  list
+        list of the marked transit events
+    peak_sec  :  list or str
+        list of the sectors that are being analyse.
+    save (default = False)
+        if save = True, the figure is saved in the directory which has the name of the TIC ID
+  
+    Returns
+    -------
+        Plot of the averaged flux per pixel around the target (left) as well as the SDSS plot (right). The red star on the right plot indicated the location of the target.
+        The orange circles show the location of nearby stars with magnitudes brighter than 17 mag where their relative sizes correspond to their relative brightness. 
+        The location of the target star is hown with the reticle on the right hans side SDSS image. 
+    '''
+    
+    # Query nearby Gaia Stars  --------------------
+    
+    sector = str(peak_sec[0])
+
+    starName = "TIC " + str(tic)
+    radSearch = 5/60 #radius in degrees
+
+    catalogData = Catalogs.query_object(starName, radius = radSearch, catalog = "TIC")
+    
+    # ra and dec of the target star
+    ra = catalogData[0]['ra']
+    dec = catalogData[0]['dec']
+
+    # Create a list of nearby bright stars (tess magnitude less than 14) from the rest of the data for later.
+    bright = catalogData['Tmag'] < 17
+
+    start = [np.float64(peak_list[0]) - 0.2]
+    end = [np.float64(peak_list[0]) + 0.2]
+
+    # ---------------------------------------------
+    # Get the data for the SDSS sky viewer --------
+    
+    survey = 'DSS2 Red'
+    fig, ax = plt.subplots()
+    plt.axis("off")
+    
+    target_coord = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
+    target = FixedTarget(coord=target_coord, name="Survey = {}".format(survey))
+    
+    ax, hdu = plot_finder_image(target, survey = survey, reticle='True', fov_radius=5*u.arcmin)
+    plt.close('all')
+
+    # --------------------------------------------
+
+    for i, tpf in enumerate(tpf_list):
+
+        # plt.subplot(row column number)
+        if (start > np.nanmin(tpf.time) and start < np.nanmax(tpf.time)):
+            
+            
+            fig= plt.figure(figsize=(7,5.5))
+
+            sector =  tpf.header['SECTOR']
+            plt.title('Sector {}'.format(sector))
+            
+            # create a tupple of the array of the data and the wcs projection of the TESS cutout
+            tup = (tpf.flux.mean(axis=0),tpf.wcs)
+            
+            # map the SDSS and TESS image onto each other - the output will be orented NORTH!
+            wcs_out, shape_out = find_optimal_celestial_wcs(input_data =[tup, hdu])
+            
+            # plot the reprojected TESS image 
+            ax1 = plt.subplot(1,2,1, projection=wcs_out)
+            array, footprint = reproject_interp(tup, wcs_out,shape_out = shape_out,order = 'nearest-neighbor')
+            
+            ax1.imshow(array, origin='lower', cmap = plt.cm.YlGnBu_r)
+
+            ax1.coords['ra'].set_axislabel('Right Ascension', fontsize = 13)
+            ax1.coords['dec'].set_axislabel('Declination', fontsize = 13)
+            ax1.grid(color = 'grey', alpha = 0.7)
+            
+            # plot the nearby GAIA stars on this image too...
+            ra_stars, dec_stars = catalogData[bright]['ra'], catalogData[bright]['dec']
+            s = np.maximum((19 - catalogData[bright]['Tmag'])*5, 0)  # the size corresponds to their brightness
+            ax1.scatter(ra_stars, dec_stars, s=s, transform=ax1.get_transform('icrs'), color='orange', zorder=100)
+
+            # plot the target star that we're looking at
+            ax1.scatter(ra, dec, s= 200, transform=ax1.get_transform('icrs'), marker = '*', color='red', zorder=100)
+            ax1.tick_params(labelsize=12)
+            
+            # plot the reprojected SDSS image
+            ax2 = plt.subplot(1,2,2, projection=wcs_out, sharex=ax1, sharey=ax1)
+            array, footprint = reproject_interp(tup, wcs_out,shape_out = shape_out)
+            ax2.imshow(hdu.data, origin='lower', cmap = 'Greys')
+            ax2.coords['ra'].set_axislabel('Right Ascension', fontsize = 13)
+            #ax2.coords['dec'].set_axislabel('Declination')
+            
+            # Draw reticle ontop of the target star
+            pixel_width = hdu.data.shape[0]
+            inner, outer = 0.03, 0.08
+            
+            reticle_style_kwargs = {}
+            reticle_style_kwargs.setdefault('linewidth', 1.5)
+            reticle_style_kwargs.setdefault('color', 'red')
+            
+            ax2.axvline(x=0.5*pixel_width, ymin=0.5+inner, ymax=0.5+outer,
+                       **reticle_style_kwargs)
+            ax2.axvline(x=0.5*pixel_width, ymin=0.5-inner, ymax=0.5-outer,
+                       **reticle_style_kwargs)
+            ax2.axhline(y=0.5*pixel_width, xmin=0.5+inner, xmax=0.5+outer,
+                       **reticle_style_kwargs)
+            ax2.axhline(y=0.5*pixel_width, xmin=0.5-inner, xmax=0.5-outer,
+                           **reticle_style_kwargs)
+            ax2.grid()
+            ax2.tick_params(labelsize=12)
+            plt.tight_layout(w_pad= 7)
+            
+            if save == True:
+                plt.savefig('{}/{}/{}_star_field.png'.format(indir, tic, tic), format='png', bbox_inches='tight')
+
+            if show == True:
+                plt.show()
+            else:
+                plt.close()
+                
+    return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], catalogData['mass'][0]
+
+
+def plot_TESS_stars_old(tic,indir,peak_list, peak_sec, tpf_list, save = False, show = False):
     
     '''
     Plot of the field fluxa round the target star showing nearby stars that are brighter than magnitude 15.
@@ -2860,7 +3044,6 @@ def plot_TESS_stars(tic,indir,peak_list, peak_sec, tpf_list, save = False, show 
         The orange circles show the location of nearby stars with magnitudes brighter than 15 mag.
 
     '''
-
 
     # always check whether the file already exists... as to not waste computer power and time
     sector = str(peak_sec[0])
@@ -2905,7 +3088,6 @@ def plot_TESS_stars(tic,indir,peak_list, peak_sec, tpf_list, save = False, show 
     for i, tpf in enumerate(tpf_list):
 
         # plt.subplot(row column number)
-
         if (start > np.nanmin(tpf.time) and start < np.nanmax(tpf.time)):
             fig, ax = plt.subplots(figsize=(5,5))
             plt.tight_layout()
@@ -3012,7 +3194,6 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
             print ("{}   out of    {} ".format(i+1,arrshape[1] ))
             for j in range(0,arrshape[2]):
     
-    
                 apmask = np.zeros(arrshape[1:], dtype=np.int)
                 apmask[i,j] = 1
                 apmask = apmask.astype(bool)
@@ -3039,7 +3220,7 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         
                     # binned data
                     time_binned    =    np.array(Xb[0])
-                    flux_binned  =   np.array(Xb[1])
+                    flux_binned    =   np.array(Xb[1])
 
                 else:
                     # binned data -
@@ -3050,7 +3231,14 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
                 # create a mask that only looks at the times cut around the transit-event
                 timemask = (time_binned < peak+0.7) & (time_binned > peak-0.7)
                 
-                #timemask = 
+                time_binned = time_binned[timemask]
+                flux_binned = flux_binned[timemask]
+                # ----------
+                # fit a spline to the cut-out of each pixel LC in order to flatten it
+                p = np.poly1d(np.polyfit(time_binned, flux_binned, 3))
+                flux_binned = flux_binned/p(time_binned)
+                # ----------
+
                 intr = abs(peak-time_binned) < 0.1
 
                 if simplebkg == True:
@@ -3068,7 +3256,7 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
                         transitcolor = 'gold'
                 
 
-                ax[i, j].plot(time_binned[timemask],flux_binned[timemask], color = linecolor, marker = '.', markersize=1, lw = 0) 
+                ax[i, j].plot(time_binned,flux_binned, color = linecolor, marker = '.', markersize=1, lw = 0) 
                 ax[i, j].plot(time_binned[intr],flux_binned[intr], color = transitcolor, marker = '.', markersize=1, lw = 0) 
                 
                 ax[i,j].set_yticklabels([])
@@ -3231,7 +3419,7 @@ def plot_full_md(tic, indir, alltime, allflux,allline,alltimebinned,allfluxbinne
     plt.close()
 
 
-def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results,period,duration,t0, in_transit = [0], save = False, show = False):
+def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results,period,duration,t0, in_transit = [0], in_transit_notbinned = [0], save = False, show = False):
 
     if len(in_transit) == 1:  # conditions for the first 'round' of plotting
 
@@ -3271,7 +3459,7 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
         ax.plot(alltime, allflux, marker =".", alpha = 0.4, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
         ax.plot(alltimebinned, allfluxbinned, marker ="o", alpha = 0.6, color = 'black', ms=3, lw = 0, MarkerFaceColor = 'none')
     else:
-        ax.plot(alltime, allflux, marker =".", alpha = 0.4, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
+        ax.plot(alltime[~in_transit_notbinned], allflux[~in_transit_notbinned], marker =".", alpha = 0.4, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
         ax.plot(alltimebinned[~in_transit], allfluxbinned[~in_transit], marker ="o", alpha = 0.6, color = 'black',  MarkerFaceColor = 'none', ms=3, lw = 0)
 
     x = np.linspace(alltimebinned.min(), alltimebinned.max(), 3*len(alltimebinned))
@@ -3287,7 +3475,7 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
         x = (alltime - t0 + 0.5*period) % period - 0.5*period
     else:
         x_binned = (alltimebinned[~in_transit] - t0 + 0.5*period) % period - 0.5*period
-        x = (alltime - t0 + 0.5*period) % period - 0.5*period
+        x = (alltime[~in_transit_notbinned] - t0 + 0.5*period) % period - 0.5*period
     
     m_binned = np.abs(x_binned) < 0.5 
     m = np.abs(x) < 0.5 
@@ -3297,9 +3485,9 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
         ax.plot(x_binned[m_binned], allfluxbinned[m_binned], marker ="o", alpha = 0.6, color = 'black', ms=3, lw = 0, MarkerFaceColor = 'none')
         
     else:
-        ax.plot(x[m], allflux[m],marker =".", alpha = 0.4, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
+        ax.plot(x[m], allflux[~in_transit_notbinned][m],marker =".", alpha = 0.4, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
         ax.plot(x_binned[m_binned], allfluxbinned[~in_transit][m_binned], marker ="o", alpha = 0.6, color = 'black', ms=3, lw = 0, MarkerFaceColor = 'none')
-        
+    
     x = np.linspace(-0.5, 0.5, 1000)
     f = model.model(x + t0, period, duration, t0)
     ax.plot(x, f, lw=2, color = color1)
@@ -3367,23 +3555,21 @@ def plot_bls_FFI(tic, indir, alltime, allflux, model, results,period,duration,t0
     ax.set_ylabel("de-trended flux (ppt)");
     
     ax = axes[2]
-    if len(in_transit) == 1: 
-        x = (alltime - t0 + 0.5*period) % period - 0.5*period
-    else:
-        x = (alltime - t0 + 0.5*period) % period - 0.5*period
-    
+    # phase fold
+    x = (alltime - t0 + 0.5*period) % period - 0.5*period
+
     m = np.abs(x) < 0.5 
     
     if len(in_transit) == 1: 
-        ax.plot(x[m], allflux[m],marker =".", alpha = 0.9, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
+        ax.plot(x[m], allflux[m],marker = ".", alpha = 0.9, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
 
     else:
-        ax.plot(x[m], allflux[m],marker =".", alpha = 0.9, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
+        ax.plot(x[m], allflux[m],marker = ".", alpha = 0.9, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
 
 
     x = np.linspace(-0.5, 0.5, 1000)
     f = model.model(x + t0, period, duration, t0)
-    ax.plot(x, f, lw=2, color = color1)
+    ax.plot(x, f, lw=2, color = color1) # the line
     ax.set_xlim(-0.5, 0.5)
     ax.set_xlabel("time since transit (days)")
     ax.set_ylabel("de-trended flux (ppt)");
@@ -3402,6 +3588,8 @@ def plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, t
     
 
     plt.figure(figsize=(16,3.5*len(T0_list)))
+
+    plt.tight_layout()
 
     count = 0
 
@@ -3441,7 +3629,7 @@ def plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, t
         plt.title("Difference Flux (e-/candence)")
 
 
-    plt.tight_layout()
+    plt.subplots_adjust(wspace = -0.15)
 
     if save == True:
         plt.savefig('{}/{}/{}_flux_comparison.png'.format(indir, tic, tic), format='png')
