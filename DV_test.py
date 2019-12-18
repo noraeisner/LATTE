@@ -17,7 +17,23 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
 
 
-def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI, bls = False, model = False):
+indir = "./LATTE_output"
+peak_list = [1454.7] 
+tic = '55525572'
+sectors_all = [11]
+target_ra = -99
+target_dec = -99
+tessmag = -99
+teff = -99
+srad = -99
+bls_stats1 = [[-99, 99], [-99]]
+bls_stats2 = [[-99, -99], [-99]]
+bls = True
+model = True
+FFI = False
+
+def LATTE_DV(tic, indir, peak_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI = False, bls = False, model = False):
+
 
 	# ---- CHECK WHETHER THE TARGET IS A TCE OR A TOI ----
 	
@@ -688,8 +704,5 @@ class MCLine_color(Flowable):
 		self.canv.line(0, self.height, self.width, self.height)
 
 
-
-
-
-
+LATTE_DV(tic, indir, peak_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI, bls = True, model = True)
 

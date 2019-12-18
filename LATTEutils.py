@@ -264,7 +264,9 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     print ("Transits you have entered:    {}   \n".format(str(peak_list))[1:-1])
     print ("Check that these are the transits that you want")
     
-    args.save = save
+    if save == False:
+        args.save = save
+        
     # END OF INTERACTIVE PART OF CODE
 
     #  -----  BREW  ------
@@ -3288,6 +3290,8 @@ def plot_TESS_stars_not_proj(tic,indir,peak_list, peak_sec, tpf_list, args):
             plt.xlim(-0.5,10.5)
             plt.ylim(-0.5,10.5)
 
+            plt.tight_layout(h_pad= 0.5)
+
             if args.save == True:
                 plt.savefig('{}/{}/{}_star_field.png'.format(indir, tic, tic), format='png')
     
@@ -3554,16 +3558,17 @@ def plot_full_md(tic, indir, alltime, allflux,allline,alltimebinned,allfluxbinne
             else:
                 plt.subplot(2,gs,(gs+g+1))
 
+            height_cut = maxf - minf
             plt.plot(np.array(time_dd)[mask_dd], np.array(flux_dd)[mask_dd], 'o', markersize = 4, color = 'orange', alpha = 0.8, label = "unbinned", markerfacecolor='white', zorder=1)
             plt.plot(np.array(time_dd_binned)[mask_dd_binned], np.array(flux_dd_binned)[mask_dd_binned], marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 5, label = 'binning = 7', markerfacecolor='k', zorder=2)
 
-            plt.vlines(line_dd, minf,minf + height*0.25 , colors = 'r', label = "Momentum Dump", zorder=3)
+            plt.vlines(line_dd, minf-height_cut/10, minf + height*0.25 , colors = 'r', label = "Momentum Dump", zorder=3)
             plt.vlines([peak], minf,minf + height*0.25 , linewidth = 3, colors = 'k', linestyle = '--', zorder=4)
 
             plt.xlim(peak-0.75, peak+0.75)
             #plt.axvline(peak, color = 'k')
 
-            height_cut = maxf - minf
+            
             try:
                 plt.ylim(minf-height_cut/10, maxf + height_cut/10)
             except:
