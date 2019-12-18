@@ -1,1 +1,0 @@
-saoimage -reg `imtmc -r 10 $1` -wcscom stmc_-ha_%s $*

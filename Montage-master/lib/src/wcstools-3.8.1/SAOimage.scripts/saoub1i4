@@ -1,1 +1,0 @@
-saoimage -reg `imub1 -n 1000 -r 10 $1 minid=4` -wcscom sub1_-ha_%s $*

@@ -1,2 +1,0 @@
-#!/bin/sh
-saoimage -reg `imusac -r 15 $1` -wcscom susac_-ha_%s $*

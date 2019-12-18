@@ -1,1 +1,0 @@
-saoimage -reg `imujc -r 10 $1` -wcscom sujc_-ha_%s $*
