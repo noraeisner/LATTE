@@ -75,7 +75,7 @@ Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-chosen
 
 - Full lightcurve with the times of the momentum dumps marked. 
 
-![Full LC](./example_output/94986319_fullLC_md.pngs=200)
+![Full LC](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_fullLC_md.png)
 
 - Background flux around the times of the marked transit event(s).
 - Centroid positions around the time of the marked transit event(s).
