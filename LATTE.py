@@ -74,6 +74,7 @@ if __name__ == '__main__':
 	'''
 	
 	if args.targetlist == 'no': 
+		
 		#if both the sectors and the tic ID are already entered then TKinter does not need to be loaded
 		if args.tic != 'no' and args.sector != 'no':
 			tic = str(args.tic)
@@ -172,7 +173,7 @@ if __name__ == '__main__':
 
 			# --- WHAT SECTORS WAS IT OBSERVED IN? ---
 
-			sectors_all = utils.tess_point(indir, tic) 
+			sectors_all, ra, dec = utils.tess_point(indir, tic) 
 			sectors_in = row['sectors']
 			
 			try:
@@ -180,7 +181,7 @@ if __name__ == '__main__':
 				if (type(sectors_in) == int) or (type(sectors_in) == float):
 					sectors_in = [sectors_in]
 				else:
-					sectors_in = list(sectors_in) 
+					sectors_in = list(sectors_in)
 				
 				# Sucessfully entered sectors
 				# check that the target was actually observed in the stated sector
@@ -197,15 +198,12 @@ if __name__ == '__main__':
 			if type(row['transits']) == float:
 				utils.interact_LATTE(tic, indir, sectors_all, sectors, args.noshow)
 
-
 			else:
 				peak_list_in = (row['transits'])
 				peak_list = ast.literal_eval(peak_list_in)
 				
 				# convert the input transit times and sectors into peak_list in the form of a list
-				print (peak_list)
-				print (type(peak_list))
-
+	
 				if (type(peak_list) == float) or (type(peak_list) == int):
 					peak_list = [peak_list]
 				else:
@@ -244,7 +242,7 @@ if __name__ == '__main__':
 
 	# end by changing the name of the folder to include the nicknane if so defined in the input functions
 	# this allows users to keep track of their targets more easily. We name our candidates after pastries. 
-				
+		
 	if (not args.nickname == 'no') and (args.FFI == True):
 		os.system("mv {}/{} {}/FFI_{}_{}".format(indir, tic, indir, tic, args.nickname))
 

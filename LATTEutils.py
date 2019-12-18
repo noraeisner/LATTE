@@ -671,8 +671,8 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
         print ("done.\n")
     
     # -----------------------------
-    
-    plt.close('all')  # make sure all the plots are closed before starting the next section
+     # make sure all the plots are closed before starting the next section
+    plt.close('all')
 
 
     # -------------------------------------
@@ -1350,10 +1350,10 @@ def download_data(indir,sector, tic, binfac = 5):
                 future_sectors.append(s)
     
         if len(future_sectors):
-            print ("In the future, this TIC {} will be observed in sector(s) {}".format(tic, future_sectors))
+            print ("In the future, TIC {} will be observed in sector(s) {}".format(tic, future_sectors))
     
     if len(dwload_link) == 0:
-        print ("This TIC was not observed in Sector(s):   {}   .Try again with different sectors.".format(sector))
+        print ("TIC {} was not observed in Sector(s):   {}   .Try again with different sectors.".format(tic, sector))
         raise SystemExit
         #exit[0]
 

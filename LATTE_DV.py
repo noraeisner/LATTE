@@ -356,25 +356,12 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	Story.append(Paragraph(ptext, styles["Normal"]))
 
 
-
 	# --------------------------------------------
 	# tess stars + SDSS star field
 	# --------------------------------------------
 	
 	Story.append(Spacer(1, 12))
 
-	#FOV1 = Image(tess_stars_name)
-	#FOV2 = Image(SDSS_stars_name)
-#
-	#FOV1._restrictSize(width*0.3, width*0.3)
-	#FOV2._restrictSize(width*0.35, width*0.35)
-#
-	#FOV_table = (Table([[FOV1, FOV2]],
-	#				colWidths=[width * 0.45], rowHeights=[width * 0.45]))
-	#
-	#FOV_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTRE'),('VALIGN', (0, 0), (-1,-1), 'MIDDLE')]))
-	#
-	#Story.append(FOV_table)
 
 	im6 = Image(tess_stars_name)
 	
@@ -480,7 +467,6 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 							('FONTSIZE', (0,0),(-1,7), 8),
 							])
 	
-
 
 		# ------ ADD A LINE TO SEPERATE SECTIONS -------
 		
