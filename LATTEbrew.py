@@ -24,10 +24,11 @@ import LATTEutils as utils
 warnings.filterwarnings('ignore')
 
 
-def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args):
+def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args):
 	'''
-	This function that runs LATTE - makes the plots, saves them, runs the BLS model and the pyaneti model before 
-	making a PHT DV report (if told to do so.) 
+	This function combines all the results from LATTE and calls all the different functions - 
+	it makes the plots, saves them, runs the BLS model and the pyaneti model before making a PHT DV report (if this option is selected.) 
+	
 	
 	Parameters
 	----------
@@ -35,7 +36,7 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 		target TIC ID
 	indir  :  str
 		path to directory where all the plots and data will be saved. 
-	peak_list   : list
+	transit_list   : list
 		list of the transit-like events
 	simple   :   boolean
 		whether or not to run the simple version
@@ -49,55 +50,97 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 		whether or not to write and save a DV report
 	sectors_all  :   list
 		all the sectors in which the target has been/ will be observed
-	show  :  list
-		the sectors which will be analysed
+    alltime  :  list
+        times (not binned)
+    allflux  :  list
+        normalized flux (not binned)
+    allflux_err  :  list
+        normalized flux errors (not binned)
+    all_md  :  list
+        times of the momentum dumps
+    alltimebinned  :  list
+        binned time
+    allfluxbinned  :  list
+        normalized binned flux
+    allx1  :  list
+        CCD column position of target’s flux-weighted centroid. In x direction
+    allx2  :  list
+        The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In x direction
+    ally1  :  list
+        CCD column position of target’s flux-weighted centroid. In y direction
+    ally2  :  list
+        The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In y direction
+    alltimel2  :  list
+        time used for the x and y centroid position plottin
+    allfbkg  :  list
+        background flux
+    start_sec  :  list
+        times of the start of the sector
+    end_sec  :  list
+        times of the end of the sector
+    in_sec  :  list
+        the sectors for which data was downloaded
+    tessmag  :  list
+        TESS magnitude of the target star
+    teff  :  float
+        effective temperature of the tagret star (K)
+    srad  :  float
+        radius of the target star (solar radii)
+	 ra    :    float 
+		the right ascension of the target stars
+	 dec    :   float 
+		the declination of the target star
 
-	Returns
-	-------
-		runs the brew_LATTE code...
 	'''
 
 	# -------------------
 	# SAVE THE DATA FILES 
 	# -------------------
-	show = args.noshow
 
 	if (save == True) or (DV == True):
 		save = True
-
+		# if this folder doesn't exist then create it. These are the folder where the images, data and reports for each TIC ID will be stored.
 		newpath = '{}/{}'.format(indir,tic)
-		# if this folder doesn't exist then create it...
+		
 		if not exists(newpath):
 			os.makedirs(newpath)
 
+		# save the data used as a text file - these often come in use later for a quick re-analysis.
 		with open('{}/{}/{}_data.txt'.format(indir, tic, tic), "w") as f:
-			# save the data 
-			# get rid of nan values first - this is used for the pyaneti code
-			
-			good_mask = np.isfinite(np.array(alltime)) * np.isfinite(np.array(allflux)) * np.isfinite(np.array(allflux_err)) 
 
+			# get rid of nan values first using a mask
+			good_mask = np.isfinite(np.array(alltime)) * np.isfinite(np.array(allflux)) * np.isfinite(np.array(allflux_err)) 
 			alltime_ar = np.array(alltime)[good_mask]
 			allflux_ar = np.array(allflux)[good_mask]
 			allflux_err_ar = np.array(allflux_err)[good_mask]
 
+			# save
 			writer = csv.writer(f, delimiter='\t')
 			writer.writerow(['time', 'flux', 'flux_err'])
 			writer.writerows(zip(alltime_ar,allflux_ar,allflux_err_ar))
 		
+		'''
+		if the modelling option was also chose, save another data file with slightly different formatting to be called by Pyaneti.
+		Pyaneti requires a very specific data format.
+		
+		Furhermore, in order for Pyaneti to run more efficiently (it has a Bayesian backend which scales with number of data points)
+		we create a cutout of the times around the times of the marked transit events. 
+		'''
+
 		if model == True:
 			with open('{}/{}/{}_data_pyaneti.dat'.format(indir, tic, tic), "w") as f:
 				writer = csv.writer(f, delimiter='\t')
 				writer.writerow(['#time', 'flux', 'flux_err'])
 
-
-			if (len(peak_list) > 1) and ((peak_list[1] - peak_list[0]) < 2): # if there are LOTS of transit events on short period (if so it's probably a TOI but let's keep it here as a condition)
+			# If the dip separations are too small, then don't create cut outs and save the whole dataset
+			if (len(transit_list) > 1) and ((transit_list[1] - transit_list[0]) < 2): # if there are LOTS of transit events on short period (if so it's probably a TOI but let's keep it here as a condition)
 				with open('{}/{}/{}_data_pyaneti.dat'.format(indir, tic, tic), "a") as f:
 					writer = csv.writer(f, delimiter='\t')
 					writer.writerows(zip(alltime_ar,allflux_ar,allflux_err_ar)) # save all the data
 
-			# else create a cut out of the data around the time of the transit event
+			# else create a cut out of the data around the time of the transit events
 			else:
-				for transit in peak_list:
+				for transit in transit_list:
 					# save the data 
 					# get rid of nan values first - this is used for the pyaneti code
 					pyaneti_mask = (alltime_ar > (transit - 1)) * (alltime_ar < (transit + 1))
@@ -107,42 +150,67 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 						writer.writerows(zip(alltime_ar[pyaneti_mask],allflux_ar[pyaneti_mask],allflux_err_ar[pyaneti_mask]))
 
 
-		utils.plot_full_md(tic, indir, alltime,allflux,allline,alltimebinned,allfluxbinned, peak_list, args)
-
-
 	# -----------------------------------
-	#            START PLOTTING
+	#            START PLOTTING          
 	# -----------------------------------
-
-	## get the sectors that have a transit marked in them
-	peak_sec = utils.peak_sec(in_sec,start_sec, end_sec, peak_list)
 	
-	utils.plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, peak_list, args)
-	utils.plot_background(tic, indir,alltime, allfbkg, peak_list, args)
+	# create a plot of the fulllighcurves with the momentum dumps (MDs) marked and a zoom-in of the marked transits
+	utils.plot_full_md(tic, indir, alltime,allflux,all_md,alltimebinned,allfluxbinned, transit_list, args)
+
+	# Get a list of the sectors that have transit marked in them
+	transit_sec = utils.transit_sec(in_sec,start_sec, end_sec, transit_list)
+	
+	# -----------
+
+	# plot how the centroids moved during the transit event
+	utils.plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, transit_list, args)
+	# plot the background flux at the time of the transit event.
+	utils.plot_background(tic, indir,alltime, allfbkg, transit_list, args)
+	
 	print ("Centroid and background plots... done.")
+	# -----------
+
+	# if the 'simple' option is chosen in the GUI, them the code will end here - this is designed a simple quick analysis
 	if simple == True:
 		print ("Simple option was selected, therefore end analysis here.")
 		sys.exit('')
 
+	# -----------
 
-	TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.tpf_data(indir, peak_list, sectors, tic)
+	# call function to extract the Target Pixel File information 
+	# this is needed in order to extract the LCs in different aperture sizes.
+	# the data is extracted using the open source LightKurve package as they a built in function to extract LCs using different aperture sizes
+	TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic)
 	
-	utils.plot_aperturesize(tic,indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, peak_list, args)
+	# plot the LCs using two different aperture sizes.
+	utils.plot_aperturesize(tic,indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, transit_list, args)
 	
 	print ("Aperture size plots... done.")
-	# nearby stars
-	_, _, _, mstar = utils.plot_TESS_stars(tic,indir, peak_list, peak_sec, tpf_list, args)
+	# ------------
+
+	'''
+	Plot the average pixel brightness of the cut-out around the target star and the corresponding SDSS field of view.
+	Both are oriented so that North is pointing upwards.
+	The former also shows the nearby stars with TESS magnitude brighter than 17. Queried from GAIA using astroquery.
+	The function returns the mass of the star (also output from astroquery)- this is a useful input for the Pyaneti modelling		
+	'''
+	_, _, _, mstar = utils.plot_TESS_stars(tic,indir, transit_list, transit_sec, tpf_list, args)
 
 	print ("Star Aperture plots... done.")
-	# plot the phase folded
-	if len (peak_list) > 1:
+	# ------------
 
-		period = peak_list[1] - peak_list[0]
-		t0 = peak_list[0]
-		
-		fig, ax = plt.subplots(figsize=(10,6))
+	# If more than one transit has been marked by the user, the LC is phase folded based on the period of the separation of the first two maarked peaks.
+	# These plots are saved but do not feature in the DV report.
+	if len (transit_list) > 1: # needs to know a period so can only do this if more than one transit has been marked.
+
+		# find the period
+		period = transit_list[1] - transit_list[0]
+		t0 = transit_list[0] # time of the first marking
+
+		# calculate the phase
 		phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltimebinned])
 		
+		fig, ax = plt.subplots(figsize=(10,6))
 		ax.plot(phased, allfluxbinned,marker='o',color = 'navy', alpha = 0.7, lw = 0, markersize = 2, label = 'binning = 7', markerfacecolor='white')
 		plt.title("Phase folded LC")
 		ax.set_xlabel("Phase (days)")
@@ -152,19 +220,27 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 		if save == True:
 			plt.savefig('{}/{}/{}_phase_folded.png'.format(indir, tic, tic), format='png')
 		
-		if show == True:
+		if args.noshow == True:
 			plt.show()
 
 		print ("Phase folded plot... done.")
 
 	else:
 		print ("\n Only one transit marked - therefore can't be phase folded. \n")
-		
+	# ------------
 	
-	X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_data_tpf(indir, peak_sec, peak_list, tic)
+	# Download the Target Pixel File using the raw MAST data - this comes in a different format as the TPFs extracted using Lightkurve
+	# This data is then corrected using Principal Component Analysis is orderto get rid of systematics.
+	X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic)
 	
-	# plot the in and out of transit flux comparison
-	# orient the images to be aligned north - required reprojecting so takes longer which is why this is not the default.
+	# ------------
+
+	'''
+	plot the in and out of transit flux comparison.
+	By default the images are NOT orented north - this is because the reprojectio takes longer to run and for a simple
+	analysis to chekc whether the brightest pixel moves during the transit this is not required.
+	The orientation towards north can be defined in the command line with '--north'.
+	'''
 	if args.north == True:
 		utils.plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, tpf_list, args)
 		print ("In and out of aperture flux comparison with reprojection... done. ")
@@ -172,54 +248,78 @@ def brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sec
 	else:
 		utils.plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, args)
 		print ("In and out of aperture flux comparison... done.")
-	
+	# ------------
 
-	# plot one lightcurve for each pixel extracted around the time of the transit
+	# For each pixel in the TPF, extract and plot a lightcurve around the time of the marked transit event.
 	utils.plot_pixel_level_LC(tic, indir,X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, args)
 	print ("Pixel level LCs plot... done.")
+	# ------------
 
-	# nearest neighbour light curve comparison plot
-	ticids, distance, target_ra, target_dec = utils.nn_ticids(indir, peak_sec, tic)
-	alltime_nn, allflux_nn, allline_nn, alltimebinned_nn, allfluxbinned_nn,outtics,tessmag_list, distance = utils.download_data_neighbours(indir, peak_sec[0], ticids, distance)
-	utils.plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, peak_list, outtics, tessmag_list, distance, args)
-	print ("Nearest neighbour plot... done.")
+	'''
+	Plot LCs of the six closest TESS target stars. This allows us to check whether the transit-like events 
+	also appear in other nearby LCs which would be a sign that this is caused by a background event.
+	'''
 
-	if BLS == True:
-		print ("Running BLS")
-		bls_stats1, bls_stats2 = utils.data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args)
-		
+	# get the tic IDs of the six nearest stars
+	ticids, distance, target_ra, target_dec = utils.nn_ticids(indir, transit_sec, tic)
 
-	# run pyaneti - this takes a while to run so carefully cnosider whether you want to run this
+	# download the data for these stars
+	alltime_nn, allflux_nn, all_md_nn, alltimebinned_nn, allfluxbinned_nn,outtics,tessmag_list, distance = utils.download_data_neighbours(indir, transit_sec[0], ticids, distance)
 	
-	# first check if Pyaneti is even installed...
+	# plot the LCs
+	utils.plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, transit_list, outtics, tessmag_list, distance, args)
+	print ("Nearest neighbour plot... done.")
+	# ------------
+
+	# if the BLS option is chose, a BLS search is run. The LCs are first detrended and smoothed using a moving average. 
+	# The corrected and uncorrected LCs are saves as a single plot for comparison and to verify that the correction worked well - saved but do not feature in the DV report. 
+	if BLS == True:
+		print ("Running BLS algorithm...", end =" ")
+		bls_stats1, bls_stats2 = utils.data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args)
+		print ("done.")
+	# ------------
+
+	'''
+	If the modelling option is selected (in the GUI), model the transit event using Pyaneti (Barragan et al 2018)
+	which uses an Bayesian approach with an MCMC sampling to best fit and model the transit.
+	The code runs slightly differently depending on whether one or multiple transits have been marked. 
+	This is because with multiple transits the code has information about the possible orbital period.
+	Need to ensure that the code has compiled correctly on the users computer. 
+	'''
+
+	# First check if Pyaneti is installed...
 	if os.path.exists("./pyaneti_LATTE.py"):
 
 		if model == True:
 			print ("Running Pyaneti modelling - this could take a while so be patient...")
 	
-			peak_list_model =  ("{}".format(str(np.asarray(peak_list)))[1:-1]) # change the list into a string and get rid of the brackets
-			os.system("python3 pyaneti_LATTE.py {} {} {} {} {} {}".format(tic, indir, mstar, teff, srad, peak_list_model))
+			transit_list_model =  ("{}".format(str(np.asarray(transit_list)))[1:-1]) # change the list into a string and get rid of the brackets
+			# the code is usually run through the command line so call it using the os.system function.
+			os.system("python3 pyaneti_LATTE.py {} {} {} {} {} {}".format(tic, indir, mstar, teff, srad, transit_list_model))
 	
 	else:
-		print ("Pyaneti has not been installed so you can't model anything yet. Ask Nora or Oscar for the LATTE version of the Pyaneti code.")
+		print ("Pyaneti has not been installed so you can't model anything yet. Contact Nora or Oscar for the LATTE version of the Pyaneti code.")
 		model = False
+	# ------------
 
-
+	# Finally, create a DV report which summarises all of the plots and tables.
 	if DV == True: 
 		import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, peak_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2,FFI = False,  bls = True, model = model)
+			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI = False,  bls = True, model = model)
 		else:
-			ldv.LATTE_DV(tic, indir, peak_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0],FFI = False,  bls = False, model = model)
+			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], FFI = False,  bls = False, model = model)
 
 
 
-def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, allline, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):
+def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):
 	
 	'''
 	This function that runs LATTE - makes the plots, saves them, runs the BLS model and the pyaneti model before 
 	making a PHT DV report (if told to do so.)
+	This function is very similar to brew_LATTE - 
+	except that it is designed to analyse the FFIs and therefore the data download is different.
 	
 	Parameters
 	----------
@@ -227,7 +327,7 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 		target TIC ID
 	indir  :  str
 		path to directory where all the plots and data will be saved. 
-	peak_list   : list
+	transit_list   : list
 		list of the transit-like events
 	simple   :   boolean
 		whether or not to run the simple version
@@ -241,55 +341,100 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 		whether or not to write and save a DV report
 	sectors_all  :   list
 		all the sectors in which the target has been/ will be observed
-	show  :  list
-		the sectors which will be analysed
 
-	Returns
-	-------
-		runs the brew_LATTE code...
+    alltime  :  list
+        times
+    allflux_normal  :  list
+        normalized flux extracted with the larger aperture (PCA corrected)
+    allflux_small  : list
+        normalized flux extracted with the smaller aperture (PCA corrected)
+    allflux   : list 
+        normalized detrended flux extracted with the larger aperture
+    all_md  :  list
+        times of the momentum dumps
+    allfbkg  :  list
+        background flux
+    allfbkg_t  :  list
+        times used to plot the background
+    start_sec  :  list
+        times of the start of the sector
+    end_sec  :  list
+        times of the end of the sector
+    in_sec  :  list
+        the sectors for which data was downloaded
+    X1_list  :  list
+        flux vs time for each pixel (for each sector)
+    X4_list  :  list
+        PCA corrected flux vs time for each pixel (for each sector)
+    apmask_list  :  list
+        aperture masks from the pipeline
+    arrshape_list  :  list
+        list of the shape of the array (for each sector)
+    tpf_filt_list   : list
+        list of the filtered (masked) corrected target pixel data - from X4. (for each sector)
+    t_list  :  list
+        list of the time arrays (for each sector)
+    bkg_list  :  list
+        the flux that was used to normalise each pixel - i.e. what is used to make the background plot colour for each pixel.
+    tpf_list   : list 
+        list of the target pixel files (for each sector)
+	ra   :   float
+		right ascension of the target star
+	dec   :   float
+		declination of the target star
+
 	'''
+
 	# ----------------------------------------
 	#           SAVE THE DATA FILES 
 	# ----------------------------------------
-	show = args.noshow
+
 
 	if (save == True) or (DV == True):
 		save = True
 
+		# if this folder doesn't exist then create it. These are the folder where the images, data and reports for each TIC ID will be stored.
 		newpath = '{}/{}'.format(indir,tic)
-		# if this folder doesn't exist then create it...
+		
 		if not exists(newpath):
 			os.makedirs(newpath)
-
+		
+		# save the data used as a text file - these often come in use later for a quick re-analysis.
 		with open('{}/{}/{}_data.txt'.format(indir, tic, tic), "w") as f:
-			# save the data 
-			# get rid of nan values first - this is used for the pyaneti code
 			
+			# get rid of nan values first using a mask
 			good_mask = np.isfinite(np.array(alltime)) * np.isfinite(np.array(allflux))
-
 			alltime_ar = np.array(alltime)[good_mask]
 			allflux_ar = np.array(allflux)[good_mask]
-
 			allflux_err_ar = allflux_ar * 0.001
 
+			# save data 
 			writer = csv.writer(f, delimiter='\t')
 			writer.writerow(['time', 'flux', 'flux_err'])
 			writer.writerows(zip(alltime_ar,allflux_ar,allflux_err_ar))
+
+		'''
+		if the modelling option was also chose, save another data file with slightly different formatting to be called by Pyaneti.
+		Pyaneti requires a very specific data format.
 		
+		Furhermore, in order for Pyaneti to run more efficiently (it has a Bayesian backend which scales with number of data points)
+		we create a cutout of the times around the times of the marked transit events. 
+		'''
+
 		if model == True:
 			with open('{}/{}/{}_data_pyaneti.dat'.format(indir, tic, tic), "w") as f:
 				writer = csv.writer(f, delimiter='\t')
 				writer.writerow(['#time', 'flux', 'flux_err'])
 
-
-			if (len(peak_list) > 1) and ((peak_list[1] - peak_list[0]) < 2): # if there are LOTS of transit events on short period (if so it's probably a TOI but let's keep it here as a condition)
+			# if the dip separations are too small, then don't create cut outs and save the whole dataset
+			if (len(transit_list) > 1) and ((transit_list[1] - transit_list[0]) < 2): # if there are LOTS of transit events on short period (if so it's probably a TOI but let's keep it here as a condition)
 				with open('{}/{}/{}_data_pyaneti.dat'.format(indir, tic, tic), "a") as f:
 					writer = csv.writer(f, delimiter='\t')
 					writer.writerows(zip(alltime_ar,allflux_ar,allflux_err_ar)) # save all the data
 
 			# else create a cut out of the data around the time of the transit event
 			else:
-				for transit in peak_list:
+				for transit in transit_list:
 					# save the data 
 					# get rid of nan values first - this is used for the pyaneti code
 					pyaneti_mask = (alltime_ar > (transit - 1)) * (alltime_ar < (transit + 1))
@@ -299,40 +444,59 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 						writer.writerows(zip(alltime_ar[pyaneti_mask],allflux_ar[pyaneti_mask],allflux_err_ar[pyaneti_mask]))
 
 
-		utils.plot_full_md(tic, indir, alltime,allflux,allline,alltime,allflux, peak_list, args)
-
 
 	# ------------------------------------------
 	#               START PLOTTING
 	# ------------------------------------------
+	
+	# create a plot of the fulllighcurves with the momentum dumps (MDs) marked and a zoom-in of the marked transits
+	utils.plot_full_md(tic, indir, alltime,allflux,all_md,alltime,allflux, transit_list, args)
 
-	## get the sectors that have a transit marked in them
-	peak_sec = utils.peak_sec(in_sec,start_sec, end_sec, peak_list)
+	# get the sectors that have a transit marked in them
+	transit_sec = utils.transit_sec(in_sec,start_sec, end_sec, transit_list)
+	
+	# -----------
 
-	utils.plot_background(tic, indir, allfbkg_t, allfbkg, peak_list, args)
-	print ("Centroid and background plots... done.")
+	# plot the background flux at the time of the transit event.
+	utils.plot_background(tic, indir, allfbkg_t, allfbkg, transit_list, args)
+	print ("Background plots... done.")
+	# -----------
+
 	if simple == True:
 		print ("Simple option was selected, therefore end analysis here.")
 		sys.exit('')
+	# -----------
 
-
-	utils.plot_aperturesize(tic,indir,alltime, alltime, alltime, allflux_normal, allflux_normal, allflux_small, peak_list, args)
+	# plot the LC using different aperture sizes
+	utils.plot_aperturesize(tic,indir,alltime, alltime, alltime, allflux_normal, allflux_normal, allflux_small, transit_list, args)
 	
-
 	print ("Aperture size plots... done.")
-	# nearby stars
-	tessmag, teff, srad, mstar = utils.plot_TESS_stars(tic,indir,peak_list, peak_sec, tpf_list, args)
+	# -----------
+
+	'''
+	Plot the average pixel brightness of the cut-out around the target star and the corresponding SDSS field of view.
+	Both are oriented so that North is pointing upwards.
+	The former also shows the nearby stars with TESS magnitude brighter than 17. Queried from GAIA using astroquery.
+	The function returns the TESS magnitude, effective temperature (K), the radius of the star (solar radii)and the 
+	mass of the star (solar mass) (also output from astroquery)- this is a useful input for the Pyaneti modelling		
+	'''
+	tessmag, teff, srad, mstar = utils.plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args)
 
 	print ("Star Aperture plots... done.")
-	# plot the phase folded
-	if len (peak_list) > 1:
+	# -----------
 
-		period = peak_list[1] - peak_list[0]
-		t0 = peak_list[0]
+	# If more than one transit has been marked by the user, the LC is phase folded based on the period of the separation of the first two maarked peaks.
+	# These plots are saved but do not feature in the DV report.
+	if len (transit_list) > 1:  # needs to know a period so can only do this if more than one transit has been marked.
+
+		# find the period
+		period = transit_list[1] - transit_list[0]
+		t0 = transit_list[0] # time of the first marking
 		
-		fig, ax = plt.subplots(figsize=(10,6))
+		# calculate the phase
 		phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltime])
 		
+		fig, ax = plt.subplots(figsize=(10,6))
 		ax.plot(phased, allflux,marker='o',color = 'navy', alpha = 0.7, lw = 0, markersize = 2, label = 'binning = 7', markerfacecolor='white')
 		plt.title("Phase folded LC")
 		ax.set_xlabel("Phase (days)")
@@ -342,66 +506,89 @@ def brew_LATTE_FFI(tic, indir, peak_list, simple, BLS, model, save, DV, sectors,
 		if save == True:
 			plt.savefig('{}/{}/{}_phase_folded.png'.format(indir, tic, tic), format='png')
 		
-		if show == True:
+		if args.noshow == True:
 			plt.show()
 
 		print ("Phase folded plot... done.")
 
 	else:
-		print ("\n Only one transit marked - therefore can't be phase folded. \n")
-		
-	
-	# calculate the oot_list and intr_list and T0_list
+		print ("\n Only one transit marked - therefore can't be phase folded. \n")	
+	# ------------
 
-	oot_list = []
-	intr_list = []
-	T0_list = []
+	'''
+	In order to create the plots that compare the in and out of transit average flux 
+	we need to create TPF masks for the in and out of transit. 
+	This couldn't be done at the time of the extraction of the TPF arrays as the transit times 
+	had not yet been defined. 
+	'''
+	oot_list = [] # out of transit
+	intr_list = []  # in transit
+	T0_list = []  # list of the transit times - make a new list to ensure that thet are in the same sorder.
 
-	for T0 in peak_list:
+	for T0 in transit_list:
 		for t in t_list:
+			# these times were found to give good approximations for out of transit and in transit
+			# Note: this will NOT be 'perfect' for all events, as it depends on the transit duration which the code doesnt' know at this time but it's a good approximation.
 			if (T0 > np.nanmin(t)) and (T0 < np.nanmax(t)):
-				oot_list.append((abs(T0-np.array(t)) < 0.56) * (abs(T0-np.array(t)) < 0.3)) 
+				oot_list.append((abs(T0-np.array(t)) < 0.55) * (abs(T0-np.array(t)) < 0.3)) 
 				intr_list.append(abs(T0-np.array(t)) < 0.1)
 				T0_list.append(T0)
 
-	# orient the images to be aligned north - required reprojecting so takes longer which is why this is not the default.
+	# ------------
+
+	# Plot the in and out of transit flux comparison 
+	# By default the images are NOT orented north - this is because the reprojectio takes longer to run and for a simple
+	# analysis to chekc whether the brightest pixel moves during the transit this is not required.
+	# The orientation towards north can be defined in the command line with '--north'.
+
 	if args.north == True:
 		utils.plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, tpf_list, args)
 		print ("In and out of aperture flux comparison with reprojection... done. ")
-
 	else:
-		# plot the in and out of transit flux comparison
 		utils.plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, args)
 		print ("In and out of aperture flux comparison... done.")
-	
-	# plot one lightcurve for each pixel extracted around the time of the transit
+	# ------------
+
+	# For each pixel in the TPF, extract and plot a lightcurve around the time of the marked transit event.
 	utils.plot_pixel_level_LC(tic, indir,X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, args)
 	print ("Pixel level LCs plot... done.")
+	# ------------
 
+	# If the BLS option is chose, a BLS search is run. The LCs are first detrended and smoothed using a moving average. 
+	# The corrected and uncorrected LCs are saves as a single plot for comparison and to verify that the correction worked well - saved but do not feature in the DV report. 
 	if BLS == True:
 		print ("Running BLS")
 		bls_stats1, bls_stats2 = utils.data_bls_FFI(tic, indir, alltime, allflux, args)
-	
-	# run pyaneti - this takes a while to run so carefully cnosider whether you want to run this
+	# ------------
+
+	'''
+	If the modelling option is selected (in the GUI), model the transit event using Pyaneti (Barragan et al 2018)
+	which uses an Bayesian approach with an MCMC sampling to best fit and model the transit.
+	The code runs slightly differently depending on whether one or multiple transits have been marked. 
+	This is because with multiple transits the code has information about the possible orbital period.
+	Need to ensure that the code has compiled correctly on the users computer. 
+	'''
+
 	# first check if Pyaneti is even installed...
 	if os.path.exists("./pyaneti_LATTE.py"):
 
 		if model == True:
 			print ("Running Pyaneti modelling - this could take a while so be patient...")
-	
-			peak_list_model =  ("{}".format(str(np.asarray(peak_list)))[1:-1]) # change the list into a string and get rid of the brackets
-			os.system("python3 pyaneti_LATTE.py {} {} {} {} {} {}".format(tic, indir, mstar, teff, srad, peak_list_model))
+			
+			# the code is usually run through the command line so call it using the os.system function.
+			transit_list_model =  ("{}".format(str(np.asarray(transit_list)))[1:-1]) # change the list into a string and get rid of the brackets
+			os.system("python3 pyaneti_LATTE.py {} {} {} {} {} {}".format(tic, indir, mstar, teff, srad, transit_list_model))
 	
 	else:
 		print ("Pyaneti has not been installed so you can't model anything yet. Ask Nora or Oscar for the LATTE version of the Pyaneti code.")
 		model = False
 
-
+	# Finally, create a DV report which summarises all of the plots and tables.
 	if DV == True: 
 		import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, peak_list, sectors_all, ra, dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI = True, bls = True, model = model)
+			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, ra, dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI = True, bls = True, model = model)
 		else:
-			ldv.LATTE_DV(tic, indir, peak_list, sectors_all, ra, dec, tessmag, teff, srad, [0], [0], FFI = True, bls = False, model = model)
+			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, ra, dec, tessmag, teff, srad, [0], [0], FFI = True, bls = False, model = model)
 

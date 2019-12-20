@@ -17,7 +17,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
 
 
-def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI, bls = False, model = False):
+def LATTE_DV(tic, indir, transit_list, sectors_all,target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI, bls = False, model = False):
 
 	# ---- CHECK WHETHER THE TARGET IS A TCE OR A TOI ----
 	
@@ -268,7 +268,7 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	Story.append(PageBreak()) # always start a new page for this analysis
 	im2 = Image(background_flux_name)
 	
-	if len(peak_list) == 1:
+	if len(transit_list) == 1:
 		im2._restrictSize(width*0.55, width*0.55)
 	
 	else:
@@ -292,8 +292,8 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	if FFI == False:
 		Story.append(Spacer(1, 10))
 		im3 = Image(centroid_positions_name)
-		print (len(peak_list))
-		if len(peak_list) == 1:
+		print (len(transit_list))
+		if len(transit_list) == 1:
 			im3._restrictSize(width*0.52, width*0.52)
 		else:
 			im3._restrictSize(width*0.7, width*0.7)
@@ -320,8 +320,8 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	# Flux Aperture
 	# --------------------------------------------
 	im4 = Image(flux_aperture_name)
-	print (peak_list)
-	if len(peak_list) == 1:
+	print (transit_list)
+	if len(transit_list) == 1:
 		im4._restrictSize(width*0.55, width*0.55)
 	else:
 		im4._restrictSize(width*0.7, width*0.7)
@@ -365,7 +365,6 @@ def LATTE_DV(tic, indir, peak_list, sectors_all,target_ra, target_dec, tessmag, 
 	# --------------------------------------------
 	
 	Story.append(Spacer(1, 12))
-
 
 	im6 = Image(tess_stars_name)
 	

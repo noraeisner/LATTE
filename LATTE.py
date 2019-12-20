@@ -1,4 +1,4 @@
-# last updated 12 Nov 2019
+# last updated 19 Nov 2019
 
 #imports
 import os
@@ -22,6 +22,9 @@ import LATTEutils as utils
 warnings.filterwarnings('ignore')
 
 
+# -------------------- START ---------------------
+# ------------------------------------------------
+
 if __name__ == '__main__':
 	ap = ArgumentParser(description='Lightcurve Analysis Tool for Transiting Exoplanets')
 	ap.add_argument('--new-data', action='store_true')
@@ -38,11 +41,11 @@ if __name__ == '__main__':
 	
 	args = ap.parse_args()
 
-	# State the imput director - change this if you want to store the data elsewhere. 
+	# State the input directory - change this if you want to store the data elsewhere. 
 	indir = "./LATTE_output"
 
-	# ----------------------------
-
+	# ------------------------------------------------
+	#check whether the directory already exists, and if it doesn't create the directory.
 	if not os.path.exists("{}".format(indir)):
 		os.makedirs(indir)
 
@@ -50,43 +53,60 @@ if __name__ == '__main__':
 		os.makedirs("{}/data".format(indir))
 
 	# ------------------------------------------------
-	# -------------------- START ---------------------
-	# ------------------------------------------------
+	'''
+	Check whether to download the data reference files
+	This will only run if you tell the program to run this (with the args)- needs to be run the first time that one wants to download data
+	This should also be called if new TESS data is released 
+	The program will check what data has already been downloaded and only download new data files.
+	'''
 
 	if args.new_data != False: 
-		# This checks to download the data reference files
-		# This will only run if you tell the program to run this - needs to be run the first time that one wants to download data
-		# Also run if new data is released - the program will check what is already available and only download new things.
-	
-		# ---- REFERENCE FILES DOWNLOAD -----
+
+		# ----- REFERENCE FILES DOWNLOAD -----
 		utils.data_files(indir)
-		utils.nn_files(indir)
+		utils.tp_files(indir)
 		utils.TOI_TCE_files(indir)
 		utils.momentum_dumps_info(indir)
-		# ----
+		# -----
 	
-	# -----------  INTERACTIVE VERSION ------------
+	# -----------  INTERACTIVE VERSION  ------------
 	# ---------------------------------------------
+	
 	'''
+	
 	NOTE: this requires you to have Tkinter installed. Tkinter does not work with certain new Mac operating systems.
 	In order to run LATTE with an input list and not interatcively, state the path to the csv file when running the program.
 	csv file must have format: "TICID, sectors, transits, BLS, model" - see example.
+	The TIC ID and Sectors to look at can also be stated in the command line as an argument to save time
+	The interactive tool is for ease of use and to avoid having to understand how to use the command line.
 	'''
 	
+	# Check whether the a target list has been defined.
 	if args.targetlist == 'no': 
-		
-		#if both the sectors and the tic ID are already entered then TKinter does not need to be loaded
+
+		# Check whether the tic ID and the sector have already been entered
+		# If both the sectors and the tic ID are already entered then TKinter does not need to be loaded
 		if args.tic != 'no' and args.sector != 'no':
 			tic = str(args.tic)
 			sectors = str(args.sector)
 
+			# Check whether we are looking at an FFI
+			# The FFI information needs to be stored straight away so a folder needs to be created to store them. 
+			# The folder for the non-FFIs is created later after the user choses whether to 'save' data or not.
 			if args.FFI == True:
 				newpath = '{}/{}'.format(indir,tic)
+
 				# if this folder doesn't exist then create it...
 				if not exists(newpath):
 					os.makedirs(newpath)
 
+			# --------
+			# Run a function called TESS-point. This returns wthe sectors in which the target has 
+			# been observed as well as the RA and DEC of the target. 
 			sectors_all, ra, dec = utils.tess_point(indir, tic) 
+			# --------
+
+		# if either the tic or the sectors or both have not already been identified, run Tkinter (interactive tools)
 		
 		else:
 			# make a GUI interface with TKinter
@@ -96,12 +116,13 @@ if __name__ == '__main__':
 			# has the tic already been defined?
 			if args.tic == 'no':
 
-				# first prompt window which asks for TIC ID	
+				# load first prompt window which asks for TIC ID	
 				tic = simpledialog.askstring(title="TIC",
 												  prompt="Enter TIC ID:")
 			else:
 				tic = str(args.tic)
 
+			# Is this an FFI? - if it is, need to create a folder to store the FFI data in (one for each TIC ID)
 			if args.FFI == True:
 				newpath = '{}/{}'.format(indir,tic)
 				# if this folder doesn't exist then create it...
@@ -111,39 +132,48 @@ if __name__ == '__main__':
 			# has the sector already been defined? 
 			if args.sector == 'no':
 				# returns all of the sectors in which TESS observed the given TIC id - this uses TESS-point
+
 				sectors_all, ra, dec = utils.tess_point(indir, tic) 
 		
-				#  Ask to define the sectors
+				# The user is shown a list of the sectors im which the target is observed 
+				# and asked to state whichones they want to assess
+
 				sectors = simpledialog.askstring(title="Sectors",
 												  prompt="TIC {} was observed in sector(s):\n {}. \n Enter the ones you wish to look at (e.g. 1,4) or 'all' for all of them.".format(tic, sectors_all))
 			else:
+				# still need to run tess point even if the targets are already defined as we need to check whether target appears in the stated sector - sanity check
 				sectors_all, ra, dec = utils.tess_point(indir, tic) 
 				sectors = str(args.sector)
 
+			# close the TKinter windows.
 			ROOT.quit()
 			ROOT.destroy()
 		
+		# if no sector is defined or the word 'all' is written in the box, analyse all of the given sectors.
 		if len(sectors) == 0:
 			sectors = 'all'
 		
+		# if not all of them are chose, convert the input list (given as a string) into a python readable list
 		if sectors != 'all':
 			sectors = sectors.split(",")
 			sectors = [int(i) for i in sectors]
 		
 		print ("\n")
-	
+		
+		# print out the information that has been chosen to the command line.
 		if sectors == 'all':
 			print ("Will look at  sector(s) ({}) \n".format(sectors_all))
 		else:
 			print ("Will look at available sectors: {} \n".format(sectors))
 	
+		# star up LATTE interactive where the transit times can be chosen manually 
+		# this works differently for FFI data and target files as the data has a different format
 		if args.FFI == False:
 			utils.interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args)  # the argument of whether to shos the images or not 
 		else:
 			utils.interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args)
 		
 		# Done
-
 
 	# ---------------------------------------
 	# ---------------------------------------
@@ -199,15 +229,15 @@ if __name__ == '__main__':
 				utils.interact_LATTE(tic, indir, sectors_all, sectors, args.noshow)
 
 			else:
-				peak_list_in = (row['transits'])
-				peak_list = ast.literal_eval(peak_list_in)
+				transit_list_in = (row['transits'])
+				transit_list = ast.literal_eval(transit_list_in)
 				
-				# convert the input transit times and sectors into peak_list in the form of a list
+				# convert the input transit times and sectors into transit_list in the form of a list
 	
-				if (type(peak_list) == float) or (type(peak_list) == int):
-					peak_list = [peak_list]
+				if (type(transit_list) == float) or (type(transit_list) == int):
+					transit_list = [transit_list]
 				else:
-					peak_list = list(peak_list)
+					transit_list = list(transit_list)
 				
 				BLS_in = row['BLS']
 				model_in = row['model']
@@ -232,13 +262,13 @@ if __name__ == '__main__':
 				#             DOWNLOAD DATA 
 				# ----------------------------------------
 				
-				alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir, sectors, tic)
+				alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir, sectors, tic)
 				
 				# ----------------------------------------
 				#	           START BREWING ....
 				# ----------------------------------------
 				
-				brew.brew_LATTE(tic, indir, peak_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, allline, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
+				brew.brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 
 	# end by changing the name of the folder to include the nicknane if so defined in the input functions
 	# this allows users to keep track of their targets more easily. We name our candidates after pastries. 
