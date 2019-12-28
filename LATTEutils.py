@@ -1642,9 +1642,11 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
         tpf = search_result.download(cutout_size=15)
         
         # get rid of the 'bad' quality data - use the data flags and only take data where the quality = 0. 
-        quality = tpf.quality
-        tpf = tpf[quality == 0]
-
+        try:
+            quality = tpf.quality
+            tpf = tpf[quality == 0]
+        except:
+            print ('This file has no quality flag.')
 
         tpf_list.append(tpf)
 
@@ -1826,8 +1828,11 @@ def download_data_FFI(indir,sector, sectors_all, tic, save = False):
         tpf = search_result.download(cutout_size=15)
         
         # get rid of the 'bad' quality data - use the data flags and only take data where the quality = 0. 
-        quality = tpf.quality
-        tpf = tpf[quality == 0]
+        try:
+            quality = tpf.quality
+            tpf = tpf[quality == 0]
+        except:
+            print ('This file has no quality flag.')
 
         tpf_list.append(tpf)
 
@@ -2870,7 +2875,7 @@ def plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, transit_list
 
 
     #206361691
-    
+
 # plot the LCs in two different aperture sizes 
 def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, transit_list, args):
     '''correspond to: tic,  indir,      alltime,         alltime,         alltime,      allflux_normal, allflux_normal, allflux_small,   transit_list
