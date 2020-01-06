@@ -1,6 +1,7 @@
 from __future__ import print_function, absolute_import, division
 
 import os
+import csv
 import astropy
 import numpy as np
 import pandas as pd
@@ -3257,7 +3258,11 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
     
     target_coord = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
     target = FixedTarget(coord=target_coord, name="Survey = {}".format(survey))
-    
+    print ("___________")
+    print (target)
+    print (5*u.arcmin)
+    print ("___________")
+
     ax, hdu = plot_finder_image(target, survey = survey, reticle='True', fov_radius=5*u.arcmin)
     plt.close('all')
 
