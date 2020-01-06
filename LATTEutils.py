@@ -27,7 +27,6 @@ from astropy.coordinates import SkyCoord
 from matplotlib.patches import Rectangle
 from lightkurve import TessTargetPixelFile
 
-
 from tess_stars2px import tess_stars2px_function_entry
 from reproject import reproject_interp, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
@@ -38,6 +37,12 @@ from matplotlib.widgets import Slider, Button, RadioButtons, TextBox, CheckButto
 import filters
 import LATTEbrew as brew
 
+# check whether pyaneti has been sucessfully installed - if it has not been installed, don't give the option to model the data
+try:
+    from pyaneti_LATTE import pyaneti
+    pyaneti_installed = True
+except:
+    pyaneti_installed = False
 
 # --------------------------------------------
 # -----------------interact ------------------
@@ -188,8 +193,14 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
 
     # Define buttons which allow the user to interactively choose options:
     # run simple code, BLS, model the data usign Pyaneti, save the data and figures, creata DV report
+
     var_ax = fig.add_axes([0.025, 0.3, 0.1, 0.15])
-    save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'model', 'Save', 'DVR'), (False, False, False, True, False))
+
+    # only give the model option if pyaneti has been sucessfully installed
+    if pyaneti_installed == True:
+        save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'model', 'Save', 'DVR'), (False, False, False, True, False))
+    else:
+        save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'Save', 'DVR'), (False, False, True, False))
     
     # Intiial values for each option
     simple = False
@@ -203,9 +214,16 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
         status = save_var.get_status()
         simple = status[0]
         BLS = status[1]
-        model = status[2]
-        save = status[3]
-        DV = status[4]
+
+        if pyaneti_installed == True:
+            model = status[2]
+            save = status[3]
+            DV = status[4]
+        else:
+            model = False
+            save = status[2]
+            DV = status[3]
+
     # ---------------
 
     # Add a set of radio buttons for changing the binning of the data
@@ -284,14 +302,21 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     # save the status of all the buttons
     end_status = save_var.get_status()
 
-    simple = end_status[0]
-    BLS = end_status[1]
-    model = end_status[2]
-    save = end_status[3]
-    DV = end_status[4]
+    if pyaneti_installed == True:
+        simple = end_status[0]
+        BLS = end_status[1]
+        model = end_status[2]
+        save = end_status[3]
+        DV = end_status[4]
+
+    else:
+        simple = end_status[0]
+        BLS = end_status[1]
+        model = False
+        save = end_status[2]
+        DV = end_status[3]
 
     # ---------------
-
     # get the entered transit times and turn them into a list
     
     if type(transit_times[-1]) == tuple:
@@ -952,12 +977,17 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
 def data_files(indir):
     '''
     Function to download all of the data that we want to the local computer.
+    
+    Parameters
+    ----------
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     '''
 
     if not os.path.exists("{}/data/tesscurl_sector_all_lc.sh".format(indir)):
         with open("{}/data/tesscurl_sector_all_lc.sh".format(indir),'w') as f:
             f.write("#all LC file links")
-        first_sec = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re run)
+        first_sec = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re-run to download new data)
         print ("Will download all of the available sectors starting with sector 1")
         
     else:
@@ -971,8 +1001,8 @@ def data_files(indir):
     
     if not os.path.exists("{}/data/tesscurl_sector_all_tp.sh".format(indir)):
         with open("{}/data/tesscurl_sector_all_tp.sh".format(indir),'w') as f:
-            f.write("#all LC file links")
-        first_sec_tp = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re run)
+            f.write("#all LC file links") # give some information at the top of the saved file for later reference (the # means this line will be inored when read back later)
+        first_sec_tp = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re-run to download new data)
         print ("Will download all of the available sectors starting with sector 1")
         
     else:
@@ -1000,7 +1030,7 @@ def data_files(indir):
                 '''
                 f.write(r_LC.content)
                 print("finished adding files for sector {}".format(sec))
-                #write the contents of the response (r.content)
+                # write the contents of the response (r.content)
                 # to a new file in binary mode.    
     
                 
@@ -1015,11 +1045,12 @@ def data_files(indir):
     
         TP_url = "https://archive.stsci.edu/missions/tess/download_scripts/sector/tesscurl_sector_{}_tp.sh".format(sec)
         r_TP = requests.get(TP_url) # create HTTP response object 
-            
+        
         if r_TP.status_code == 404:
             print ("TP data only available up to Sector {} -- try downloading more data later".format(sec))
             break
-    
+        
+
         with open("{}/data/tesscurl_sector_all_tp.sh".format(indir), 'ab') as f:
                 '''
                 Saving recieved content as a png file in binary format
@@ -1039,7 +1070,12 @@ def data_files(indir):
 def tp_files(indir):
     '''
     Function to download all of the TPF data that we want to the local computer.
-    These are needed for the nearest neighbour analysis
+    These are needed for the nearest neighbour analysis.
+    
+    Parameters
+    ----------
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     '''
 
     if not os.path.exists("{}/data/all_targets_list.txt".format(indir)):
@@ -1097,6 +1133,11 @@ def TOI_TCE_files(indir):
     '''
     Function to download the files that list all the known TOI's and TCEs.
     This is useful to display on the DV report.
+
+    Parameters
+    ----------
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     '''
 
     # ------ TOIs ------
@@ -1111,7 +1152,6 @@ def TOI_TCE_files(indir):
 
 
     # ------ TCE ------
-
     if not os.path.exists("{}/data/tesscurl_sector_all_dv.sh".format(indir)):
         with open("{}/data/tesscurl_sector_all_dv.sh".format(indir),'w') as f:
             f.write("#all LC file links")
@@ -1145,7 +1185,12 @@ def TOI_TCE_files(indir):
 
 def momentum_dumps_info(indir):
     '''
-    function to the create a list of all of the momentum dump times for each sector - only needed in the FFIs
+    function to the create a list of all of the momentum dump times for each sector - only needed in the FFIs.
+
+    Parameters
+    ----------
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     '''
     print ("store the times of the momentum dumps for each sector - only needed when looking at the FFIs")
 
@@ -1198,8 +1243,8 @@ def tess_point(indir,tic):
     
     Parameters
     ----------
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     tic : str
         TIC (Tess Input Catalog) ID of the target
 
@@ -1257,8 +1302,8 @@ def nn_ticids(indir, transit_sec, tic):
     
     Parameters
     ----------
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     transit_sec  : list
         list of the sectors in which the peaks appear.
     tic : str
@@ -1331,8 +1376,8 @@ def download_data(indir,sector, tic, binfac = 5):
     
     Parameters
     ----------
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     sector  :  list or str
         list of the sectors that we want to analyse. If 'all', all the sectors in whic the target appears will be downloaded.
     tic : str
@@ -1372,7 +1417,7 @@ def download_data(indir,sector, tic, binfac = 5):
         times of the end of the sector
     in_sec  :  list
         the sectors for which data was downloaded
-    tessmag  :  list
+    tessmag  :  float
         TESS magnitude of the target star
     teff  :  float
         effective temperature of the tagret star (K)
@@ -1381,7 +1426,7 @@ def download_data(indir,sector, tic, binfac = 5):
 
     '''
 
-
+    # plot using the seaborn library
     sb.set(style='ticks')
     sb.set_color_codes('deep')
     
@@ -1423,6 +1468,7 @@ def download_data(indir,sector, tic, binfac = 5):
         print ("TIC {} was not observed in Sector(s):   {}   .Try again with different sectors.".format(tic, sector))
         raise SystemExit
 
+    # define all the empty lists to append to in order to return the data that will be requrides later on in the script
     alltimebinned = []
     allfluxbinned = []
     
@@ -1442,28 +1488,29 @@ def download_data(indir,sector, tic, binfac = 5):
     allflux_err = []
     all_md = []
     
+    # loop through all the download links - all the data that we want to access
     for lcfile in dwload_link:
         
+        # use the downlload link to download the file from the server - need an internet connection for this to work
         response = requests.get(lcfile)
     
         # open the file using the response url  
         lchdu  = pf.open(response.url) # this needs to be a URL - not a file
         
-        #Open and view columns in lightcurve extension
+        # open and view columns in lightcurve extension
         lcdata = lchdu[1].data
         lchdu[1].columns
 
-        sapflux = lcdata['SAP_FLUX']
-        f02 = lcdata['PDCSAP_FLUX']
+        f02 = lcdata['PDCSAP_FLUX'] # Presearch Data Conditioning 
         f02_err = lcdata['PDCSAP_FLUX_ERR']
-        quality = lcdata['QUALITY']
+        quality = lcdata['QUALITY']  # quality flags as determined by the SPOC pipeline 
         time    = lcdata['TIME']
-        f0     = lcdata['SAP_FLUX']
-        fbkg     = lcdata['SAP_BKG']
+        f0     = lcdata['SAP_FLUX']  # 
+        fbkg     = lcdata['SAP_BKG']  # background flux 
         
-        med = np.nanmedian(f02)
-        f1 = f02/med
-        f1_err = f02_err/med
+        med = np.nanmedian(f02)  # determine the median flux (ignore nan values)
+        f1 = f02/med  # normalize by dividing byt the median flux
+        f1_err = f02_err/med  # normalise the errors on the flux
         
         x1      = lcdata['MOM_CENTR1']  # CCD column position of target’s flux-weighted centroid 
         x1      -= np.nanmedian(x1)
@@ -1473,17 +1520,18 @@ def download_data(indir,sector, tic, binfac = 5):
         x2      -= np.nanmedian(x2)
         y2      = lcdata['POS_CORR2']
         y2      -= np.nanmedian(y2)
-        l       = (quality>0)
-        l2      = (quality<=0)
+        l       = (quality>0)   # good quality data
+        l2      = (quality<=0)  # bad quality data
         
-        sec     = int(lchdu[0].header['SECTOR'])
+        sec     = int(lchdu[0].header['SECTOR'])  # the TESS observational sector
 
-        tessmag = lchdu[0].header['TESSMAG']
-        teff    = lchdu[0].header['TEFF']
-        srad    = lchdu[0].header['RADIUS']
+        tessmag = lchdu[0].header['TESSMAG']  # magnitude in the FITS header
+        teff    = lchdu[0].header['TEFF']     # effective temperature in the FITS header (kelvin)
+        srad    = lchdu[0].header['RADIUS']   # stellar radius in the FITS header (solar radii) 
 
         flux     = lcdata['SAP_FLUX']
 
+        # store the sector we are looking at
         in_sec.append(sec)
 
         # binned data
@@ -1497,20 +1545,12 @@ def download_data(indir,sector, tic, binfac = 5):
         time_binned    = Xb[0]
         flux_binned    = Xb[1]
 
-        #bad_bits = np.array([1,2,3,4,5,6,8,10,12])
-        #value = 0
-        #for v in bad_bits:
-        #    value = value + 2**(v-1)
-
-        #bad_data = np.bitwise_and(quality, value) >= 1
-
-        #fluxcent_col = lcdata['MOM_CENTR1']
-        #fluxcent_row = lcdata['MOM_CENTR2']
-
+        # the time of the momentum dumps are indicated by the quality flag
         mom_dump = np.bitwise_and(quality, 2**5) >= 1
 
-        alltime.append(list(time)) #[~bad_data]
-        allflux.append(list(f1)) #[~bad_data])fly
+        # store the relevant information in the given list
+        alltime.append(list(time)) 
+        allflux.append(list(f1)) 
         allflux_err.append(list(f1_err))
         all_md.append(list(time[mom_dump]))
         
@@ -1528,7 +1568,7 @@ def download_data(indir,sector, tic, binfac = 5):
         start_sec.append([time[0]])
         end_sec.append([time[-1]])
     
-
+    # flatten lists of lists
     alltime = [val for sublist in alltime for val in sublist]
     allflux = [val for sublist in allflux for val in sublist]
     allflux_err = [val for sublist in allflux_err for val in sublist]
@@ -1542,9 +1582,9 @@ def download_data(indir,sector, tic, binfac = 5):
     ally1 = [val for sublist in ally1 for val in sublist]
     ally2 = [val for sublist in ally2 for val in sublist]
     alltimel2 = [val for sublist in alltimel2 for val in sublist]
-    
     allfbkg = [val for sublist in allfbkg for val in sublist]
    
+
     return alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltimel2, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad
 
 def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
@@ -1553,8 +1593,8 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
     
     Parameters
     ----------
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     sector  :  list or str
         list of the sectors that we want to analyse. If 'all', all the sectors in whic the target appears will be downloaded.
     tic : str
@@ -1594,7 +1634,7 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
         times of the end of the sector
     in_sec  :  list
         the sectors for which data was downloaded
-    tessmag  :  list
+    tessmag  :  float
         TESS magnitude of the target star
     teff  :  float
         effective temperature of the tagret star (K)
@@ -1609,7 +1649,7 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
 
     searchtic = 'TIC' + tic
 
-    
+    # empty lists to append the data that will be returned and used later    
     start_sec = []
     end_sec = []
     in_sec = []
@@ -1627,6 +1667,7 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
     bkg_list = []
     tpf_list = []
 
+    # print a warning if more than one sector is chosen - as this will use more internet data and will take longer to run
     if len(sector) > 1:
         print ("Warning: Downloading data from multiple FFI sectors may take a while to run.")
     
@@ -1638,6 +1679,8 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
 
         # import the data
         print ("Importing FFI data sector {}...".format(sec), end =" ")
+
+        # download data using lightkurve
         search_result = lk.search_tesscut(searchtic, sector=sec)
         tpf = search_result.download(cutout_size=15)
         
@@ -1648,6 +1691,7 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
         except:
             print ('This file has no quality flag.')
 
+        # save the raw tpf (target pixel file) data which will be used later - need to store it in this format as it will be used for the reprojection into the right coordinates.
         tpf_list.append(tpf)
 
         print ("done.\n")
@@ -1655,27 +1699,35 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
         # extract the information and perform PCA
         print ("Start PCA analysis...", end =" ")
         
+        # acess the flux information
         X1 = tpf.flux
-        X1flux_list.append(X1)
+        X1flux_list.append(X1)  # store tghe flux array in the list
 
-        arrshape_list.append(X1.shape)
+        arrshape_list.append(X1.shape)  # store the shape in the list - not always the same shape but mostly 11 x 11 pixels.
         
+        # calculate the average pixel value across all frames. 
+        # this will be used as the background color of the pixel level LCs plot.
+
         bkg = X1
         bkg = bkg.mean(axis = 0)
 
-        bkg_list.append(bkg)
+        bkg_list.append(bkg) # store the information in a list
 
-        # reshape the array in order to perform PCA on it.
+        # reshape the array in order to perform PCA on it
+        # reshape into 2 D (from 3D)
         s = X1.shape
         X1 = X1.reshape(s[0],s[1]*s[2])
         
+        # maker sure that there are no NaN values
         lkeep = np.isfinite(X1.sum(axis=1)) * (X1.sum(axis=1)>0)
         X1 = X1[lkeep,:]
         
+        # make 'similar' arrays filled with zeros
         X2 = np.zeros_like(X1)
         M = np.zeros(X1.shape[1])
         S = np.zeros(X1.shape[1])
         
+        # normalize the data 
         for n in range(X1.shape[1]):
             a = X1[:,n]
             x, m, s = norm(a)
@@ -1683,10 +1735,10 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
             M[n] = m
             S[n] = s
         
-        ncomp = 5
-        pca = PCA(n_components=ncomp)
-        trends = pca.fit_transform(X2)
-        weights = pca.components_
+        ncomp = 5 # number of PCA components to consider
+        pca = PCA(n_components=ncomp) # PCA 
+        trends = pca.fit_transform(X2) 
+        weights = pca.components_  
         
         X3 = np.copy(X2)
         for n in range(X2.shape[1]):
@@ -1735,8 +1787,8 @@ def download_data_FFI(indir,sector, sectors_all, tic, save = False):
     
     Parameters
     ----------
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     sector  :  list or str
         list of the sectors that we want to analyse. If 'all', all the sectors in whic the target appears will be downloaded.
     tic : str
@@ -1776,11 +1828,11 @@ def download_data_FFI(indir,sector, sectors_all, tic, save = False):
         times of the end of the sector
     in_sec  :  list
         the sectors for which data was downloaded
-    tessmag  :  list
+    tessmag  :  float
         TESS magnitude of the target star
-    teff  :  list
+    teff  :  float
         effective temperature of the tagret star (K)
-    srad  :  list
+    srad  :  float
         radius of the target star (solar radii)
 
     '''
@@ -2070,6 +2122,7 @@ def download_data_FFI(indir,sector, sectors_all, tic, save = False):
 
     return alltime_list, allflux, allflux_small, allflux_flat, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
 
+
 def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
     ''''
     Dowloand the data for the 6 nearest neightbour target pixel LC - in the future want to 
@@ -2077,8 +2130,8 @@ def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
     
     Parameters
     ----------
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     sector  :  list or str
         list of the sectors that we want to analyse. If 'all', all the sectors in whic the target appears will be downloaded.
     distance:  list
@@ -2161,7 +2214,6 @@ def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
         lcdata = lchdu[1].data
         lchdu[1].columns
     
-        sapflux = lcdata['SAP_FLUX']
         f02 = lcdata['PDCSAP_FLUX']
         quality = lcdata['QUALITY']
         time    = lcdata['TIME']
@@ -2223,8 +2275,8 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic):
  
     Parameters
     ----------
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     transit_list  : list
         list of the marked transit-events
     sector  :  list or str
@@ -2353,8 +2405,8 @@ def download_tpf_mast(indir, transit_sec, transit_list, tic):
     
     Parameters
     ----------
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     transit_sec  :  list or str
         list of the sectors that have a transit in them. If 'all', all the sectors in whic the target appears will be downloaded
     tic : str
@@ -2492,7 +2544,7 @@ def download_tpf_mast(indir, transit_sec, transit_list, tic):
 
 def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
     '''
-    function that rus the BLS routine and plots the results. The BLS is run twice and in the second 
+    function that runs the BLS routine and plots the results. The BLS is run twice and in the second 
     the most significant result found in the first run is removed. 
     Prior to running the BLS the data is detrended. 
 
@@ -2500,8 +2552,8 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
     ----------
     tic : str
         TIC (Tess Input Catalog) ID of the target
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     alltime  :  list
         times for the LC of the target
     allflux  :  list
@@ -2592,7 +2644,7 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
     
 
     # call the first round of plotting
-    plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results,period,duration,t0, args)
+    plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results, period, duration, t0, args)
     
     stats_period = period
     stats_t0 = t0
@@ -2632,8 +2684,29 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
 
 def data_bls_FFI(tic, indir, alltime, allflux, args):
     '''
-    
+    function that rund the BLS routine for the FFI images. This code is differs from data_bls (which is used for the atrget pixel files) in as it doesn't have binned data.
 
+    Parameters
+    ----------
+    tic : str
+        TIC (Tess Input Catalog) ID of the target
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
+    alltime  :  list
+        times for the LC of the target
+    allflux  :  list
+        normalized flux for the LC of the target (not binned)
+    
+    Returns
+    -------    
+        two lists of the statistics of the to BLS runs. Each list contains:
+    stats_period
+    stats_t0
+    stats_depth
+    stats_depth_phased
+    stats_depth_half
+    stats_depth_odd
+    stats_depth_even
     '''
     # make sure that there are no nan value sin the data - they cause everything to crash
 
@@ -2693,7 +2766,7 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
 # --------------------------------------------
 
 # plot nearest neighbour LCs
-def plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, transit_list, outtics, tessmag_list, distance, args):
+def plot_nn(tic, indir, alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, transit_list, outtics, tessmag_list, distance, args):
     
     '''
     Plot the lighcurves of the 6 nearest neighbours to the target. 
@@ -2704,8 +2777,8 @@ def plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_n
     ----------
     tic : str
         TIC (Tess Input Catalog) ID of the target
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     alltime_nn  :  list
         times for all the nearest neighbours (not binned)
     allflux_nn  :  list
@@ -2718,8 +2791,6 @@ def plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_n
         list of all the marked transits
     outtics  :  list
         the tic IDs of the 6 nearest neighbours
-    save (default = False)
-        if save = True, the figure is saved in the directory which has the name of the TIC ID
 
     Returns
     -------
@@ -2764,6 +2835,7 @@ def plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_n
     else:
         plt.close()
 
+# plot the image cut-out of the nearby stars
 def plot_cutout(image):
     """
     Plot image cut out of the target. 
@@ -2775,7 +2847,7 @@ def plot_cutout(image):
     plt.grid(axis = 'both',color = 'white', ls = 'solid')
 
 # plot the centroid positions and whether thet move in transit (only zoomed in on transit events and not for the whole LC)
-def plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, transit_list, args):
+def plot_centroid(tic, indir, alltime12, allx1, ally1, allx2, ally2, transit_list, args):
     '''
     Plot the x and y centroids around the time(s) of the marked transit.
 
@@ -2785,8 +2857,8 @@ def plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, transit_list
     ----------
     tic : str
         TIC (Tess Input Catalog) ID of the target
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     alltimel2  :  list
         time used for the x and y centroid position plotting
     allx1  :  list
@@ -2797,9 +2869,9 @@ def plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, transit_list
         CCD column position of target’s flux-weighted centroid. In y direction
     ally2  :  list
         The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In y direction
-    save (default = False)
-        if save = True, the figure is saved in the directory which has the name of the TIC ID
-  
+    transit_list   :  list
+        list of the marked transit events
+
     Returns
     -------
         Plot of the centroid positions in the x and y direction. 
@@ -2877,7 +2949,7 @@ def plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, transit_list
     #206361691
 
 # plot the LCs in two different aperture sizes 
-def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, transit_list, args):
+def plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, transit_list, args):
     '''correspond to: tic,  indir,      alltime,         alltime,         alltime,      allflux_normal, allflux_normal, allflux_small,   transit_list
 
     LC plot around the time of transit-event extracted in two different aperture sizes. The LC is not corrected for any systematics. 
@@ -2886,8 +2958,8 @@ def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binne
     ----------
     tic : str
         TIC (Tess Input Catalog) ID of the target
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     TESS_unbinned_t_l   :  list
         time for LC extracted with the TESS SPOC pipeline aperture 
     TESS_binned_t_l   :  list
@@ -2902,9 +2974,7 @@ def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binne
         binned flux extracted with the aperture that is 50% smaller than the TESS SPOC pipeline aperture
     transit_list   :  list
         list of the marked transit events
-    save (default = False)
-        if save = True, the figure is saved in the directory which has the name of the TIC ID
-  
+
     Returns
     -------
         plot of the transit-event extracted in two different aperture sizes. EBs will exhibit different transit shapes with the different aperture sizes. 
@@ -3028,7 +3098,7 @@ def plot_aperturesize(tic, indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binne
             plt.close()
 
 # plot the background flux around the time of the transit like event.
-def plot_background(tic, indir,alltime, allfbkg, transit_list, args):
+def plot_background(tic, indir, alltime, allfbkg, transit_list, args):
     
     '''
     LC of the bakcground flux at the time of the transit event. 
@@ -3037,17 +3107,15 @@ def plot_background(tic, indir,alltime, allfbkg, transit_list, args):
     ----------
     tic : str
         TIC (Tess Input Catalog) ID of the target
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     alltime  :  list
         times (not binned)
     allfbkg  :  list
         background flux
     transit_list   :  list
         list of the marked transit events
-    save (default = False)
-        if save = True, the figure is saved in the directory which has the name of the TIC ID
-  
+
     Returns
     -------
         plot of the background flux at the time of the marked transit-events.
@@ -3136,15 +3204,15 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
     ----------
     tic : str
         TIC (Tess Input Catalog) ID of the target
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     transit_list   :  list
         list of the marked transit events
     transit_sec  :  list or str
         list of the sectors that are being analyse.
-    save (default = False)
-        if save = True, the figure is saved in the directory which has the name of the TIC ID
-  
+    tpf_list   : list 
+        list of the target pixel files (for each sector)
+
     Returns
     -------
         Plot of the averaged flux per pixel around the target (left) as well as the SDSS plot (right). The red star on the right plot indicated the location of the target.
@@ -3268,8 +3336,9 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
                 
     return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], catalogData['mass'][0]
 
+
 # same as plot_TESS_stars but not re-projected
-def plot_TESS_stars_not_proj(tic,indir,transit_list, transit_sec, tpf_list, args):
+def plot_TESS_stars_not_proj(tic, indir,transit_list, transit_sec, tpf_list, args):
     
     '''
     Plot of the field of view round the target star showing nearby stars that are brighter than magnitude 15.
@@ -3278,15 +3347,15 @@ def plot_TESS_stars_not_proj(tic,indir,transit_list, transit_sec, tpf_list, args
     ----------
     tic : str
         TIC (Tess Input Catalog) ID of the target
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     transit_list   :  list
         list of the marked transit events
     transit_sec  :  list or str
         list of the sectors that are being analyse.
-    save (default = False)
-        if save = True, the figure is saved in the directory which has the name of the TIC ID
-  
+    tpf_list   : list 
+        list of the target pixel files (for each sector)
+
     Returns
     -------
         Plot of the averaged flux per pixel around the target. The red star indicated the location of the target.
@@ -3373,8 +3442,7 @@ def plot_TESS_stars_not_proj(tic,indir,transit_list, transit_sec, tpf_list, args
     return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], catalogData['mass'][0]
 
 # LC per pixel
-def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, transit_list, 
-    args):
+def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, transit_list, args):
     
     '''
     Plot the LC for each pixel around the time of the transit like event. Each LC is fit with a spline and corrected to flatten. 
@@ -3382,12 +3450,10 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
 
     Parameters
     ----------
-    indir : str
-        path to where the files will be saved.
-    transit_sec  :  list or str
-        list of the sectors that we want to analyse. If 'all', all the sectors in whic the target appears will be downloaded.
     tic : str
         TIC (Tess Input Catalog) ID of the target
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     X1_list  :  list
         flux vs time for each pixel 
     X4_list  :  list
@@ -3406,9 +3472,7 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         time arrays    
     transit_list  :  int
         list of all the marked transits
-    save (default = False)
-        if save = True, the figure is saved in the directory which has the name of the TIC ID
-  410153553
+
     Returns
     -------
         Plot of the normalised LC for each pixel around the time of the transit like event. 
@@ -3544,15 +3608,16 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
             plt.close()
 
 # full light curve with the momentum dumps
-def plot_full_md(tic, indir, alltime, allflux,all_md,alltimebinned,allfluxbinned, transit_list, args):
+def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbinned, transit_list, args):
     '''
-    
+    Plot of the full LC with the times of the momentum dumps marked (red lines) and the marked transit events indicated (dashed balck line(s)). 
+
     Parameters
     ----------
     tic : str
         TIC (Tess Input Catalog) ID of the target
-    indir : str
-        path to where the files will be saved.
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
     alltime  :  list
         times (not binned)
     allflux  :  list
@@ -3633,7 +3698,7 @@ def plot_full_md(tic, indir, alltime, allflux,all_md,alltimebinned,allfluxbinned
             plt.plot(np.array(time_dd_binned)[mask_dd_binned], np.array(flux_dd_binned)[mask_dd_binned], marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 5, label = 'binning = 7', markerfacecolor='k', zorder=2)
 
             plt.vlines(line_dd, minf-(height_cut/10), minf + height_cut*0.25 , colors = 'r', label = "Momentum Dump", zorder=3)
-            plt.vlines([peak], minf,minf + height*0.25 , linewidth = 3, colors = 'k', linestyle = '--', zorder=4)
+            plt.vlines([peak], minf-(height_cut/10),minf + height*0.25 , linewidth = 3, colors = 'k', linestyle = '--', zorder=4)
 
             plt.xlim(peak-0.75, peak+0.75)
 
@@ -3681,48 +3746,84 @@ def plot_full_md(tic, indir, alltime, allflux,all_md,alltimebinned,allfluxbinned
     plt.close()
 
 # plot of the two BLS runs including phase folded on most likely period
-def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results,period,duration,t0, args, in_transit = [0], in_transit_notbinned = [0]):
+def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results, period, duration, t0, args, in_transit = [0], in_transit_notbinned = [0]):
     '''
     Plot the BLS. This functinon is called in data_bls().
-    '''
-    if len(in_transit) == 1:  # conditions for the first 'round' of plotting
 
+    Parameters
+    ----------
+    tic : str
+        TIC (Tess Input Catalog) ID of the target
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
+    alltime  :  list
+        times (not binned)
+    allflux  :  list
+        normalized flux (not binned)
+    alltimebinned  :  list
+        binned time
+    allfluxbinned  :  list
+        normalized binned flux
+    model :  float
+        the transit model at the given period, duration, and phase
+    results :  class
+        results from the BLS fitting routine
+    period :  float
+        the period of the 'most-likely' transits
+    duration :  float
+        the duration of the transit
+    t0  :  float
+        the mid-transit time of the reference transit
+    in_transit = [0] :  float
+        if this is [0] (by deafult), the code knows that this is the initial run i.e. no transits have been removes (+ results are plotted in different colors)
+    in_transit_notbinned = [0]. :  float
+        if this is [0] (by deafult), the code knows that this is the initial run i.e. no transits have been removes (+ results are plotted in different colors)
+
+    Returns
+    -------
+        Plot the results from the BLS with three pannels: periodgram, best fit model to the transits, phase folded fit.
+    '''
+
+    if len(in_transit) == 1:  # conditions for the first 'round' of plotting
+        # define the colours of the plot
         color1 = '#DC143C'
         color2 = 'orange'
         title = 'Initial BLS'
-        name = '{}_bls_first.png'.format(tic)
+        name = '{}_bls_first.png'.format(tic) # name to be used to save the output file
 
     else:  # conditions for the second 'round' of plotting once the first event has been removed
+        # define the colours of the plot
         color1 = 'deepskyblue'
         color2 = '#4682B4'
         title = 'Initial event removed'
-        name = '{}_bls_second.png'.format(tic)
+        name = '{}_bls_second.png'.format(tic) # name to be used to save the output file
         
     fig, axes = plt.subplots(3, 1, figsize=(5, 7))
     
-    # Highlight the harmonics of the peak period
+    # highlight the harmonics of the peak period
     ax = axes[0]
     ax.axvline(period, alpha=0.4, lw=5, color = color1)
     for n in range(2, 15):
-        ax.axvline(n*period, alpha=0.4, lw=2, linestyle="dashed", color = color2)
+        ax.axvline(n*period, alpha=0.4, lw=2, linestyle="dashed", color = color2) # plot the harmonics
         ax.axvline(period / n, alpha=0.4, lw=2, linestyle="dashed", color = color2)
     
-    # Plot the periodogram
+    # ------------
+    # plot the periodogram
     ax.plot(results.period, results.power, "k", lw=0.5, label = 'P = %.3f T0 = %.3f' % (period,t0))
-    
     ax.set_title(title)
     ax.set_xlim(results.period.min(), results.period.max())
     ax.set_xlabel("period (days)")
     ax.set_ylabel("log likelihood")
     ax.legend(fontsize = 10, loc = 1)
     
-    # Plot the light curve and best-fit model
+    # ------------
+    # plot the light curve and best-fit model
     ax = axes[1]
     
-    if len(in_transit) == 1:
+    if len(in_transit) == 1:  # for the initial run 
         ax.plot(alltime, allflux, marker =".", alpha = 0.4, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
         ax.plot(alltimebinned, allfluxbinned, marker ="o", alpha = 0.6, color = 'black', ms=3, lw = 0, MarkerFaceColor = 'none')
-    else:
+    else:  # for the second run (once the first 'event' has been removed)
         ax.plot(alltime[~in_transit_notbinned], allflux[~in_transit_notbinned], marker =".", alpha = 0.4, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
         ax.plot(alltimebinned[~in_transit], allfluxbinned[~in_transit], marker ="o", alpha = 0.6, color = 'black',  MarkerFaceColor = 'none', ms=3, lw = 0)
 
@@ -3733,22 +3834,24 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
     ax.set_xlabel("time (days)")
     ax.set_ylabel("de-trended flux (ppt)");
     
+    # ------------
     ax = axes[2]
-    if len(in_transit) == 1: 
+    if len(in_transit) == 1:  # for the initial run 
         x_binned = (alltimebinned - t0 + 0.5*period) % period - 0.5*period
         x = (alltime - t0 + 0.5*period) % period - 0.5*period
-    else:
+    else: # for the second run (once the first 'event' has been removed)
         x_binned = (alltimebinned[~in_transit] - t0 + 0.5*period) % period - 0.5*period
         x = (alltime[~in_transit_notbinned] - t0 + 0.5*period) % period - 0.5*period
     
     m_binned = np.abs(x_binned) < 0.5 
     m = np.abs(x) < 0.5 
     
-    if len(in_transit) == 1: 
+    # plot the data
+    if len(in_transit) == 1:  # for the initial run 
         ax.plot(x[m], allflux[m],marker =".", alpha = 0.4, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
         ax.plot(x_binned[m_binned], allfluxbinned[m_binned], marker ="o", alpha = 0.6, color = 'black', ms=3, lw = 0, MarkerFaceColor = 'none')
         
-    else:
+    else: # for the second run (once the first 'event' has been removed)
         ax.plot(x[m], allflux[~in_transit_notbinned][m],marker =".", alpha = 0.4, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
         ax.plot(x_binned[m_binned], allfluxbinned[~in_transit][m_binned], marker ="o", alpha = 0.6, color = 'black', ms=3, lw = 0, MarkerFaceColor = 'none')
     
@@ -3760,6 +3863,7 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
     ax.set_ylabel("de-trended flux (ppt)");
     plt.tight_layout()
 
+    # save the figures
     if args.save == True:
         plt.savefig('{}/{}/{}'.format(indir, tic, name), format='png')
     
@@ -3769,12 +3873,41 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
         plt.close()
 
 # plot of the two BLS runs including phase folded on most likely period for the FFIs
-def plot_bls_FFI(tic, indir, alltime, allflux, model, results,period,duration,t0, args, in_transit = [0]):
+def plot_bls_FFI(tic, indir, alltime, allflux, model, results, period, duration, t0, args, in_transit = [0]):
     '''
 
     Plot the BLS for the FFIs (these don't have binned data). This functinon is called in data_bls().
 
+    Parameters
+    ----------
+    tic : str
+        TIC (Tess Input Catalog) ID of the target
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
+    alltime  :  list
+        times (not binned)
+    allflux  :  list
+        normalized flux (not binned)
+    model :  float
+        the transit model at the given period, duration, and phase
+    results :  class
+        results from the BLS fitting routine
+    period :  float
+        the period of the 'most-likely' transits
+    duration :  float
+        the duration of the transit
+    t0  :  float
+        the mid-transit time of the reference transit
+    in_transit = [0] :  float
+        if this is [0] (by deafult), the code knows that this is the initial run i.e. no transits have been removes (+ results are plotted in different colors)
+    in_transit_notbinned = [0]. :  float
+        if this is [0] (by deafult), the code knows that this is the initial run i.e. no transits have been removes (+ results are plotted in different colors)
+
+    Returns
+    -------
+        Plot the results from the BLS with three pannels: periodgram, best fit model to the transits, phase folded fit.
     '''
+
     if len(in_transit) == 1:  # conditions for the first 'round' of plotting
 
         color1 = 'navy'
@@ -3858,35 +3991,65 @@ def plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, t
     Plot the in transit average flux and the out of transit average flux and compare the two (difference image). 
     The images are plotted in terms of pixels and are not oriented North.
     To have them oriented North run plot_in_out_TPF_proj (run code with --north in the command line) <-- this one takes longer.
+    
+    Parameters
+    ----------
+    tic : str
+        TIC (Tess Input Catalog) ID of the target
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
+    X4_list  :  list
+        PCA corrected flux vs time for each pixel
+    oot_list  :  list
+        out of transit mask
+    t_list  :  list
+        time arrays        
+    intr_list  :  list
+        in transit mask
+    T0_list  :  list
+        list of the peaks
+    tpf_filt_list   : list 
+        list of the filtered tpfs
+
+    Returns
+    -------
+    plot of the in average in transit flux, average out of transit flux and difference between the tw (out of transit ninu in transit) for each marked transit event.
+
     '''
+
 
     plt.figure(figsize=(16,3.5*len(T0_list)))
 
     plt.tight_layout()
 
-    count = 0
+    count = 0 # keep track of how many images have been plotted to that they appear on a subgrid of plots which has three columns
 
-    for idx, X4 in enumerate(X4_list):
+    # loop through all of the list of PCA corrected flux vs time arrays for each marked transit-event
+    for idx, X4 in enumerate(X4_list): # idx is for each maked transit-event
         
-        oot = oot_list[idx]
-        intr = intr_list[idx]
-        T0 = T0_list[idx]
-        t = t_list[idx]
-        tpf_filt  =  tpf_filt_list[idx]
+        oot = oot_list[idx] # the out of transit flux mask
+        intr = intr_list[idx] # the in-transit flux mask
+        T0 = T0_list[idx] # the time of the transit-like event
+        t = t_list[idx] # the time array 
+        tpf_filt  =  tpf_filt_list[idx]  # the filtered target pixel files 
         
-        intr = abs(T0-t) < 0.25
-        oot = (abs(T0-t) < 0.5) * (abs(T0-t) < 0.3)
-        img_intr = tpf_filt[intr,:,:].sum(axis=0)/float(intr.sum())
+        intr = abs(T0-t) < 0.25  # create a mask of the in transit times
+        oot = (abs(T0-t) < 0.5) * (abs(T0-t) < 0.3)  # create a mask of the out of transit times
+        img_intr = tpf_filt[intr,:,:].sum(axis=0)/float(intr.sum()) # apply the masks and normalize the flux
         img_oot = tpf_filt[oot,:,:].sum(axis=0)/float(oot.sum())
-        img_diff = img_oot-img_intr
+        img_diff = img_oot-img_intr # calculate the diffefence image (out of transit minus in-transit)
         
-        count += 1
+        # ---- PLOT -------
+
+        # in transit
+        count += 1 # add to the count before each plot
         plt.subplot(len(T0_list), 3, count)
         plt.axis('off')
         plt.imshow(img_intr)
         plt.colorbar()
         plt.title("t = {} days \n In Transit Flux (e-/candence)".format(T0))
 
+        # out of transit
         count += 1
         plt.subplot(len(T0_list), 3, count)
         plt.axis('off')
@@ -3894,6 +4057,7 @@ def plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, t
         plt.colorbar()
         plt.title("Out of Transit Flux (e-/candence)")
 
+        # out of transit minus in-transit 
         count += 1
         plt.subplot(len(T0_list), 3, count)
         plt.axis('off')
@@ -3904,6 +4068,7 @@ def plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, t
 
     plt.subplots_adjust(wspace = 0)
 
+    # save the figure
     if args.save == True:
         plt.savefig('{}/{}/{}_flux_comparison.png'.format(indir, tic, tic), format='png', bbox_inches='tight')
     
@@ -3917,45 +4082,80 @@ def plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_li
     '''
     Plot the in transit average flux and the out of transit average flux and compare the two (difference image). 
     The images are oriented so that North is up. Note that this takes longer to run than if they are not re-projected. 
-    '''    
+
+    Parameters
+    ----------
+    tic : str
+        TIC (Tess Input Catalog) ID of the target
+    indir   :   str
+        path to where the data will be saved (defaul = "./LATTE_output")
+    X4_list  :  list
+        PCA corrected flux vs time for each pixel
+    oot_list  :  list
+        out of transit mask
+    t_list  :  list
+        time arrays        
+    intr_list  :  list
+        in transit mask
+    T0_list  :  list
+        list of the peaks
+    tpf_filt_list   : list 
+        list of the filtered tpfs
+    tpf_list   : list
+        list of the target pixel files (for each sector)
+
+    Returns
+    -------
+    plot of the in average in transit flux, average out of transit flux and difference between the tw (out of transit ninu in transit) for each marked transit event.
+    All the plots are oriented so that north is upwards.
+
+    '''
 
     plt.figure(figsize=(15,3.5*len(T0_list)))
 
-    count = 0
+    count = 0 # keep track of how many images have been plotted to that they appear on a subgrid of plots which has three columns
 
+    # loop through all of the list of PCA corrected flux vs time arrays for each marked transit-event
     for idx, X4 in enumerate(X4_list):
-        
-        oot = oot_list[idx]
-        intr = intr_list[idx]
-        T0 = T0_list[idx]
-        t = t_list[idx]
-        tpf_filt  =  tpf_filt_list[idx]
+
+        oot = oot_list[idx] # the out of transit flux mask
+        intr = intr_list[idx] # the in-transit flux mask
+        T0 = T0_list[idx] # the time of the transit-like event
+        t = t_list[idx] # the time array 
+        tpf_filt  =  tpf_filt_list[idx] # the filtered target pixel files 
         tpf = tpf_list[idx]
         
         # create a tupple of the array of the data and the wcs projection of the TESS cutout
         tup = (tpf.flux.mean(axis=0),tpf.wcs)
         
-        # mapthe output will be oriented NORTH!
+        # map the output so that the image will be oriented NORTH
+        # the find_optimal_celestial_wcs function returns new world coordinate system (wcs) orented north that can be used to map the images
         wcs_out, shape_out = find_optimal_celestial_wcs(input_data =[tup], resolution = 0.0002*u.deg)
         
-        array, footprint = reproject_interp(tup, wcs_out, shape_out = shape_out,order = 'nearest-neighbor')
+        # re-project the image with the new wcs
+        array, footprint = reproject_interp(tup, wcs_out, shape_out = shape_out, order = 'nearest-neighbor')
            
-        intr = abs(T0-t) < 0.25
-        oot = (abs(T0-t) < 0.5) * (abs(T0-t) < 0.3)
-        img_intr = tpf_filt[intr,:,:].sum(axis=0)/float(intr.sum())  # array
+        intr = abs(T0-t) < 0.25 # create a mask of the in transit times
+        oot = (abs(T0-t) < 0.5) * (abs(T0-t) < 0.3) # the in-transit flux mask
+        img_intr = tpf_filt[intr,:,:].sum(axis=0)/float(intr.sum())  # array of the time of the transit-like event
         img_oot = tpf_filt[oot,:,:].sum(axis=0)/float(oot.sum())     # array
-        img_diff = img_oot-img_intr                                  # array
+        img_diff = img_oot-img_intr                                  # array of the diffefence image (out of transit minus in-transit)
         
-        
+        # ---- RE-PROJECT ----
+        # create tupples of the image array and the wcs projection of the TESS cutout
         tup_intr = (img_intr, tpf.wcs)
         tup_oot  = (img_oot, tpf.wcs)
         tup_diff = (img_diff, tpf.wcs)
         
-        img_intr, _ = reproject_interp(tup_intr, wcs_out, shape_out = shape_out,order = 'nearest-neighbor')
-        img_oot, _ = reproject_interp(tup_oot, wcs_out, shape_out = shape_out,order = 'nearest-neighbor')
-        img_diff, _ = reproject_interp(tup_diff, wcs_out, shape_out = shape_out,order = 'nearest-neighbor')
+        # re-project the image with the new (north oriented) wcs
+        img_intr, _ = reproject_interp(tup_intr, wcs_out, shape_out = shape_out, order = 'nearest-neighbor')
+        img_oot, _ = reproject_interp(tup_oot, wcs_out, shape_out = shape_out, order = 'nearest-neighbor')
+        img_diff, _ = reproject_interp(tup_diff, wcs_out, shape_out = shape_out, order = 'nearest-neighbor')
         
-        count += 1
+        # --- PLOT ---
+
+        # in transit
+        count += 1 # add to the count before each plot
         plt.subplot(len(T0_list), 3, count,projection=wcs_out)
         plt.axis('off')
         plt.imshow(img_intr)
@@ -3964,6 +4164,7 @@ def plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_li
         plt.ylabel("Dec", fontsize = 12)
         plt.title("t = {} days \n In Transit Flux (e-/candence)".format(T0), fontsize = 13)
 
+        # out of transit
         count += 1
         plt.subplot(len(T0_list), 3, count,projection=wcs_out)
         plt.axis('off')
@@ -3972,6 +4173,7 @@ def plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_li
         plt.xlabel("RA", fontsize = 12)
         plt.title("Out of Transit Flux (e-/candence)", fontsize = 13)
 
+        # out of transit minus in transit
         count += 1
         plt.subplot(len(T0_list), 3, count,projection=wcs_out)
         plt.axis('off')
@@ -3982,6 +4184,7 @@ def plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_li
 
     plt.tight_layout(w_pad= -2)
 
+    # save the figure
     if args.save == True:
         plt.savefig('{}/{}/{}_flux_comparison.png'.format(indir, tic, tic), format='png', bbox_inches='tight', pad_inches=0.5)
     
@@ -3990,10 +4193,15 @@ def plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_li
     else:
         plt.close()
 
+
 # --------------------------------------------
 #                other functions             #
 # --------------------------------------------
 def rebin(arr,new_shape):
+
+    ''''
+    function used to rebin the data
+    '''
     shape = (new_shape[0], arr.shape[0] // new_shape[0],
         new_shape[1], arr.shape[1] // new_shape[1])
     return arr.reshape(shape).mean(-1).mean(1)
@@ -4016,6 +4224,7 @@ def unnorm(x,m,s):
     a = y + m
     return a
 
+
 # --------------------------------------------
 # only used for the Jupyter Notebook version
 def transit_finder(transit, alltime, all_md, allflux,alltimebinned, allfluxbinned, start_sec, end_sec, flux_min = None, flux_max = None):
@@ -4023,7 +4232,7 @@ def transit_finder(transit, alltime, all_md, allflux,alltimebinned, allfluxbinne
     # only used for the Jupyter Notebook version
     '''
 
-    # WHOLE
+    # WHOLE LC
     fig, ax = plt.subplots(figsize=(6,4))
     ax.plot(alltime, allflux, marker='o',lw = 0, markersize = 1, color = 'orange', alpha = 0.5, label = 'unbinned', markerfacecolor='white')
     

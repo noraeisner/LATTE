@@ -20,7 +20,6 @@ from os.path import exists
 
 #custom modules to import
 import LATTEutils as utils
-
 warnings.filterwarnings('ignore')
 
 
@@ -158,7 +157,7 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 	utils.plot_full_md(tic, indir, alltime,allflux,all_md,alltimebinned,allfluxbinned, transit_list, args)
 
 	# Get a list of the sectors that have transit marked in them
-	transit_sec = utils.transit_sec(in_sec,start_sec, end_sec, transit_list)
+	transit_sec = utils.transit_sec(in_sec, start_sec, end_sec, transit_list)
 	
 	# -----------
 
@@ -312,7 +311,6 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], FFI = False,  bls = False, model = model)
 
 
-
 def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):
 	
 	'''
@@ -444,7 +442,6 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 						writer.writerows(zip(alltime_ar[pyaneti_mask],allflux_ar[pyaneti_mask],allflux_err_ar[pyaneti_mask]))
 
 
-
 	# ------------------------------------------
 	#               START PLOTTING
 	# ------------------------------------------
@@ -570,6 +567,8 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 	'''
 
 	# first check if Pyaneti is even installed...
+
+
 	if os.path.exists("./pyaneti_LATTE.py"):
 
 		if model == True:

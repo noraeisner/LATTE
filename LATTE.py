@@ -1,6 +1,3 @@
-# last updated 19 Nov 2019
-
-#imports
 import os
 import ast
 import csv

@@ -9,6 +9,7 @@ from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import inch
 
+# modules to generate the a pdf validation report
 from reportlab.lib.pagesizes import letter, A4
 from reportlab.pdfbase.pdfmetrics import stringWidth
 from reportlab.lib.colors import red, black, grey, darkcyan
@@ -17,7 +18,45 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
 
 
-def LATTE_DV(tic, indir, transit_list, sectors_all,target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI, bls = False, model = False):
+def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI, bls = False, model = False):
+
+	'''
+	funtion that makes compiles all of the information and figures into a comprehensive pdf summary document.
+
+    Parameters
+    ----------
+    tic  :   str
+        target TIC ID
+    indir  :  str
+        path to directory where all the plots and data will be saved. 
+    sectors_all  :   list
+        all the sectors in which the target has been/ will be observed
+    target_ra   :  float
+        the right ascension of the target
+    target_dec   :  float
+        the declination of the target
+    tessmag  :  float
+        TESS magnitude of the target star
+    teff  :  float
+        effective temperature of the tagret star (K)
+    srad  :  float
+        radius of the target star (solar radii)
+	bls_stats1  :  list
+		list of the returned stats of the initial bls search
+	bls_stats2  :  list
+		list of the returned stats of the second bls search
+	FFI  :  bool
+		whether the input data is from FFIs (True = from FFIs)
+	bls  :  bool  (false)
+		whether the bls search was run 
+	model  :  bool  (false)
+		whether the transit was modelled (only works if payenti has sucessfully been installed)
+
+    Returns
+    -------
+    LATTE Data Validation report in PDF format.
+
+	'''
 
 	# ---- CHECK WHETHER THE TARGET IS A TCE OR A TOI ----
 	
@@ -50,7 +89,6 @@ def LATTE_DV(tic, indir, transit_list, sectors_all,target_ra, target_dec, tessma
 		TOI = (float(TOIpl["Full TOI ID"]))
 
 	
-	
 	# ------ PARAMS ------
 	ra = float(target_ra)
 	dec = float(target_dec)
@@ -59,7 +97,7 @@ def LATTE_DV(tic, indir, transit_list, sectors_all,target_ra, target_dec, tessma
 
 	def addPageNumber(canvas, doc):
 		"""
-		Add the page number
+		Add the page numbers to the document
 		"""
 		width, height = A4 # this is useful when defining where to plot something on the page
 	
@@ -664,7 +702,7 @@ class MCLine(Flowable):
 	  
 class MCLine_color(Flowable):
 	"""
-	Line flowable --- draws a line in a flowable
+	Line flowable --- draws a line in a flowable in COLOUR
 	http://two.pairlist.net/pipermail/reportlab-users/2005-February/003695.html
 	"""
  
@@ -685,10 +723,4 @@ class MCLine_color(Flowable):
 		"""
 		self.canv.setStrokeColor(darkcyan)
 		self.canv.line(0, self.height, self.width, self.height)
-
-
-
-
-
-
 
