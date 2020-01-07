@@ -210,9 +210,9 @@ if __name__ == '__main__':
 		
 		# print out the information that has been chosen to the command line.
 		if sectors == 'all':
-			print ("Will look at  sector(s) ({}) \n".format(sectors_all))
+			print ("Will look at sector(s) ({}) \n".format(sectors_all))
 		else:
-			print ("Will look at available sectors: {} \n".format(sectors))
+			print ("Will look at sector(s): {} \n".format(str(sectors)[1:-1]))
 	
 		# star up LATTE interactive where the transit times can be chosen manually 
 		# this works differently for FFI data and target files as the data has a different format
