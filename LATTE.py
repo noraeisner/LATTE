@@ -16,6 +16,7 @@ from argparse import ArgumentParser
 #custom modules to import
 import LATTEbrew as brew 
 import LATTEutils as utils
+sys.tracebacklimit = 0
 warnings.filterwarnings('ignore')
 
 
@@ -39,57 +40,69 @@ if __name__ == '__main__':
 
 	args = ap.parse_args()
 
-
+	# ------------------------------------------------
 	# Check what the current path is - when the program is first downloaded the path is set to 'no/path/set/yet' and the user is automatically prompted to change'no/path/set/yet'
 	with open("_config.txt", 'r') as f:
-	    path = str(f.readlines()[-1])
+		path = str(f.readlines()[-1])
 	
-	
+	f.close()
+
 	def yes_or_no():
 	
-	    '''
-	    Yes/No command line option to verify that the user really wants to change the output/input path
-	    '''
-	    print ('\n \n WARNING: if you have already downloded the input files (with --new-data) then these will remain in the location set by your previous path, so you will have to redowload the data (not recommended) or move the data to the new location set by this path. \n \n ')
+		'''
+		Yes/No command line option to verify that the user really wants to change the output/input path
+		'''
+		print ('\n \n WARNING: if you have already downloded the input files (with --new-data) then these will remain in the location set by your previous path, so you will have to redowload the data (not recommended) or move the data to the new location set by this path. \n \n ')
 	
-	    reply = str(input('Are you sure that you want to change the path?' + '(yes/no): '))
+		reply = str(input('Are you sure that you want to change the path?' + '(yes/no): '))
 	
-	    if (reply == 'y') or (reply == 'yes') or (reply == 'yep') or (reply == 'yeah'):
-	        return True
+		if (reply == 'y') or (reply == 'yes') or (reply == 'yep') or (reply == 'yeah'):
+			return True
 	
-	    else: # if anything else is entered assume that this is a 'no' and continue with the old path
-	        return False     
+		else: # if anything else is entered assume that this is a 'no' and continue with the old path
+			return False	 
 	
 	if path == 'no/path/set/yet':
-	    indir = input("\n \n No output path has been set yet. \n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
+		indir = input("\n \n No output path has been set yet. \n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
 	
-	    # SAVE the new output path
-	    with open("_config.txt",'w') as f:
-	        f.write(str(indir))
+		# SAVE the new output path
+		with open("_config.txt",'w') as f:
+			f.write(str(indir))
 	
-	    print("\n New path: " + indir)
+		print("\n New path: " + indir)
 	
+		# this is also the first time that the program is being run, so download all the data that is required.
+		print ("\n Download the data files required ... " )
+		print ("\n This will take a while but luckily it only has to run once..." )
+
+		# ----- REFERENCE FILES DOWNLOAD -----
+		utils.data_files(indir)
+		utils.tp_files(indir)
+		utils.TOI_TCE_files(indir)
+		utils.momentum_dumps_info(indir)
+		# -----
+
 	# if the user chooses to redefine the path
 	
 	elif args.new_path == True: 
 	
-	    reply = yes_or_no()
+		reply = yes_or_no()
 	
-	    if reply == True:
-	        indir = input("\n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
+		if reply == True:
+			indir = input("\n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
 	
-	        # SAVE the new output path
-	        with open("_config.txt",'w') as f:
-	            f.write(str(indir))    
-	        
-	        print("\n New path: " + indir)
+			# SAVE the new output path
+			with open("_config.txt",'w') as f:
+				f.write(str(indir))	
+			
+			print("\n New path: " + indir)
 	
-	    else:
+		else:
 	
-	        print ("LATTE will continue to run with the old path: {}".format(path))
-	        indir = path
+			print ("LATTE will continue to run with the old path: {}".format(path))
+			indir = path
 	else:
-	    indir = path
+		indir = path
 	
 	
 	# ------------------------------------------------
@@ -101,6 +114,7 @@ if __name__ == '__main__':
 		os.makedirs("{}/data".format(indir))
 
 	# ------------------------------------------------
+
 	'''
 	Check whether to download the data reference files
 	This will only run if you tell the program to run this (with the args)- needs to be run the first time that one wants to download data
@@ -108,7 +122,7 @@ if __name__ == '__main__':
 	The program will check what data has already been downloaded and only download new data files.
 	'''
 
-	if args.new_data != False: 
+	if (args.new_data != False) and (path != 'no/path/set/yet'): 
 
 		# ----- REFERENCE FILES DOWNLOAD -----
 		utils.data_files(indir)
@@ -122,7 +136,7 @@ if __name__ == '__main__':
 	
 	'''
 	
-	NOTE: this requires you to have Tkinter installed. Tkinter does not work with certain new Mac operating systems.
+	NOTE: this requires you to have Tkinter installed. Tkinter currently does not work with certain new Mac operating systems.
 	In order to run LATTE with an input list and not interatcively, state the path to the csv file when running the program.
 	csv file must have format: "TICID, sectors, transits, BLS, model" - see example.
 	The TIC ID and Sectors to look at can also be stated in the command line as an argument to save time
@@ -225,7 +239,7 @@ if __name__ == '__main__':
 
 	# ---------------------------------------
 	# ---------------------------------------
-	#		    RUN WITH INPUT FILE
+	#			RUN WITH INPUT FILE
 	# ---------------------------------------
 	
 	else:
@@ -307,13 +321,13 @@ if __name__ == '__main__':
 				DV = True   # we'll make a DV report for all of them
 				
 				# ----------------------------------------
-				#             DOWNLOAD DATA 
+				#			 DOWNLOAD DATA 
 				# ----------------------------------------
 				
 				alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir, sectors, tic)
 				
 				# ----------------------------------------
-				#	           START BREWING ....
+				#			   START BREWING ....
 				# ----------------------------------------
 				
 				brew.brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)

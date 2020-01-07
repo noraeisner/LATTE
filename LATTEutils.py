@@ -39,6 +39,8 @@ import filters
 import LATTEbrew as brew
 
 # check whether pyaneti has been sucessfully installed - if it has not been installed, don't give the option to model the data
+# NOTE: in this version the Pyaneti modeling will not work (except on my computer) - this is being handled in the next release.
+
 try:
     from pyaneti_LATTE import pyaneti
     pyaneti_installed = True
@@ -49,298 +51,9 @@ except:
 # -----------------interact ------------------
 # --------------------------------------------
 
-def interact_LATTE_old(tic, indir, sectors_all, sectors, ra, dec, args):
-    '''
-    Function to run the Interactive LATTE code using the matplotlib interactive tool.
-    Calls the plot where the transit-event times can be identifies and the plotting/modeling options specified.
-    
-    Parameters
-    ----------
-    tic  :   str
-        target TIC ID
-    indir  :  str
-        path to directory where all the plots and data will be saved. 
-    sectors_all  :   list
-        all the sectors in which the target has been/ will be observed
-    sectors  :  list
-        the sectors which will be analysed
-
-    Returns
-    -------
-        runs the brew_LATTE code...
-    '''
-
-    # function needed in the rebinning - changes the shape of the array
-    def rebin(arr,new_shape):
-        shape = (new_shape[0], arr.shape[0] // new_shape[0],
-            new_shape[1], arr.shape[1] // new_shape[1])
-        return arr.reshape(shape).mean(-1).mean(1)
-    # ---------------   
-
-    # call function to download the data from MAST
-    print ("Start data download.....", end =" ")
-    alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = download_data(indir, sectors, tic)
-    print ("done.\n")
-    
-    plt.close('all') # make sure that all figures are close. 
-    # ---------------
-
-    # -------------------------
-    # Plot the interactive plot - uses matplolib
-    # -------------------------
-    
-    fig, ax = plt.subplots(2, 1, figsize=(10,7))
-    plt.tight_layout()
-
-    # Adjust the plots region to leave some space for the sliders and buttons
-    fig.subplots_adjust(left=0.24, bottom=0.25)
-    
-    fluxmin = np.nanmin(allflux)
-    fluxmax = np.nanmax(allflux)
-    
-    # function to define the plotting area around the transit event. 
-    # this needs to be in a function as the area changes with the interactive slider.
-    def cutout(transit):
-        mask_binned = (np.array(alltimebinned) > transit-1) & (np.array(alltimebinned) < transit+1)
-        mask = (np.array(alltime) > transit-1) & (np.array(alltime) < transit+1)
-        
-        return [np.array(alltime)[mask], np.array(allflux)[mask], np.array(alltime), np.array(allflux), np.array(alltimebinned)[mask_binned], np.array(allfluxbinned)[mask_binned], np.array(alltimebinned), np.array(allfluxbinned)]
-    
-    # ---------------
-
-    # function to define the bin factor
-    # this needs to be in a function as binning can be changed with the interactive buttons. 
-    def binning(binfac):
-        N      = len(alltime)
-        n      = int(np.floor(N/binfac)*binfac)
-        X      = np.zeros((2,n))
-        X[0,:]  = alltime[:n]
-        X[1,:]  = allflux[:n]
-        Xb    = rebin(X, (2,int(n/binfac)))
-        
-        time_binned = Xb[0]
-        flux_binned = Xb[1]
-    
-        return [time_binned, flux_binned]
-    # ---------------
-
-    # define the initial conditions - this is what appears on the plot initially but can change later. 
-    transit = np.nanmean(alltimebinned)  # start the cut-out in the centre of the plot.
-    binfac = 7
-    
-    # FIRST PLOT - FULL LC
-    # plot the unbinned flux
-    [line_full] = ax[0].plot(alltime, allflux , marker='o',lw = 0, markersize = 4, color = 'orange', alpha = 0.8,  markerfacecolor='white')
-    # plot the binned flux - it is called through the above function so that the binning can be changed.
-    [line_full_binned] = ax[0].plot(binning(binfac)[0], binning(binfac)[1],marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3,  markerfacecolor='k')
-    # ---------------
-
-    # SECOND PLOT - CUT OUT LC
-    # plot the cut out around the time of the transit - called with function as it can be changed with the slider.
-    [line] =  ax[1].plot(cutout(transit)[0], cutout(transit)[1], marker='o',lw = 0, markersize = 4, color = 'orange', alpha = 0.8, markerfacecolor='white')
-    [line_binned] =  ax[1].plot(cutout(transit)[4], cutout(transit)[5],marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3, markerfacecolor='k')
-    # ---------------
-
-    # Define the slider to change the transit-event time (and cut out region)
-    transit_slider_ax  = fig.add_axes([0.25, 0.1, 0.65, 0.03])  # location of the slider
-    transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=transit, color='teal')
-    
-    # Define the slider to change the y axis scale
-    scale_slider_ax  = fig.add_axes([0.25, 0.15, 0.65, 0.03])
-    scale_slider = Slider(scale_slider_ax, 'Y-Axis Scale', 0.99, 1.01, valinit=1, color='silver')
-    # ---------------
-    
-    # deifne the intial x and y axis limits - y limit can be changed with slider, x limit cannot.
-    ax[0].set_xlim([np.nanmin(alltime), np.nanmax(alltime)])
-    ax[0].set_ylim([fluxmin, fluxmax])
-    
-    ax[1].set_xlim([np.nanmean(alltime)-1, np.nanmean(alltime)+1])
-    ax[1].set_ylim([fluxmin, fluxmax])
-    
-    # ---------------
-    # Define an action for acessing the required cut-out data and drawing the line when the slider's value changes
-    def sliders_on_changed(val):
-        line.set_xdata(cutout(transit_slider.val)[0])
-        line.set_ydata(cutout(transit_slider.val)[1])
-    
-        line_binned.set_xdata(cutout(transit_slider.val)[4])
-        line_binned.set_ydata(cutout(transit_slider.val)[5])
-    
-        fig.canvas.draw_idle()  # update figure
-
-    # draw a line at the time of the chosen transit-event (from slider) on the top and bottom plot 
-    lver0 = ax[0].axvline(transit, color = 'r', linewidth = 2)
-    lver1 = ax[1].axvline(transit, color = 'r', linewidth = 2)
-
-    # ---------------
-    # Define an action for modifying the plot region on the second plot
-    def update_axis(val):   
-        ax[1].set_xlim([transit_slider.val - 1,transit_slider.val + 1])
-        lver0.set_xdata(transit_slider.val)
-        lver1.set_xdata(transit_slider.val)
-    
-    def update_yaxis(val):  
-    
-        med = 1
-        diff = abs(med - (fluxmin * scale_slider.val))
-    
-        ax[0].set_ylim([med - diff ,med + diff])
-        ax[1].set_ylim([med - diff ,med + diff])
-    
-    # Link the functions (actions) to the corresponding sliders
-    transit_slider.on_changed(update_axis)
-    scale_slider.on_changed(update_yaxis)
-    transit_slider.on_changed(sliders_on_changed)
-    # ---------------
-
-    # Define buttons which allow the user to interactively choose options:
-    # run simple code, BLS, model the data usign Pyaneti, save the data and figures, creata DV report
-
-    var_ax = fig.add_axes([0.025, 0.3, 0.1, 0.15])
-
-    # only give the model option if pyaneti has been sucessfully installed
-    if pyaneti_installed == True:
-        save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'model', 'Save', 'DVR'), (False, False, False, True, False))
-    else:
-        save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'Save', 'DVR'), (False, False, True, False))
-    
-    # Intiial values for each option
-    simple = False
-    BLS = False
-    model = False
-    save = True
-    DV = False
-
-    # function to get the status of each button and to save it
-    def variables(label):
-        status = save_var.get_status()
-        simple = status[0]
-        BLS = status[1]
-
-        if pyaneti_installed == True:
-            model = status[2]
-            save = status[3]
-            DV = status[4]
-        else:
-            model = False
-            save = status[2]
-            DV = status[3]
-
-    # ---------------
-
-    # Add a set of radio buttons for changing the binning of the data
-    binning_ax = fig.add_axes([0.025, 0.5, 0.10, 0.15])
-    binning_radios = RadioButtons(binning_ax, ('2', '5', '7', '10'), active=0)
-    
-    # this function accesses the binning functino.
-    def binning_button(label):
-        line_full_binned.set_xdata(binning(int(label))[0])
-        line_full_binned.set_ydata(binning(int(label))[1])
-        fig.canvas.draw_idle()
-
-    binning_radios.on_clicked(binning_button)
-    # ---------------
-
-    # define the paramaters of the plot
-    minf = np.nanmin(np.array(allflux))
-    maxf = np.nanmax(np.array(allflux))
-    height = maxf - minf
-    
-    ax[0].tick_params(axis="y",direction="inout", labelsize = 12) #, pad= -20)
-    ax[0].tick_params(axis="x",direction="inout", labelsize = 12) #, pad= -17)   
-    ax[0].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
-    ax[0].set_ylabel("Normalised Flux", fontsize = 12)
-    ax[0].vlines(all_md, minf-1,minf + height*0.3 , colors = 'r', label = "Momentum Dump")
-    
-    ax[1].tick_params(axis="y",direction="inout", labelsize = 12) #, pad= -20)
-    ax[1].tick_params(axis="x",direction="inout", labelsize = 12) #, pad= -17)   
-    ax[1].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
-    ax[1].set_xlabel("BJD-2457000", fontsize = 12)
-    ax[1].set_ylabel("Normalised Flux", fontsize = 12)
-    ax[1].vlines(all_md, minf-0.5,minf-0.5 + height*0.3 , colors = 'r', label = "Momentum Dump")
-    
-    # ---------------
-    # Create a label for the 'binning' box to clarify what it does
-    plt.text(0.05, 1.1, "Binning Factor", fontsize=10, verticalalignment='center')
-    
-    # ---------------
-    # define a 'text box' that lets you enter the transit times 
-
-    initial_text = ""  # no initial text (the text box is empty)
-    transit_times = []  # list of the entered transit times
-
-    # function to store the entererd transit times. 
-    def submit(text):
-        ydata = eval(text)
-        transit_times.append(ydata)
-    
-    axbox = plt.axes([0.25, 0.04, 0.50, 0.04])
-    text_box = TextBox(axbox, 'Enter transit-event times', initial=initial_text)
-    text_box.on_submit(submit)
-    # ---------------
-
-    # Create a button to close the figure and more onto the next stage of the code.
-    ebx = plt.axes([0.77, 0.04, 0.13, 0.04])
-    exit = Button(ebx, 'Close', color='orange')
-
-    # make button to exit the plot and continue with the code.
-    # pop up warning if no transit time is entered
-    def close(event):
-        if len(transit_times) > 0:
-            plt.close('all')
-        else:
-            print ("Must enter at least one transit time!")
-            ax[1].text(0.35,-0.715, "Please enter at least one transit time!", color = 'red', size=9, ha="center", transform=ax[1].transAxes)
-            fig.canvas.draw()
-
-
-    exit.on_clicked(close)
-    # ---------------
-
-    plt.show()
-
-    # ------ END OF INTERACTIVE PART OF CODE ------
-
-    # save the status of all the buttons
-    end_status = save_var.get_status()
-
-    if pyaneti_installed == True:
-        simple = end_status[0]
-        BLS = end_status[1]
-        model = end_status[2]
-        save = end_status[3]
-        DV = end_status[4]
-
-    else:
-        simple = end_status[0]
-        BLS = end_status[1]
-        model = False
-        save = end_status[2]
-        DV = end_status[3]
-
-    # ---------------
-    # get the entered transit times and turn them into a list
-    
-    if type(transit_times[-1]) == tuple:
-        transit_list = list(transit_times[-1])
-        transit_list = [float(i) for i in transit_list]
-    
-    else:
-        transit_list = [float(i) for i in transit_times]
-        transit_list = [transit_list[-1]] #if you entered it twice
-
-    print ("Transits you have entered:    {}   \n".format(str(transit_list))[1:-1])
-    print ("Check that these are the transits that you want")
-    
-    # if the save button was not selected, then change the iput argument to false
-    if save == False:
-        args.save = save
-
-    
-    #  -----  BREW  ------
-    brew.brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
-
+# the main interactive tool used to identify the times of the transit-like events
 def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
+    
     '''
     Function to run the Interactive LATTE code using the matplotlib interactive tool.
     Calls the plot where the transit-event times can be identifies and the plotting/modeling options specified.
@@ -374,6 +87,7 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     print ("done.\n")
     
     plt.close('all') # make sure that all figures are close. 
+    
     # ---------------
 
     # -------------------------
@@ -434,6 +148,7 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
 
     global transit_slider_ax
     global transit_slider
+
     # Define the slider to change the transit-event time (and cut out region)
     transit_slider_ax  = fig.add_axes([0.25, 0.14, 0.65, 0.03])  # location of the slider
     transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=transit, color='teal')
@@ -469,7 +184,6 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     # ---------------
     # Define an action for modifying the plot region on the second plot
     def update_axis(val):
-
         # ---------------
         # only ever plot one line so get rid of the old ones before plotting the new ones...
         if (len (ax[0].lines) > 1) or (len(ax[1].lines) > 1):
@@ -493,11 +207,6 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
         ax[0].set_ylim([med - diff ,med + diff])
         ax[1].set_ylim([med - diff ,med + diff])
     
-    # Link the functions (actions) to the corresponding sliders
-    transit_slider.on_changed(update_axis)
-    scale_slider.on_changed(update_yaxis)
-    transit_slider.on_changed(sliders_on_changed)
-
 
     # ------ ON CLICK -------
     # define the action that lets you click on the image in order to chose the location instead of using the slider - probably more useful
@@ -538,10 +247,18 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
             
             # these values need to be global as are needed but the clicking and the slider events
             global transit_slider_ax
-            global transit_slider            
+            global transit_slider
+
             transit_slider_ax.remove() # remove the old bar and plot a new one which has the colour bar in the right place
             transit_slider_ax  = fig.add_axes([0.25, 0.14, 0.65, 0.03])  # location of the slider
             transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=val, color='teal')
+        
+        # if clicked outside of the region activate the slider bar
+        else:
+            # Link the functions (actions) to the corresponding sliders
+            transit_slider.on_changed(update_axis)
+            scale_slider.on_changed(update_yaxis)
+            transit_slider.on_changed(sliders_on_changed)
     
     # alternatively one can click on the image in order to change the zoom in region of the plot.
     fig.canvas.mpl_connect('button_press_event', onclick)
@@ -551,7 +268,7 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     # Define buttons which allow the user to interactively choose options:
     # run simple code, BLS, model the data usign Pyaneti, save the data and figures, creata DV report
 
-    var_ax = fig.add_axes([0.025, 0.3, 0.1, 0.15])
+    var_ax = fig.add_axes([0.025, 0.4, 0.1, 0.15])
 
     # only give the model option if pyaneti has been sucessfully installed
     if pyaneti_installed == True:
@@ -640,7 +357,7 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
 
     global ttxt
     # text that will be updated to list the 'wanted' transit event times
-    ttxt = plt.text(2.1,-3.37, "Transit times: ", weight='bold')
+    ttxt = plt.text(-4.01,1.45, "Transit times: ", weight='bold')
 
     # Create a button to store the 'current' value of the slider
     stx = plt.axes([0.53, 0.04, 0.11, 0.04])
@@ -684,6 +401,7 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     # ---------------
 
     plt.show()
+    plt.close('all')
 
     # ------ END OF INTERACTIVE PART OF CODE ------
 
@@ -705,15 +423,9 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
         DV = end_status[3]
 
     # ---------------
-    # get the entered transit times and turn them into a list
-    
-    if type(transit_times[-1]) == tuple:
-        transit_list = list(transit_times[-1])
-        transit_list = [float(i) for i in transit_list]
-    
-    else:
-        transit_list = [float(i) for i in transit_times]
-        transit_list = [transit_list[-1]] #if you entered it twice
+    # get the entered transit times and make sure that all the values are floats
+
+    transit_list = transit_times
 
     print ("Transits you have entered:    {}   \n".format(str(transit_list))[1:-1])
     print ("Check that these are the transits that you want")
@@ -722,11 +434,12 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     if save == False:
         args.save = save
 
-    
+
+
     #  -----  BREW  ------
     brew.brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 
-
+# interactive tool to identify the aperture masks when run in the FFI mode
 def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args):
 
     '''
@@ -1116,7 +829,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
 
     return alltime, allflux, allflux_small, allflux_flat, all_md, allfbkg,allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
 
-
+# the main interactive tool used to identify the times of the transit-like events when run in FFI mode
 def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
     '''
     Function to run the Interactive LATTE code for the FFI using the matplotlib interactive tool.
@@ -1290,19 +1003,26 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
             transit_slider_ax.remove() # remove the old bar and plot a new one which has the colour bar in the right place
             transit_slider_ax  = fig.add_axes([0.25, 0.14, 0.65, 0.03])  # location of the slider
             transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltime), np.nanmax(alltime), valinit=val, color='teal')
-    
+
+        # if clicked outside of the region activate the slider bar
+        else:
+            transit_slider.on_changed(update_axis)
+            scale_slider.on_changed(update_yaxis)
+            transit_slider.on_changed(sliders_on_changed)
+
     # alternatively one can click on the image in order to change the zoom in region of the plot.
     fig.canvas.mpl_connect('button_press_event', onclick)
 
     # ---------------------
 
 
+    var_ax = fig.add_axes([0.025, 0.4, 0.1, 0.15])
 
-
-    # Define buttons which allow the user to interactively choose options:
-    # run simple code, BLS, model the data usign Pyaneti, save the data and figures, creata DV report
-    var_ax = fig.add_axes([0.025, 0.5, 0.1, 0.15])
-    save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'model', 'Save', 'DVR'), (False, False, False, True, False))
+    # only give the model option if pyaneti has been sucessfully installed
+    if pyaneti_installed == True:
+        save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'model', 'Save', 'DVR'), (False, False, False, True, False))
+    else:
+        save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'Save', 'DVR'), (False, False, True, False))
     
     # Intiial values for each option
     simple = False
@@ -1316,9 +1036,16 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
         status = save_var.get_status()
         simple = status[0]
         BLS = status[1]
-        model = status[2]
-        save = status[3]
-        DV = status[4]
+
+        if pyaneti_installed == True:
+            model = status[2]
+            save = status[3]
+            DV = status[4]
+        else:
+            model = False
+            save = status[2]
+            DV = status[3]
+
     # ---------------
 
     # define the paramaters of the plot
@@ -1363,7 +1090,7 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
 
     global ttxt
     # text that will be updated to list the 'wanted' transit event times
-    ttxt = plt.text(-4,1.45, "Transit times: ", weight='bold')
+    ttxt = plt.text(-4.01,1.45, "Transit times: ", weight='bold')
 
     # Create a button to store the 'current' value of the slider
     stx = plt.axes([0.53, 0.04, 0.11, 0.04])
@@ -1411,21 +1138,6 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
     exit.on_clicked(close)
     
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     # ---------------
     plt.show()
     
@@ -1442,13 +1154,7 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
 
 
     # get the entered transit times and turn them into a list
-    if type(transit_times[-1]) == tuple:
-        transit_list = list(transit_times[-1])
-        transit_list = [float(i) for i in transit_list]
-    
-    else:
-        transit_list = [float(i) for i in transit_times]
-        transit_list = [transit_list[-1]] #if you entered it twice
+    transit_list = transit_times # redefine the to note that this is a list
 
     print ("Transits you have entered:    {}   \n".format(str(transit_list))[1:-1])
     print ("Check that these are the transits that you want")
@@ -1622,6 +1328,7 @@ def tp_files(indir):
                 start = str(r_target_list.content).find('t  Dec')
                 f.write(r_target_list.content[start-3:])
                 print("finished adding TP sector {}".format(sec))
+
 
 def TOI_TCE_files(indir):
     '''
@@ -3375,7 +3082,6 @@ def plot_centroid(tic, indir, alltime12, allx1, ally1, allx2, ally2, transit_lis
 
     '''
 
-    print (args)
 
     gs = len(transit_list) # the grid size
     
@@ -3753,10 +3459,7 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
     
     target_coord = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
     target = FixedTarget(coord=target_coord, name="Survey = {}".format(survey))
-    print ("___________")
-    print (target)
-    print (5*u.arcmin)
-    print ("___________")
+
 
     ax, hdu = plot_finder_image(target, survey = survey, reticle='True', fov_radius=5*u.arcmin)
     plt.close('all')
@@ -4693,10 +4396,10 @@ def plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_li
     else:
         plt.close()
 
-
 # --------------------------------------------
 #                other functions             #
 # --------------------------------------------
+
 def rebin(arr,new_shape):
 
     ''''
@@ -4797,7 +4500,6 @@ def transit_finder(transit, alltime, all_md, allflux,alltimebinned, allfluxbinne
     ax.set_xlim(transit-1, transit+1)
     mask = (np.array(alltimebinned) > transit-1) & (np.array(alltimebinned) < transit+1)
  
-
     minorLocator = AutoMinorLocator()
     ax.xaxis.set_minor_locator(minorLocator)
     ax.tick_params(direction='in', which ='minor', colors='grey',length=3, labelsize=13)

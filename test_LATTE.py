@@ -1,29 +1,10 @@
 
 '''
 
-This script is designed to test the LATTE python code to ensure that all the function are working as they should. 
-
-What does it test?
-
-- the data is downloaded correctly
-- the data is processed correctly
-- the plots are made
+This script is designed to test the LATTE python code to ensure that all the major function are working as they should. 
 
 '''
 
-#import unittest
-
-## Third-party imports...
-#from nose.tools import assert_true
-#import requests
-
-
-#def test_request_response():
-#	# Send a request to the API server and store the response.
-#	response = requests.get('http://jsonplaceholder.typicode.com/todos')
-#	
-#	# Confirm that the request-response cycle completed successfully.
-#	assert_true(response.ok)
 
 import unittest
 from nose.tools import assert_true
@@ -35,7 +16,7 @@ from LATTEutils import tess_point, nn_ticids, download_data
 
 
 # test the downloading of the data
-'''
+
 def download_LC_data():
 	# function to reach the external server to download the scipt - this is for the first sector only
 	LC_url = "https://archive.stsci.edu/missions/tess/download_scripts/sector/tesscurl_sector_1_lc.sh"
@@ -91,7 +72,6 @@ class TestNearestNeighbours(unittest.TestCase):
 		self.assertEqual(output[2], 72.6941, "RA is incorrect")
 		self.assertEqual(output[3], -60.9055, "DEC is incorrect")
 
-'''
 
 class TestDownloadLC(unittest.TestCase):
 

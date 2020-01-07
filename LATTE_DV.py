@@ -59,7 +59,8 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 	'''
 
 	# ---- CHECK WHETHER THE TARGET IS A TCE OR A TOI ----
-	
+	print ("\n Start compiling the data validation report...")
+
 	# TCE -----
 	lc_dv = np.genfromtxt('{}/data/tesscurl_sector_all_dv.sh'.format(indir), dtype = str)
 
@@ -115,8 +116,7 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 	#------------------------------------------------------------------
 	
 	# plot the full light curve, with marked sectors and marked transit - binned and unbinned
-	print ("Creating plots...")
-	
+
 	full_LC_name = "{}/{}/{}_fullLC_md.png".format(indir,tic,tic)
 	
 	background_flux_name = '{}/{}/{}_background.png'.format(indir, tic, tic)
@@ -143,7 +143,7 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 	
 	# ----- LOGOS ------
 	PHT_logo_name  =  './LATTE_imgs/PHT_logo.jpg'
-	LATTE_logo_name = './LATTE_imgs/LATTE_logo.jpg'
+	LATTE_logo_name = './LATTE_imgs/LATTE_logo.png'
 	TESS_logo_name  = './LATTE_imgs/TESS_logo.png'
 
 
@@ -330,7 +330,7 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 	if FFI == False:
 		Story.append(Spacer(1, 10))
 		im3 = Image(centroid_positions_name)
-		print (len(transit_list))
+
 		if len(transit_list) == 1:
 			im3._restrictSize(width*0.52, width*0.52)
 		else:
@@ -358,7 +358,7 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 	# Flux Aperture
 	# --------------------------------------------
 	im4 = Image(flux_aperture_name)
-	print (transit_list)
+
 	if len(transit_list) == 1:
 		im4._restrictSize(width*0.55, width*0.55)
 	else:
@@ -541,15 +541,10 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 		ptext = '<font size=8>%s</font>' % Stellartable_text
 		Story.append(Paragraph(ptext, styles["Normal"]))
 
-
-		#except: 
-		#	print("Nopeeee")
-
 		Story.append(PageBreak())
 		# -----------
 
-			#print ("We tried to run the BLS but it didn't work. You'll have to look into this - try running it in a Jupyter notebook to find out why it didnt' work.")
-	
+
 	if model == True:
 
 		#Story.append(PageBreak()) # always start a new page for this analysis
@@ -666,14 +661,11 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 			Story.append(Paragraph(ptext, styles["Normal"]))
 		
 
-		#except: 
-		#	print ("Something didn't work with Pyaneti - maye try adjusting the priors.")
-	
-
 
 	doc.build(Story, onFirstPage=addPageNumber, onLaterPages=addPageNumber)
 
-
+	print ("\n  Complete!")
+	
 # ----- ADDITIONAL MODULES ------
 
 class MCLine(Flowable):

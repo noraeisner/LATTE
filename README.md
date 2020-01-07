@@ -31,7 +31,7 @@ Next, you will see a screen that has the full lighcurve as well as a zoom in of 
 Options:
 - change the binning of full lightcurve (not the zoomed in one at the moment) on the left.
 - change the y-scale (flux) with the sliding bar underneath the plot.
-- In this widnow you have to indicate whether you want to run a BLS search, model the transit, save the output files (default is yes) and generate summary pdf - Data Validation Report (DVR) - at the end. 
+- In this widnow you have to indicate whether you want to run a BLS search, model the transit (in progress, will be available in next release), save the output files (default is yes) and generate summary pdf - Data Validation Report (DVR) - at the end. 
 
 All of the options and the listed times of the events are entered when the orange 'close' button is pressed.
 
@@ -46,7 +46,11 @@ Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-chosen
 
 ### Arguments
 
-!!!!!!  **--new-data**     The code requires multiple text files to be stored on your computer in order to run - these are downloaded automatically from the MAST server. The first time the proghram is run, and any time that there is new data available, add **--new-data** to the command line when running the program. The code checks what data has already been downloaded and doesn't re-download anything that already exists.
+!!!!!!  **--new-data**  The code requires multiple text files to be stored on your computer in order to run - these are downloaded automatically from the MAST server. The first time the proghram is run, and any time that there is new data available, add **--new-data** to the command line when running the program. The code checks what data has already been downloaded and doesn't re-download anything that already exists.
+
+**--tic** You can skip the box to enter the tic ID by entering it in the command line with e.g. --tic=55525572. 
+
+**--sector** You can skip entering the sectors by entering them in the command line with e.g. --sector=2,5. You will need to know in what sectors this target was observed.
 
 **--targetlist***=path/to/the/csv/input/file* instead of entering the information manually everytime, you can provide LATTE with an input file which lists all the TIC IDs and the times of the transit events. Look at the example file to see the required format of the information.
 
@@ -54,15 +58,16 @@ Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-chosen
 
 **--o** If the input target list option is chosen, the program will check whether each target has already been analysed, in which case it will skip this target. If you do not wish to skip targets that have already been assessed use this in order to specify the 'overwrite' option. When the program is run interactively (not with an input file) this option has no effect.
 
+**--auto** When looking at the FFIs, the default option is that you choose both the large and small apertures interactivelty. In order for the system to choose them run the command with '--auto'. 
+
 **--nickname** In order to keep track of all of the candidates, it can be useful to asign them a nickname. This can be entered here which will simply change the name of the folder at the end. 
-
-**--tic** You can skip the box to enter the tic ID by entering it in the command line with e.g. --tic=55525572. 
-
-**--sector** You can skip entering the sectors by entering them in the command line with e.g. --sector=2,5. You will need to know in what sectors this target was observed.
 
 **--FFI** If you want to look at a FFI write '--FFI' in the command line. 
 
-**--auto** When looking at the FFIs, the default option is that you choose both the large and small apertures interactivelty. In order for the system to choose them run the command with '--auto'. 
+**--north** If you want all the images to be oriented due north (this is not the default as it takes longer to run)
+
+**--new-path** If you want to define a new path to store the data.
+
 
 
 ### Example
@@ -77,14 +82,31 @@ Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-chosen
 ![Full LC](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_fullLC_md.png)
 
 - Background flux around the times of the marked transit event(s).
+
+![Background Flux](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_background.png)
+
 - Centroid positions around the time of the marked transit event(s).
+
+![Centroid](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_centroids.png)
+
 - The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
+
+![Aperture Size](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_aperture_size.png)
+
 - The average flux in and out of the marked event(s) and the differences between the two.
+
+
 - The average flux of the target pixel file with the locatiosn of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
 - The lightcurves of the 6 closest stars that were also observed by TESS (TP files).
+
+![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_nearest_neighbours.png)
+
 - A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
+
+![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_individual_pixel_LCs_0.png)
+
 - (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
-- (optional) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
+- (in progress, will be available in next release) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
 - **FFI Mode**The FFI mode currently does not plot the nearby stars lightcurves (will be implemented soon).
 - Saves the extracted apertures used
 - Saves the corrected and the uncorrected lightcurves to verify that the detrending is workign correctly - there's are nt stored in the DV reports. 

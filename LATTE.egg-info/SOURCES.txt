@@ -1,0 +1,8 @@
+README.md
+setup.py
+LATTE.egg-info/PKG-INFO
+LATTE.egg-info/SOURCES.txt
+LATTE.egg-info/dependency_links.txt
+LATTE.egg-info/entry_points.txt
+LATTE.egg-info/top_level.txt
+pyaneti_LATTE/__init__.py

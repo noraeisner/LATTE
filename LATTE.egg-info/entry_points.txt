@@ -1,0 +1,3 @@
+[console_scripts]
+LATTE = __main__:main
+
