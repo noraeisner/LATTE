@@ -1466,7 +1466,9 @@ def download_data(indir,sector, tic, binfac = 5):
             print ("In the future, TIC {} will be observed in sector(s) {}".format(tic, future_sectors))
     
     if len(dwload_link) == 0:
-        print ("TIC {} was not observed in Sector(s):   {}   .Try again with different sectors.".format(tic, sector))
+        print ("TIC {} was not observed in Sector(s):   {}. Try again with different sectors.".format(tic, sector))
+
+        print ("\n (Also check that the data file have been downloaded - run code with '--new-data' in the command line)")
         raise SystemExit
 
     # define all the empty lists to append to in order to return the data that will be requrides later on in the script
@@ -2334,7 +2336,7 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic):
             print ("In the future, this TIC {} will be observed in sector(s) {}".format(tic, future_sectors))
 
     if len(dwload_link) == 0:
-        print ("This TIC was not observed in Sector(s):   {}   .Try again with different sectors.".format(sector))
+        print ("\n (Also check that the data file have been downloaded - run code with '--new-data' in the command line)")
 
 
     TESS_unbinned_t_l = []
