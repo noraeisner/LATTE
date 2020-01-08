@@ -667,7 +667,7 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 
 	doc.build(Story, onFirstPage=addPageNumber, onLaterPages=addPageNumber)
 
-	print ("\n  Complete!")
+	print ("\n  Complete! \n ")
 
 
 # ----- ADDITIONAL MODULES ------

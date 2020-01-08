@@ -46,6 +46,7 @@ Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-chosen
 
 ### Arguments
 
+
 !!!!!!  **--new-data**  The code requires multiple text files to be stored on your computer in order to run - these are downloaded automatically from the MAST server. The first time the proghram is run, and any time that there is new data available, add **--new-data** to the command line when running the program. The code checks what data has already been downloaded and doesn't re-download anything that already exists.
 
 **--tic** You can skip the box to enter the tic ID by entering it in the command line with e.g. --tic=55525572. 
@@ -68,6 +69,7 @@ Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-chosen
 
 **--new-path** If you want to define a new path to store the data.
 
+NOTE: all of these arguments (except new-path, auto and targetlist) can be changed as option in the GUI. They are arguments in case the same options wish to be run multiple times and the user therfore wishes to identify them in the command line when the program is executed.
 
 
 ### Example

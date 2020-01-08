@@ -340,12 +340,30 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     # Create a label for the 'binning' box to clarify what it does
     plt.text(0.08, 1.1, "Binning Factor", fontsize=10, verticalalignment='center')
     # ---------------
-    # Create a label for the 'binning' box to clarify what it does
+    # Create a label for the 'settings' box to clarify what it does
     plt.text(0.28, -0.25, "Settings", fontsize=10, verticalalignment='center')
     # ---------------
 
+    # define a box to enter the nickname of the target - this is useful if you analyse a lot of different candidates and you need a way of identifying them easily
+
+    # ---------------
+    # define a 'text box' that lets you enter the transit times 
+
+    initial_text = ""  # no initial text (the text box is empty)
+    nick_name = []  # list of the entered transit times
+
+    # function to store the entererd transit times. 
+    def submit(text):
+        nick_name.append(text)
+    
+    axbox = plt.axes([0.25, 0.03, 0.22, 0.04]) # x, y, width, height
+    text_box = TextBox(axbox, 'Memorable name (optional): ', initial=initial_text)
+    text_box.on_submit(submit)
+    # ---------------
+
+
     # Create a button to close the figure and more onto the next stage of the code.
-    ebx = plt.axes([0.77, 0.04, 0.13, 0.04])
+    ebx = plt.axes([0.77, 0.03, 0.13, 0.04])
     exit = Button(ebx, 'Done', color='orange')
 
     # make button to exit the plot and continue with the code.
@@ -365,10 +383,10 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
 
     global ttxt
     # text that will be updated to list the 'wanted' transit event times
-    ttxt = plt.text(-4.01,1.45, "Transit times: ", weight='bold')
+    ttxt = plt.text(-4.01,1.55, "Transit times: ", weight='bold')
 
     # Create a button to store the 'current' value of the slider
-    stx = plt.axes([0.53, 0.04, 0.11, 0.04])
+    stx = plt.axes([0.53, 0.03, 0.11, 0.04])
     store_val = Button(stx, 'Add time', color='gold')
 
     transit_times = []
@@ -389,7 +407,7 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     # ---------------
 
     # Create a button to delete the last entered value
-    delx = plt.axes([0.65, 0.04, 0.11, 0.04])
+    delx = plt.axes([0.65, 0.03, 0.11, 0.04])
     del_val = Button(delx, 'Remove time', color='grey')
 
     transit_times = []
@@ -447,6 +465,12 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     # if the save button was not selected, then change the iput argument to false
     if save == False:
         args.save = save
+
+    # check whether the user identified a nickname, or memorable name, for the candidate
+    if len(nick_name) != 0: # if the box was left untouched do nothing and continue without setting a new nickname - will be ignored
+        if len(nick_name[-1]) > 0: # [-1] in case the user pressed enter and then deleted the nickname again
+            args.nickname = str(nick_name[-1])
+
     # ---------------
 
     # get the entered transit times and make sure that all the values are floats
@@ -455,7 +479,6 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     print ("Transits you have entered:    {}   \n".format(str(transit_list))[1:-1])
     print ("Check that these are the transits that you want")
     
-
     #  -----  BREW  ------
     brew.brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 
@@ -1075,7 +1098,6 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
 
     # ---------------
 
-
     # define the paramaters of the plot
     minf = np.nanmin(np.array(allflux))
     maxf = np.nanmax(np.array(allflux))
@@ -1098,15 +1120,27 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
     # -------------------------------------
 
     # Create a button to close the figure and more onto the next stage of the code.
-    ebx = plt.axes([0.77, 0.04, 0.13, 0.04])
+    ebx = plt.axes([0.77, 0.03, 0.13, 0.04])
     exit = Button(ebx, 'Done', color='orange')
 
-    # make button to exit the plot and continue with the code.
-    # pop up warning if no transit time is entered
+    # define a box to enter the nickname of the target - this is useful if you analyse a lot of different candidates and you need a way of identifying them easily
+    # ---------------
+    # define a 'text box' that lets you enter the transit times 
+
+    initial_text = "FFI"  # no initial text (the text box is empty)
+    nick_name = []  # list of the entered transit times
+
+    # function to store the entererd transit times. 
+    def submit(text):
+        nick_name.append(text)
     
+    axbox = plt.axes([0.25, 0.03, 0.22, 0.04]) # x, y, width, height
+    text_box = TextBox(axbox, 'Memorable name (optional): ', initial=initial_text)
+    text_box.on_submit(submit)
 
     # ---------------
-
+    # make button to exit the plot and continue with the code.
+    # pop up warning if no transit time is entered
     def close(event):
         if len(transit_times) > 0:
             plt.close('all')
@@ -1121,10 +1155,10 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
 
     global ttxt
     # text that will be updated to list the 'wanted' transit event times
-    ttxt = plt.text(-4.01,1.45, "Transit times: ", weight='bold')
+    ttxt = plt.text(0,1.5, "Transit times: ", weight='bold')
 
     # Create a button to store the 'current' value of the slider
-    stx = plt.axes([0.53, 0.04, 0.11, 0.04])
+    stx = plt.axes([0.53, 0.03, 0.11, 0.04])
     store_val = Button(stx, 'Add time', color='gold')
 
     transit_times = []
@@ -1145,7 +1179,7 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
     # ---------------
 
     # Create a button to delete the last entered value
-    delx = plt.axes([0.65, 0.04, 0.11, 0.04])
+    delx = plt.axes([0.65, 0.03, 0.11, 0.04])
     del_val = Button(delx, 'Remove time', color='grey')
 
     transit_times = []
@@ -1208,6 +1242,17 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
     # if the save button was not selected, then change the iput argument to false
     if save == False:
         args.save = save
+
+    print (nick_name)
+    # check whether the user identified a nickname, or memorable name, for the candidate
+
+    if len(nick_name) == 0: # if the box was left untouched
+        args.nickname = "FFI"
+
+    elif len(nick_name[-1]) > 0: # [-1] in case the user pressed enter and then deleted the nickname again
+        args.nickname = str(nick_name[-1])
+
+    print (args.nickname)
     # ---------------
 
 

@@ -316,6 +316,7 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 
 	# ------------
 
+
 	# Finally, create a DV report which summarises all of the plots and tables.
 	if DV == True: 
 		import LATTE_DV as ldv
@@ -579,10 +580,11 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 	The code runs slightly differently depending on whether one or multiple transits have been marked. 
 	This is because with multiple transits the code has information about the possible orbital period.
 	Need to ensure that the code has compiled correctly on the users computer. 
+
+	SKIP FOR NOW - this will become available in the next version of LATTE
 	'''
 
 	# first check if Pyaneti is even installed...
-
 
 	if os.path.exists("./pyaneti_LATTE.py"):
 
@@ -596,7 +598,10 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 	else:
 		print ("Pyaneti has not been installed so you can't model anything yet. Ask Nora or Oscar for the LATTE version of the Pyaneti code.")
 		model = False
+	
+	# SKIP until HERE
 
+	# ------------
 	# Finally, create a DV report which summarises all of the plots and tables.
 	if DV == True: 
 		import LATTE_DV as ldv
@@ -606,3 +611,5 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 		else:
 			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, ra, dec, tessmag, teff, srad, [0], [0], FFI = True, bls = False, model = model)
 
+	else:
+		print ("\n  Complete! \n ")

@@ -41,7 +41,7 @@ if __name__ == '__main__':
 	ap.add_argument('--noshow', action='store_true', help='if you want to NOT show the plots write --noshow in the command line')
 	ap.add_argument('--o', action='store_true', help='if you call this old files will be overwriten in the non-interactive version')
 	ap.add_argument('--auto', action='store_false', help='automatic aperture selection')
-	ap.add_argument('--nickname', type=str, help='give the target a memorable name', default='no')
+	ap.add_argument('--nickname', type=str, help='give the target a memorable name', default='noname')
 	ap.add_argument('--FFI', action='store_true', help='is this an FIIs?')
 	ap.add_argument('--save', help='is this an FIIs?', default = True)
 	ap.add_argument('--north', action='store_true', help='write "north" if you want all the images to be aligned North')
@@ -384,17 +384,14 @@ if __name__ == '__main__':
 				
 				brew.brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 
-	# end by changing the name of the folder to include the nicknane if so defined in the input functions
-	# this allows users to keep track of their targets more easily. We name our candidates after pastries. 
-		
-	if (not args.nickname == 'no') and (args.FFI == True):
-		os.system("mv {}/{} {}/FFI_{}_{}".format(indir, tic, indir, tic, args.nickname))
 
-	elif not args.nickname == 'no':
+	# end by changing the name of the folder to include the nicknane if defined
+	# this allows users to keep track of their targets more easily e.g. Planet Hunters TESS candidates are named after pastries.
+		
+	if not args.nickname == 'noname':
 		os.system("mv {}/{} {}/{}_{}".format(indir, tic, indir, tic, args.nickname))
 	
-	elif args.FFI == True:
-		os.system("mv {}/{} {}/FFI_{}".format(indir, tic,indir, tic))
-	
+
+	print ("\n  Complete! \n ")
 # End.
 
