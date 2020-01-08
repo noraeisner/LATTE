@@ -476,7 +476,8 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     # get the entered transit times and make sure that all the values are floats
     transit_list = transit_times
 
-    print ("Transits you have entered:    {}   \n".format(str(transit_list))[1:-1])
+    print ("Transit times : {}".format(str(transit_list)[1:-1]))
+
     print ("Check that these are the transits that you want")
     
     #  -----  BREW  ------
@@ -1259,7 +1260,7 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
     # get the entered transit times and turn them into a list
     transit_list = transit_times # redefine the to note that this is a list
 
-    print ("Transits you have entered:    {}   \n".format(str(transit_list))[1:-1])
+    print ("Transit times : {}".format(str(transit_list)[1:-1]))
     print ("Check that these are the transits that you want")
     
     # if the save button was not selected, then change the iput argument to false

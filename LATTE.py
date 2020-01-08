@@ -309,7 +309,9 @@ if __name__ == '__main__':
 			tic = str(int(row['TICID']))
 
 			existing_files = glob("{}/*{}*".format(indir, tic))
-			# Check whether this file already exists
+			
+			# Check whether this file already exist
+			# if it already exists it will only be overwritten if --o function has been enabled to avoid file loss.
 			if (len(existing_files) > 0)  and (args.o != True): 
 				print ("This file already exists therefore SKIP. To overwrite files run this code with --o in the command line.")
 				continue
@@ -371,7 +373,7 @@ if __name__ == '__main__':
 				simple = False  # we don't want to run the simple version - that's option is simply to do quick test
 				save = True  # always save the files - no point running this if you're not going to save them
 				DV = True   # we'll make a DV report for all of them
-				
+				args.noshow == True  # don't show these, just save them
 				# ----------------------------------------
 				#			 DOWNLOAD DATA 
 				# ----------------------------------------
