@@ -16,9 +16,18 @@ from argparse import ArgumentParser
 #custom modules to import
 import LATTEbrew as brew 
 import LATTEutils as utils
-sys.tracebacklimit = 0
+#sys.tracebacklimit = 0
 warnings.filterwarnings('ignore')
 
+'''
+NOTE: a warning message currently appears when the code is exited (i.e. at the end of the code). 
+This is due to an error in the current verion of matplolib with the interactive widgets but has been adressed
+in future releases of matplolib (see https://github.com/matplotlib/matplotlib/issues/13660)
+The above link shows how to change the matplolib cbook __init__ file in order to make it disapear.
+
+# REQUIRES MATPLOLIB 3.2 (there is a bug in 3.1 the current stable version - as of January 2020)). 
+ --- pip install matplotlib==3.2.0rc1 (still in testing?)
+'''
 
 # -------------------- START ---------------------
 # ------------------------------------------------
@@ -29,7 +38,7 @@ if __name__ == '__main__':
 	ap.add_argument('--tic', type=str, help='the target TIC id, if blank will be prompted to enter', default = 'no')
 	ap.add_argument('--sector', type=str, help='the sector(s) to look at', default = 'no')
 	ap.add_argument('--targetlist', type=str, help='the link to the target file list', default='no')
-	ap.add_argument('--noshow', action='store_false', help='if you want to NOT show the plots write --noshow in the command line')
+	ap.add_argument('--noshow', action='store_true', help='if you want to NOT show the plots write --noshow in the command line')
 	ap.add_argument('--o', action='store_true', help='if you call this old files will be overwriten in the non-interactive version')
 	ap.add_argument('--auto', action='store_false', help='automatic aperture selection')
 	ap.add_argument('--nickname', type=str, help='give the target a memorable name', default='no')
@@ -48,7 +57,6 @@ if __name__ == '__main__':
 	f.close()
 
 	def yes_or_no():
-	
 		'''
 		Yes/No command line option to verify that the user really wants to change the output/input path
 		'''
@@ -170,19 +178,61 @@ if __name__ == '__main__':
 
 		# if either the tic or the sectors or both have not already been identified, run Tkinter (interactive tools)
 		
+
+
 		else:
+
 			# make a GUI interface with TKinter
 			ROOT = tk.Tk()
 			ROOT.withdraw()
-			
-			# has the tic already been defined?
-			if args.tic == 'no':
+			# if this hasn't already been identified as an FFI through the command line, give the option to chose this when entering the TIC ID
+			if args.FFI == False:
 
-				# load first prompt window which asks for TIC ID	
-				tic = simpledialog.askstring(title="TIC",
-												  prompt="Enter TIC ID:")
-			else:
-				tic = str(args.tic)
+				# -----------
+				class TICprompt(simpledialog.Dialog):
+				
+				    def body(self, master):
+					
+						# make a text box for the TIC ID
+				        tk.Label(master, text="Enter TIC ID:").grid(row=0)
+				        self.e1 = tk.Entry(master)
+				        self.e1.grid(row=0, column=1)
+				        
+				        # make a check button with the option to run this in FFI mode
+				        self.FFIbox = tk.IntVar()
+				        self.answer = tk.Checkbutton(master,text="Check for FFI mode", variable=self.FFIbox)
+				        self.answer.grid(row=1, column=1,  columnspan=2)
+				
+				    def apply(self):
+				    	# make these global variables so that they can be used outside of this class and applied to the rest of the program
+				        global tkTIC
+				        global tkFFI
+				
+				        ROOT.form=(self.FFIbox.get())
+				        tkTIC = (self.e1.get())
+				        tkFFI =  (self.FFIbox.get())
+        		# -----------
+
+				TICprompt(ROOT)
+				# make the TIC a string
+				tic = str(tkTIC)
+
+				# If the FFI button was checked, change the FFI argument 
+
+				if tkFFI == 1:
+					args.FFI = True
+
+			else: # if this is a FFI, don't give the FFI option again
+				# has the tic already been defined?
+				if args.tic == 'no':
+	
+					# load first prompt window which asks for TIC ID	
+					tic = simpledialog.askstring(title="TIC",
+													  prompt="Enter TIC ID:")
+				else:
+					tic = str(args.tic)
+
+			# -----------
 
 			# Is this an FFI? - if it is, need to create a folder to store the FFI data in (one for each TIC ID)
 			if args.FFI == True:
@@ -224,12 +274,14 @@ if __name__ == '__main__':
 		
 		# print out the information that has been chosen to the command line.
 		if sectors == 'all':
-			print ("Will look at sector(s) ({}) \n".format(sectors_all))
+			print ("Will look at sector(s): {} \n".format(str(sectors_all)[1:-1]))
 		else:
-			print ("Will look at sector(s): {} \n".format(str(sectors)[1:-1]))
+			print ("Will look at sector(s):  {} \n".format(str(sectors)[1:-1]))
 	
-		# star up LATTE interactive where the transit times can be chosen manually 
+		# start up LATTE interactive where the transit times can be chosen manually 
 		# this works differently for FFI data and target files as the data has a different format
+
+
 		if args.FFI == False:
 			utils.interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args)  # the argument of whether to shos the images or not 
 		else:

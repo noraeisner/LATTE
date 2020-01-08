@@ -181,21 +181,58 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 	# the data is extracted using the open source LightKurve package as they a built in function to extract LCs using different aperture sizes
 	TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic)
 	
-	# plot the LCs using two different aperture sizes.
-	utils.plot_aperturesize(tic,indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, transit_list, args)
+	# if the TPF wasn't corrupt then make the TPF files (only very ocassionally corrupt)
+	if (TESS_unbinned_t_l != -111):
+
+		tpf_corrupt = False
+		# plot the LCs using two different aperture sizes.
+		utils.plot_aperturesize(tic,indir,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, transit_list, args)
+		
+		print ("Aperture size plots... done.")
+		# ------------
 	
-	print ("Aperture size plots... done.")
+		'''
+		Plot the average pixel brightness of the cut-out around the target star and the corresponding SDSS field of view.
+		Both are oriented so that North is pointing upwards.
+		The former also shows the nearby stars with TESS magnitude brighter than 17. Queried from GAIA using astroquery.
+		The function returns the mass of the star (also output from astroquery)- this is a useful input for the Pyaneti modelling		
+		'''
+		_, _, _, mstar = utils.plot_TESS_stars(tic,indir, transit_list, transit_sec, tpf_list, args)
+	
+		print ("Star Aperture plots... done.")
+	
+		# ------------
+		
+		# Download the Target Pixel File using the raw MAST data - this comes in a different format as the TPFs extracted using Lightkurve
+		# This data is then corrected using Principal Component Analysis is orderto get rid of systematics.
+		X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic)
+		
+		# ------------
+	
+		'''
+		plot the in and out of transit flux comparison.
+		By default the images are NOT orented north - this is because the reprojectio takes longer to run and for a simple
+		analysis to chekc whether the brightest pixel moves during the transit this is not required.
+		The orientation towards north can be defined in the command line with '--north'.
+		'''
+		if args.north == True:
+			utils.plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, tpf_list, args)
+			print ("In and out of aperture flux comparison with reprojection... done. ")
+	
+		else:
+			utils.plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, args)
+			print ("In and out of aperture flux comparison... done.")
+		# ------------
+	
+		# For each pixel in the TPF, extract and plot a lightcurve around the time of the marked transit event.
+		utils.plot_pixel_level_LC(tic, indir,X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, args)
+		print ("Pixel level LCs plot... done.")
+		# ------------
+	
+	else:
+		tpf_corrupt = True
 	# ------------
-
-	'''
-	Plot the average pixel brightness of the cut-out around the target star and the corresponding SDSS field of view.
-	Both are oriented so that North is pointing upwards.
-	The former also shows the nearby stars with TESS magnitude brighter than 17. Queried from GAIA using astroquery.
-	The function returns the mass of the star (also output from astroquery)- this is a useful input for the Pyaneti modelling		
-	'''
-	_, _, _, mstar = utils.plot_TESS_stars(tic,indir, transit_list, transit_sec, tpf_list, args)
-
-	print ("Star Aperture plots... done.")
+	# end of plots that require target pixel files
 	# ------------
 
 	# If more than one transit has been marked by the user, the LC is phase folded based on the period of the separation of the first two maarked peaks.
@@ -219,39 +256,13 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 		if save == True:
 			plt.savefig('{}/{}/{}_phase_folded.png'.format(indir, tic, tic), format='png')
 		
-		if args.noshow == True:
+		if args.noshow == False:
 			plt.show()
 
 		print ("Phase folded plot... done.")
 
 	else:
 		print ("\n Only one transit marked - therefore can't be phase folded. \n")
-	# ------------
-	
-	# Download the Target Pixel File using the raw MAST data - this comes in a different format as the TPFs extracted using Lightkurve
-	# This data is then corrected using Principal Component Analysis is orderto get rid of systematics.
-	X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic)
-	
-	# ------------
-
-	'''
-	plot the in and out of transit flux comparison.
-	By default the images are NOT orented north - this is because the reprojectio takes longer to run and for a simple
-	analysis to chekc whether the brightest pixel moves during the transit this is not required.
-	The orientation towards north can be defined in the command line with '--north'.
-	'''
-	if args.north == True:
-		utils.plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, tpf_list, args)
-		print ("In and out of aperture flux comparison with reprojection... done. ")
-
-	else:
-		utils.plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, args)
-		print ("In and out of aperture flux comparison... done.")
-	# ------------
-
-	# For each pixel in the TPF, extract and plot a lightcurve around the time of the marked transit event.
-	utils.plot_pixel_level_LC(tic, indir,X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, args)
-	print ("Pixel level LCs plot... done.")
 	# ------------
 
 	'''
@@ -279,6 +290,7 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 	# ------------
 
 	'''
+	NOTE: CURRENTLY ONLY WORKS ON NORA'S COMPUTER - WILL BE AVAILABLE IN NEXT RELEASE SO PLEASE SCIP THIS PART OF THE CODE
 	If the modelling option is selected (in the GUI), model the transit event using Pyaneti (Barragan et al 2018)
 	which uses an Bayesian approach with an MCMC sampling to best fit and model the transit.
 	The code runs slightly differently depending on whether one or multiple transits have been marked. 
@@ -299,6 +311,9 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 	else:
 		print ("Pyaneti has not been installed so you can't model anything yet. Contact Nora or Oscar for the LATTE version of the Pyaneti code.")
 		model = False
+
+	# SKIP UNTIL HERE
+
 	# ------------
 
 	# Finally, create a DV report which summarises all of the plots and tables.
@@ -306,9 +321,9 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 		import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI = False,  bls = True, model = model)
+			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI = False,  bls = True, model = model)
 		else:
-			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], FFI = False,  bls = False, model = model)
+			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, FFI = False,  bls = False, model = model)
 
 
 def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):
@@ -503,7 +518,7 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 		if save == True:
 			plt.savefig('{}/{}/{}_phase_folded.png'.format(indir, tic, tic), format='png')
 		
-		if args.noshow == True:
+		if args.noshow == False:
 			plt.show()
 
 		print ("Phase folded plot... done.")

@@ -268,40 +268,45 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     # Define buttons which allow the user to interactively choose options:
     # run simple code, BLS, model the data usign Pyaneti, save the data and figures, creata DV report
 
-    var_ax = fig.add_axes([0.025, 0.4, 0.1, 0.15])
 
     # only give the model option if pyaneti has been sucessfully installed
     if pyaneti_installed == True:
-        save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'model', 'Save', 'DVR'), (False, False, False, True, False))
+        var_ax = fig.add_axes([0.025, 0.34, 0.119, 0.21]) # x, y, width, height
+        save_var = CheckButtons(var_ax, ('Simple','Hide plots', 'North', 'BLS', 'model', 'Save', 'Report'), (False, args.noshow, args.north, False, False, True, True))
     else:
-        save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'Save', 'DVR'), (False, False, True, False))
+        var_ax = fig.add_axes([0.025, 0.35, 0.119, 0.2]) # x, y, width, height
+        save_var = CheckButtons(var_ax, ('Simple','Hide plots', 'North', 'BLS', 'Save', 'Report'), (False, args.noshow, args.north, False, True, True))
     
-    # Intiial values for each option
-    simple = False
+    # Initial values for each option
+    simple = False 
+    hide = args.noshow
+    north = args.north
     BLS = False
     model = False
     save = True
-    DV = False
+    DV = True
 
     # function to get the status of each button and to save it
     def variables(label):
         status = save_var.get_status()
         simple = status[0]
-        BLS = status[1]
+        hide = status[1]
+        north = status[2]
+        BLS = status[3]
 
         if pyaneti_installed == True:
-            model = status[2]
-            save = status[3]
-            DV = status[4]
+            model = status[4]
+            save = status[5]
+            DV = status[6]
         else:
             model = False
-            save = status[2]
-            DV = status[3]
+            save = status[4]
+            DV = status[5]
 
     # ---------------
 
     # Add a set of radio buttons for changing the binning of the data
-    binning_ax = fig.add_axes([0.025, 0.6, 0.10, 0.15])
+    binning_ax = fig.add_axes([0.035, 0.6, 0.1, 0.15]) # x, y, width, height
     binning_radios = RadioButtons(binning_ax, ('2', '5', '7', '10'), active=0)
     
     # this function accesses the binning functino.
@@ -333,7 +338,10 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     
     # ---------------
     # Create a label for the 'binning' box to clarify what it does
-    plt.text(0.05, 1.1, "Binning Factor", fontsize=10, verticalalignment='center')
+    plt.text(0.08, 1.1, "Binning Factor", fontsize=10, verticalalignment='center')
+    # ---------------
+    # Create a label for the 'binning' box to clarify what it does
+    plt.text(0.28, -0.25, "Settings", fontsize=10, verticalalignment='center')
     # ---------------
 
     # Create a button to close the figure and more onto the next stage of the code.
@@ -410,31 +418,43 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
 
     if pyaneti_installed == True:
         simple = end_status[0]
-        BLS = end_status[1]
-        model = end_status[2]
-        save = end_status[3]
-        DV = end_status[4]
+        hide = end_status[1]
+        north = end_status[2]
+        BLS = end_status[3]
+        model = end_status[4]
+        save = end_status[5]
+        DV = end_status[6]
 
     else:
         simple = end_status[0]
-        BLS = end_status[1]
+        hide = end_status[1]
+        north = end_status[2]
+        BLS = end_status[3]
         model = False
-        save = end_status[2]
-        DV = end_status[3]
+        save = end_status[4]
+        DV = end_status[5]
+
 
     # ---------------
-    # get the entered transit times and make sure that all the values are floats
 
+    # update the arguments if they are different from the ones entered in the command line: 
+    if args.noshow != hide:
+        args.noshow = hide
+
+    if args.north != north:
+        args.north = north
+    
+    # if the save button was not selected, then change the iput argument to false
+    if save == False:
+        args.save = save
+    # ---------------
+
+    # get the entered transit times and make sure that all the values are floats
     transit_list = transit_times
 
     print ("Transits you have entered:    {}   \n".format(str(transit_list))[1:-1])
     print ("Check that these are the transits that you want")
     
-    # if the save button was not selected, then change the iput argument to false
-    if save == False:
-        args.save = save
-
-
 
     #  -----  BREW  ------
     brew.brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
@@ -1015,38 +1035,46 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
 
     # ---------------------
 
+    # Define buttons which allow the user to interactively choose options:
+    # run simple code, BLS, model the data usign Pyaneti, save the data and figures, creata DV report
 
-    var_ax = fig.add_axes([0.025, 0.4, 0.1, 0.15])
 
     # only give the model option if pyaneti has been sucessfully installed
     if pyaneti_installed == True:
-        save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'model', 'Save', 'DVR'), (False, False, False, True, False))
+        var_ax = fig.add_axes([0.025, 0.44, 0.119, 0.21]) # x, y, width, height
+        save_var = CheckButtons(var_ax, ('Simple','Hide plots', 'North', 'BLS', 'model', 'Save', 'Report'), (False, args.noshow, args.north, False, False, True, True))
     else:
-        save_var = CheckButtons(var_ax, ('Simple', 'BLS', 'Save', 'DVR'), (False, False, True, False))
+        var_ax = fig.add_axes([0.025, 0.45, 0.119, 0.2]) # x, y, width, height
+        save_var = CheckButtons(var_ax, ('Simple','Hide plots', 'North', 'BLS', 'Save', 'Report'), (False, args.noshow, args.north, False, True, True))
     
-    # Intiial values for each option
-    simple = False
+    # Initial values for each option
+    simple = False 
+    hide = args.noshow
+    north = args.north
     BLS = False
     model = False
     save = True
-    DV = False
+    DV = True
 
     # function to get the status of each button and to save it
     def variables(label):
         status = save_var.get_status()
         simple = status[0]
-        BLS = status[1]
+        hide = status[1]
+        north = status[2]
+        BLS = status[3]
 
         if pyaneti_installed == True:
-            model = status[2]
-            save = status[3]
-            DV = status[4]
+            model = status[4]
+            save = status[5]
+            DV = status[6]
         else:
             model = False
-            save = status[2]
-            DV = status[3]
+            save = status[4]
+            DV = status[5]
 
     # ---------------
+
 
     # define the paramaters of the plot
     minf = np.nanmin(np.array(allflux))
@@ -1075,6 +1103,9 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
 
     # make button to exit the plot and continue with the code.
     # pop up warning if no transit time is entered
+    
+
+    # ---------------
 
     def close(event):
         if len(transit_times) > 0:
@@ -1146,11 +1177,38 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
     # save the status of all the buttons
     end_status = save_var.get_status()
 
-    simple = end_status[0]
-    BLS = end_status[1]
-    model = end_status[2]
-    save = end_status[3]
-    DV = end_status[4]
+    if pyaneti_installed == True:
+        simple = end_status[0]
+        hide = end_status[1]
+        north = end_status[2]
+        BLS = end_status[3]
+        model = end_status[4]
+        save = end_status[5]
+        DV = end_status[6]
+
+    else:
+        simple = end_status[0]
+        hide = end_status[1]
+        north = end_status[2]
+        BLS = end_status[3]
+        model = False
+        save = end_status[4]
+        DV = end_status[5]
+
+
+    # ---------------
+
+    # update the arguments if they are different from the ones entered in the command line: 
+    if args.noshow != hide:
+        args.noshow = hide
+
+    if args.north != north:
+        args.north = north
+    
+    # if the save button was not selected, then change the iput argument to false
+    if save == False:
+        args.save = save
+    # ---------------
 
 
     # get the entered transit times and turn them into a list
@@ -2551,8 +2609,13 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic):
     
     for idx,file in enumerate(dwload_link_tp):
 
-        tpf = TessTargetPixelFile(file) # dowload the Target Pixel File
-        
+        try:
+            tpf = TessTargetPixelFile(file) # dowload the Target Pixel File
+        except:
+            # on very occasioal files the target pixel file is corrupt and cannot download with the TypeError: Buffer is too small.
+            print ("\n !!! This target pixel file is corrupt and cannot be downloaded at this time. Please try again later or a different file. \n")
+            return -111, -111, -111, -111, -111, -111, -111 # flag an error message
+
         for T0 in transit_list:
             if (T0 > np.nanmin(tpf.time)) and (T0 < np.nanmax(tpf.time)):
                 tpf_list.append(tpf)
@@ -3033,7 +3096,7 @@ def plot_nn(tic, indir, alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_
         plt.savefig('{}/{}/{}_nearest_neighbours.png'.format(indir, tic, tic), format='png', bbox_inches='tight')
 
     
-    if args.noshow == True:
+    if args.noshow == False:
         plt.show()
     else:
         plt.close()
@@ -3239,7 +3302,7 @@ def plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binn
         if args.save == True:
             plt.savefig('{}/{}/{}_aperture_size.png'.format(indir, tic, tic), format='png')
 
-        if args.noshow == True:
+        if args.noshow == False:
             plt.show()
         else:
             plt.close()
@@ -3294,7 +3357,7 @@ def plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binn
         if args.save == True:
             plt.savefig('{}/{}/{}_aperture_size.png'.format(indir, tic, tic), format='png')
 
-        if args.noshow == True:
+        if args.noshow == False:
             plt.show()
         else:
             plt.close()
@@ -3352,7 +3415,7 @@ def plot_background(tic, indir, alltime, allfbkg, transit_list, args):
         if args.save == True:
             plt.savefig('{}/{}/{}_background.png'.format(indir, tic, tic), format='png')
         
-        if args.noshow == True:
+        if args.noshow == False:
             plt.show()
         else:
             plt.close()
@@ -3390,7 +3453,7 @@ def plot_background(tic, indir, alltime, allfbkg, transit_list, args):
         if args.save == True:
             plt.savefig('{}/{}/{}_background.png'.format(indir, tic, tic), format='png', bbox_inches='tight', pad_inches=0.5)
 
-        if args.noshow == True:
+        if args.noshow == False:
             plt.show()
         else:
             plt.close()
@@ -3458,10 +3521,16 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
     plt.axis("off")
     
     target_coord = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
-    target = FixedTarget(coord=target_coord, name="Survey = {}".format(survey))
-
-
-    ax, hdu = plot_finder_image(target, survey = survey, reticle='True', fov_radius=5*u.arcmin)
+    
+    try:
+        target = FixedTarget(coord=target_coord, name="Survey = {}".format(survey))
+        ax, hdu = plot_finder_image(target, survey = survey, reticle='True', fov_radius=5*u.arcmin)
+    
+    except: # if DSS2 Red is not available, download the DSS field of view image instead
+        survey = 'DSS'
+        target = FixedTarget(coord=target_coord, name="Survey = {}".format(survey))
+        ax, hdu = plot_finder_image(target, survey = survey, reticle='True', fov_radius=5*u.arcmin)
+    
     plt.close('all')
 
     # --------------------------------------------
@@ -3532,7 +3601,7 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
             if args.save == True:
                 plt.savefig('{}/{}/{}_star_field.png'.format(indir, tic, tic), format='png', bbox_inches='tight')
 
-            if args.noshow == True:
+            if args.noshow == False:
                 plt.show()
             else:
                 plt.close()
@@ -3636,7 +3705,7 @@ def plot_TESS_stars_not_proj(tic, indir,transit_list, transit_sec, tpf_list, arg
             if args.save == True:
                 plt.savefig('{}/{}/{}_star_field.png'.format(indir, tic, tic), format='png')
     
-            if args.noshow == True:
+            if args.noshow == False:
                 plt.show()
             else:
                 plt.close()
@@ -3805,7 +3874,7 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         if args.save == True:
             plt.savefig('{}/{}/{}_individual_pixel_LCs_{}.png'.format(indir, tic,tic, idx), format='png')
 
-        if args.noshow == True:
+        if args.noshow == False:
             plt.show()
         else:
             plt.close()
@@ -4070,7 +4139,7 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
     if args.save == True:
         plt.savefig('{}/{}/{}'.format(indir, tic, name), format='png')
     
-    if args.noshow == True:
+    if args.noshow == False:
         plt.show()
     else:
         plt.close()
@@ -4182,7 +4251,7 @@ def plot_bls_FFI(tic, indir, alltime, allflux, model, results, period, duration,
     if args.save == True:
         plt.savefig('{}/{}/{}'.format(indir, tic, name), format='png')
     
-    if args.noshow == True:
+    if args.noshow == False:
         plt.show()
     else:
         plt.close()
@@ -4275,7 +4344,7 @@ def plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, t
     if args.save == True:
         plt.savefig('{}/{}/{}_flux_comparison.png'.format(indir, tic, tic), format='png', bbox_inches='tight')
     
-    if args.noshow == True:
+    if args.noshow == False:
         plt.show()
     else:
         plt.close()
@@ -4391,7 +4460,7 @@ def plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_li
     if args.save == True:
         plt.savefig('{}/{}/{}_flux_comparison.png'.format(indir, tic, tic), format='png', bbox_inches='tight', pad_inches=0.5)
     
-    if args.noshow == True:
+    if args.noshow == False:
         plt.show()
     else:
         plt.close()

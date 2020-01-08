@@ -18,7 +18,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
 
 
-def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, FFI, bls = False, model = False):
+def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI, bls = False, model = False):
 
 	'''
 	funtion that makes compiles all of the information and figures into a comprehensive pdf summary document.
@@ -353,70 +353,72 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 
 		#Story.append(PageBreak()) # always start a new page for this analysis
 
+	# the following plots will only exist if the TPF file is not corrupt - otherwise skip these.
+	if tpf_corrupt == False:
 
-	# --------------------------------------------
-	# Flux Aperture
-	# --------------------------------------------
-	im4 = Image(flux_aperture_name)
-
-	if len(transit_list) == 1:
-		im4._restrictSize(width*0.55, width*0.55)
-	else:
-		im4._restrictSize(width*0.7, width*0.7)
-	Story.append(im4)
+		# --------------------------------------------
+		# Flux Aperture
+		# --------------------------------------------
+		im4 = Image(flux_aperture_name)
 	
-	fig_count += 1
-	Story.append(Spacer(1, 10))
-	flux_aperture_text = "Fig {}. The lighcurve around the time of each transit-like event extracted with the SPOC pipeline \
-		defined aperture (binned:blue, unbinned:grey) and the with an aperture that is 50% smaller (red). The flux is extracted \
-		from the target pixel files (TPFs) and has not been detrended or \
-		corrected for systematics. The vertical orange line indicates the time of the transit-like event.".format(fig_count)
+		if len(transit_list) == 1:
+			im4._restrictSize(width*0.55, width*0.55)
+		else:
+			im4._restrictSize(width*0.7, width*0.7)
+		Story.append(im4)
+		
+		fig_count += 1
+		Story.append(Spacer(1, 10))
+		flux_aperture_text = "Fig {}. The lighcurve around the time of each transit-like event extracted with the SPOC pipeline \
+			defined aperture (binned:blue, unbinned:grey) and the with an aperture that is 50% smaller (red). The flux is extracted \
+			from the target pixel files (TPFs) and has not been detrended or \
+			corrected for systematics. The vertical orange line indicates the time of the transit-like event.".format(fig_count)
+		
+		ptext = '<font size=8>%s</font>' % flux_aperture_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
+		
 	
-	ptext = '<font size=8>%s</font>' % flux_aperture_text
-	Story.append(Paragraph(ptext, styles["Normal"]))
 	
-
-
-	# --------------------------------------------
-	# In and Out of Transit Comparison
-	# --------------------------------------------
-
-	Story.append(Spacer(1, 12))
-	im5 = Image(in_out_name)
-
-
-	im5._restrictSize(width*0.9, width*0.9)
-
-	Story.append(im5)
-
-	fig_count += 1
-	Story.append(Spacer(1, 10))
-	flux_aperture_text = "Fig {}. Diffrence images for target TIC {} for each transit like event. \
-	Left: mean in-transit flux(left). Right: mean out-of-transit flux. Right: difference between the mean out-of-transit and mean in-transit flux.".format(fig_count, tic)
+		# --------------------------------------------
+		# In and Out of Transit Comparison
+		# --------------------------------------------
 	
-	ptext = '<font size=8>%s</font>' % flux_aperture_text
-	Story.append(Paragraph(ptext, styles["Normal"]))
-
-
-	# --------------------------------------------
-	# tess stars + SDSS star field
-	# --------------------------------------------
+		Story.append(Spacer(1, 12))
+		im5 = Image(in_out_name)
 	
-	Story.append(Spacer(1, 12))
-
-	im6 = Image(tess_stars_name)
 	
-	im6._restrictSize(width*0.7, width*0.5)
-	Story.append(im6)
-
-	fig_count += 1
-	tess_stars_text = "Fig {}. Left: The locations of nearby GAIA DR2 stars with mag < 15 (orange circle) within the Tess \
-	Cut Out around TIC {} (red star). Only shown for one sector. Right: SDSS image of the surrounding field.".format(fig_count, tic)
+		im5._restrictSize(width*0.9, width*0.9)
 	
-	ptext = '<font size=8>%s</font>' % tess_stars_text
-	Story.append(Paragraph(ptext, styles["Normal"]))
+		Story.append(im5)
 	
-
+		fig_count += 1
+		Story.append(Spacer(1, 10))
+		flux_aperture_text = "Fig {}. Diffrence images for target TIC {} for each transit like event. \
+		Left: mean in-transit flux(left). Right: mean out-of-transit flux. Right: difference between the mean out-of-transit and mean in-transit flux.".format(fig_count, tic)
+		
+		ptext = '<font size=8>%s</font>' % flux_aperture_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
+	
+	
+		# --------------------------------------------
+		# tess stars + SDSS star field
+		# --------------------------------------------
+		
+		Story.append(Spacer(1, 12))
+	
+		im6 = Image(tess_stars_name)
+		
+		im6._restrictSize(width*0.7, width*0.5)
+		Story.append(im6)
+	
+		fig_count += 1
+		tess_stars_text = "Fig {}. Left: The locations of nearby GAIA DR2 stars with mag < 15 (orange circle) within the Tess \
+		Cut Out around TIC {} (red star). Only shown for one sector. Right: SDSS image of the surrounding field.".format(fig_count, tic)
+		
+		ptext = '<font size=8>%s</font>' % tess_stars_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
+		
+	
 	# --------------------------------------------
 	# nearest neighbours
 	# --------------------------------------------
@@ -436,23 +438,24 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 		Story.append(Paragraph(ptext, styles["Normal"]))
 	
 
-	# --------------------------------------------
-	# pixel_LCs_name
-	# --------------------------------------------
+	# this plot also only exists if the TPF downloaded sucessfully
+	if tpf_corrupt == False:
+		# --------------------------------------------
+		# pixel_LCs_name
+		# --------------------------------------------
+		Story.append(Spacer(1, 10))
+		im8 = Image(pixel_LCs_name)
+		
 	
-	Story.append(Spacer(1, 10))
-	im8 = Image(pixel_LCs_name)
+		im8._restrictSize(width*0.65, width*0.65)
 	
-
-	im8._restrictSize(width*0.65, width*0.65)
-
-	Story.append(im8)
-	fig_count += 1
-	pixLC_text = "Fig {}. Normalised flux extracted for each pixel, using the SPOC pipeline mask, around the time of the transit-like event. \
-	The orange/red data points show the in-transit data. The solid red lines show the SPOC pipeline mask. Only shown for one sector.".format(fig_count)
-	
-	ptext = '<font size=8>%s</font>' % pixLC_text
-	Story.append(Paragraph(ptext, styles["Normal"]))
+		Story.append(im8)
+		fig_count += 1
+		pixLC_text = "Fig {}. Normalised flux extracted for each pixel, using the SPOC pipeline mask, around the time of the transit-like event. \
+		The orange/red data points show the in-transit data. The solid red lines show the SPOC pipeline mask. Only shown for one sector.".format(fig_count)
+		
+		ptext = '<font size=8>%s</font>' % pixLC_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
 	
 
 	# ------ BLS -------
@@ -665,7 +668,8 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 	doc.build(Story, onFirstPage=addPageNumber, onLaterPages=addPageNumber)
 
 	print ("\n  Complete!")
-	
+
+
 # ----- ADDITIONAL MODULES ------
 
 class MCLine(Flowable):

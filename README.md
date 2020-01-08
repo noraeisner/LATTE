@@ -18,7 +18,7 @@ How to run it?
 
 **Normal Mode**
 
-LATTE is simply run through the command line with: (don't forget to run it with --new-data the first time - see below)
+LATTE is simply run through the command line with:
 
 			python3 LATTE.py         
 
@@ -106,8 +106,11 @@ Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-chosen
 ![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_individual_pixel_LCs_0.png)
 
 - (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
-- (in progress, will be available in next release) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
-- **FFI Mode**The FFI mode currently does not plot the nearby stars lightcurves (will be implemented soon).
+- (in progress, will be available in next release of LATTE) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
+
+**FFI Mode**
+
+- The FFI mode currently does not plot the nearby stars lightcurves (will be implemented soon).
 - Saves the extracted apertures used
 - Saves the corrected and the uncorrected lightcurves to verify that the detrending is workign correctly - there's are nt stored in the DV reports. 
 
