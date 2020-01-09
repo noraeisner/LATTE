@@ -9,8 +9,8 @@ README = (HERE / "README.md").read_text()
 
 # This call to setup() does all the work
 setup(
-    name="LATTE-test",
-    version="0.1.0",
+    name="tessLATTE",
+    version="0.1.5",
     description="Lightcurve Analysis Tool for Transiting Exoplanets",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -25,8 +25,7 @@ setup(
     ],
     packages=find_packages(exclude = ("tests",)),
     include_package_data=True,
-    install_requires = ["astropy>=3.2", 
-    "numpy",
+    install_requires = ["numpy",
     "pandas", 
     "seaborn", 
     "requests", 
@@ -37,8 +36,9 @@ setup(
     "sklearn", 
     "scipy", 
     "tess-point", 
-    "reproject", 
-    "reportlab"],
+    "reproject==0.4", 
+    "reportlab", 
+    "astropy==3.2.0rc1"],
     entry_points={
         "console_scripts": [
             "LATTE=LATTE.__main__:main",

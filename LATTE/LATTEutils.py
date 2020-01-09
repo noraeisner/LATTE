@@ -35,8 +35,8 @@ from matplotlib.ticker import AutoMinorLocator, FormatStrFormatter
 from matplotlib.widgets import Slider, Button, RadioButtons, TextBox, CheckButtons
 
 # custom modules
-import filters
-import LATTEbrew as brew
+from LATTE import filters
+from LATTE import LATTEbrew as brew
 
 # check whether pyaneti has been sucessfully installed - if it has not been installed, don't give the option to model the data
 # NOTE: in this version the Pyaneti modeling will not work (except on my computer) - this is being handled in the next release.
@@ -1294,14 +1294,18 @@ def data_files(indir):
         first_sec = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re-run to download new data)
         print ("Will download all of the available sectors starting with sector 1")
         
-    else:
+    else: # if the file already exists check whether there is something in the file
         os.system('tail -n 1 {0}/data/tesscurl_sector_all_lc.sh > {0}/data/temp.txt'.format(indir))
-        
         with open("{}/data/temp.txt".format(indir), 'r') as f:
             string = f.readlines()[-1]
         
-        first_sec = int(string.split('-')[5][2:]) # this is the last imported sector 0 start from here
+        if string == "#all LC file links": # if this is the last (and only) line
+            first_sec = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re-run to download new data)
+            print ("Will download all of the available sectors starting with sector 1")
+        else:
+            first_sec = int(string.split('-')[5][2:]) # this is the last imported sector 0 start from here
             
+
     
     if not os.path.exists("{}/data/tesscurl_sector_all_tp.sh".format(indir)):
         with open("{}/data/tesscurl_sector_all_tp.sh".format(indir),'w') as f:
@@ -1315,7 +1319,11 @@ def data_files(indir):
         with open("{}/data/temp_tp.txt".format(indir), 'r') as f:
             string = f.readlines()[-1]
         
-        first_sec_tp = int(string.split('-')[5][2:]) # this is the last imported sector 0 start from here
+        if string == "#all LC file links": # if this is the last (and only) line
+            first_sec_tp = 0
+            print ("Will download all of the available sectors starting with sector 1")
+        else:
+            first_sec_tp = int(string.split('-')[5][2:]) # this is the last imported sector 0 start from here
             
     
     for sec in range(first_sec+1,27): # 26 because that's how many TESS sectors there will be in total
@@ -1370,6 +1378,7 @@ def data_files(indir):
                 Saving recieved content as a png file in binary format
                 '''
                 f.write(r_TP.content)
+
 
 def tp_files(indir):
     '''

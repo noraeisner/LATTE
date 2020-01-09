@@ -14,8 +14,8 @@ from tkinter import simpledialog
 from argparse import ArgumentParser
 
 #custom modules to import
-import LATTEbrew as brew 
-import LATTEutils as utils
+from LATTE import LATTEbrew as brew 
+from LATTE import LATTEutils as utils
 #sys.tracebacklimit = 0
 warnings.filterwarnings('ignore')
 
@@ -51,10 +51,8 @@ if __name__ == '__main__':
 
 	# ------------------------------------------------
 	# Check what the current path is - when the program is first downloaded the path is set to 'no/path/set/yet' and the user is automatically prompted to change'no/path/set/yet'
-	with open("_config.txt", 'r') as f:
-		path = str(f.readlines()[-1])
 	
-	f.close()
+
 
 	def yes_or_no():
 		'''
@@ -70,7 +68,7 @@ if __name__ == '__main__':
 		else: # if anything else is entered assume that this is a 'no' and continue with the old path
 			return False	 
 	
-	if path == 'no/path/set/yet':
+	if not os.path.exists("_config.txt"):
 		indir = input("\n \n No output path has been set yet. \n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
 	
 		# SAVE the new output path
@@ -82,6 +80,16 @@ if __name__ == '__main__':
 		# this is also the first time that the program is being run, so download all the data that is required.
 		print ("\n Download the data files required ... " )
 		print ("\n This will take a while but luckily it only has to run once..." )
+
+		# ------------------------------------------------
+		#check whether the chosen (output) directory already exists, and if it doesn't create the directory.
+		if not os.path.exists("{}".format(indir)):
+			os.makedirs(indir)
+	
+		if not os.path.exists("{}/data".format(indir)):
+			os.makedirs("{}/data".format(indir))
+	
+		# ------------------------------------------------
 
 		# ----- REFERENCE FILES DOWNLOAD -----
 		utils.data_files(indir)
@@ -110,9 +118,10 @@ if __name__ == '__main__':
 			print ("LATTE will continue to run with the old path: {}".format(path))
 			indir = path
 	else:
-		indir = path
+		with open("_config.txt", 'r') as f:
+			indir = str(f.readlines()[-1])
 	
-	
+
 	# ------------------------------------------------
 	#check whether the chosen (output) directory already exists, and if it doesn't create the directory.
 	if not os.path.exists("{}".format(indir)):
@@ -130,7 +139,7 @@ if __name__ == '__main__':
 	The program will check what data has already been downloaded and only download new data files.
 	'''
 
-	if (args.new_data != False) and (path != 'no/path/set/yet'): 
+	if (args.new_data != False) and (os.path.exists("_config.txt")): 
 
 		# ----- REFERENCE FILES DOWNLOAD -----
 		utils.data_files(indir)

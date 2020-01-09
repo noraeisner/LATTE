@@ -79,6 +79,7 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 		TCE = 'Yes **'
 		TCE_link = '<link href="%s" color="blue">here</link>' % TCE_link
 	
+
 	# TOI -----
 	TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment = "#")
 	
@@ -88,7 +89,6 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 		TOI = ' -  '
 	else:
 		TOI = (float(TOIpl["Full TOI ID"]))
-
 	
 	# ------ PARAMS ------
 	ra = float(target_ra)
@@ -142,9 +142,9 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 	model_name = '{}/{}/model_out/{}b_tr.png'.format(indir, tic, tic)
 	
 	# ----- LOGOS ------
-	PHT_logo_name  =  './LATTE_imgs/PHT_logo.jpg'
-	LATTE_logo_name = './LATTE_imgs/LATTE_logo.png'
-	TESS_logo_name  = './LATTE_imgs/TESS_logo.png'
+	PHT_logo_name  =  'LATTE/LATTE_imgs/PHT_logo.jpg'
+	LATTE_logo_name = 'LATTE/LATTE_imgs/LATTE_logo.png'
+	TESS_logo_name  = 'LATTE/LATTE_imgs/TESS_logo.png'
 
 
 	# -------------------------------------------
@@ -431,7 +431,7 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 		Story.append(im7)
 		fig_count += 1
 		Story.append(Spacer(1, 10))
-		nn_text = "Fig {}. Lightcurves of the six closest stars to target {} (top pannel). \
+		nn_text = "Fig {}. Lightcurves of the five closest stars to target {} (top pannel). \
 			The distances to the target star and the TESS magnitudes are shown for each star. Only ever shown for one sector.".format(fig_count,tic)
 		
 		ptext = '<font size=8>%s</font>' % nn_text
@@ -666,8 +666,6 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 
 
 	doc.build(Story, onFirstPage=addPageNumber, onLaterPages=addPageNumber)
-
-	print ("\n  Complete! \n ")
 
 
 # ----- ADDITIONAL MODULES ------

@@ -13,7 +13,7 @@ import os
 import sys
 
 sys.path.append('pyaneti_LATTE/')
-import pyaneti as pti #FORTRAN module
+from LATTE import pyaneti as pti #FORTRAN module
 
 #-------------------------------------------------------------
 #                   INITIALIZATION

@@ -1,1 +1,1 @@
-include LATTE_img/*
+include LATTE/LATTE_img
