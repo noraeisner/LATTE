@@ -188,7 +188,6 @@ if __name__ == '__main__':
 		# if either the tic or the sectors or both have not already been identified, run Tkinter (interactive tools)
 		
 
-
 		else:
 
 			# make a GUI interface with TKinter
@@ -273,6 +272,7 @@ if __name__ == '__main__':
 		# if no sector is defined or the word 'all' is written in the box, analyse all of the given sectors.
 		if len(sectors) == 0:
 			sectors = 'all'
+
 		
 		# if not all of them are chose, convert the input list (given as a string) into a python readable list
 		if sectors != 'all':
@@ -284,12 +284,12 @@ if __name__ == '__main__':
 		# print out the information that has been chosen to the command line.
 		if sectors == 'all':
 			print ("Will look at sector(s): {} \n".format(str(sectors_all)[1:-1]))
+			sectors = sectors_all
 		else:
 			print ("Will look at sector(s):  {} \n".format(str(sectors)[1:-1]))
 	
 		# start up LATTE interactive where the transit times can be chosen manually 
 		# this works differently for FFI data and target files as the data has a different format
-
 
 		if args.FFI == False:
 			utils.interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args)  # the argument of whether to shos the images or not 

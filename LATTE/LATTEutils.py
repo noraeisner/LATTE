@@ -1994,7 +1994,7 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
     for sec in sector:
 
         # import the data
-        print ("Importing FFI data sector {}...".format(sec), end =" ")
+        print ("Importing FFI data sector {}...".format(sec))
 
         # download data using lightkurve
         search_result = lk.search_tesscut(searchtic, sector=sec)
