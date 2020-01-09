@@ -81,7 +81,7 @@ The next release will allow for the option to model the transit-like events usin
 
 # Acknowledgements
 
-I thank the all of the Planet Hunters TESS volunteers who prompted me to write a program that may be helpful in identifying the signal of true exoplanets in the TESS data and the support from the entire Zooniverse team and Oxford exoplanet group.
+I thank all of the Planet Hunters TESS volunteers who's dedication to the project encouraged me to write this analysis tool. I am also extremely grateful to all of the support provided by the Zooniverse team and the Oxford exoplanet group.
 
 # References
 
