@@ -4,3 +4,6 @@ EB_input.csv
 pyaneti_test.py
 pyaneti_test2.py
 test_nickname.py
+build
+dist
+LATTE.egg-info

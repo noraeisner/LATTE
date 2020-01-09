@@ -5,11 +5,11 @@ from setuptools import setup, find_packages
 HERE = pathlib.Path(__file__).parent
 
 # The text of the README file
-README = (HERE / "readme.md").read_text()
+README = (HERE / "README.md").read_text()
 
 # This call to setup() does all the work
 setup(
-    name="LATTE",
+    name="LATTE-test",
     version="0.1.0",
     description="Lightcurve Analysis Tool for Transiting Exoplanets",
     long_description=README,
@@ -25,9 +25,23 @@ setup(
     ],
     packages=find_packages(exclude = ("tests",)),
     include_package_data=True,
+    install_requires = ["astropy>=3.2", 
+    "numpy",
+    "pandas", 
+    "seaborn", 
+    "requests", 
+    "lightkurve", 
+    "matplotlib", 
+    "astroplan",
+    "astroquery",
+    "sklearn", 
+    "scipy", 
+    "tess-point", 
+    "reproject", 
+    "reportlab"],
     entry_points={
         "console_scripts": [
-            "LATTE=__main__:main",
+            "LATTE=LATTE.__main__:main",
         ]
     },
 )

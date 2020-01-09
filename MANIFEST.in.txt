@@ -1,1 +1,1 @@
-include LATTE_img/* _config.txt
+include LATTE_img/*

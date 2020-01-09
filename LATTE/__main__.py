@@ -393,7 +393,6 @@ if __name__ == '__main__':
 	if not args.nickname == 'noname':
 		os.system("mv {}/{} {}/{}_{}".format(indir, tic, indir, tic, args.nickname))
 	
-
 	print ("\n  Complete! \n ")
 # End.
 
