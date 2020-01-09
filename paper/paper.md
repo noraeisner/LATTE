@@ -36,14 +36,14 @@ The standard vetting test performed by ``LATTE`` provide a useful tool for both 
 
 Upon execution, ``LATTE`` prompts the user enter a TIC ID [@Stassun19] of a target star, as well as the observational sector(s) to analyse. The corresponding data is then downloaded directly from the Mikulski Archive for Space Telescopes (MAST, http://archive.stsci.edu/tess/) and displayed in a Graphical User Interface (GUI), as shown in Figure 1. The user is asked to identify the times of the transit-like events by clicking on the lightcurve plots before storing the transit-times using the 'Add time' button. Additional program settings, such as whether to run a Box-Least-Squares (BLS) algorithm that searches for periodic signals in the lightcurve, can be selected within the GUI (see Figure 1). Once the times of one or more transit-like events have been identified the script automatically downloads and handles the *TESS* data to provide essential exoplanet diagnostic plots and figures.
 
-![User-interface displaying the whole lightcurve (top pannel) and a zoom-in of the data around the selected time (bottom pannel) as indicated by the vertical red line. The selected time can be changed by clicking on either one of the two lightcurve plots. Times are stored and removed with the 'Add time' and 'Remove time' buttons respectively. Further program options are shown to the left of the lightcurve plots.](Fig1.png)
+![User-interface displaying the whole lightcurve (top pannel) and a zoom-in of the data around the selected transit-time (bottom pannel) as indicated by the vertical red line. The selected time can be changed by clicking on either one of the two lightcurve plots. Times are stored and removed with the 'Add time' and 'Remove time' buttons respectively. Further program options are shown to the left of the lightcurve plots.](Fig1.png)
 
 
 # Different Modes
 
 ### Standard mode 
 
-By default ``LATTE`` runs in '*standard mode*' using the pre-selected short-cadence *TESS* data and lightcurves that were extracted and detrended by the SPOC pipeline [SPOC, @jenkins16]. The *Lightkurve* package [@2018lightkurve] is used to extract raw lightcurves from the Target Pixel Files.
+By default ``LATTE`` runs in '*standard mode*' using the pre-selected short-cadence *TESS* data and lightcurves that were extracted and detrended by the Science Processing Operations Center [SPOC, @jenkins16] pipeline. The *Lightkurve* package [@2018lightkurve] is used to extract raw lightcurves from the Target Pixel Files.
 
 ### FFI mode
 

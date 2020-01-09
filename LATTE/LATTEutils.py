@@ -4509,8 +4509,8 @@ def plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_li
         plt.xlabel("RA", fontsize = 12)
         plt.title("Difference Flux (e-/candence)", fontsize = 13)
 
-    plt.tight_layout(w_pad= -2)
-
+    plt.tight_layout()
+    plt.subplots_adjust(hspace=0.45)
     # save the figure
     if args.save == True:
         plt.savefig('{}/{}/{}_flux_comparison.png'.format(indir, tic, tic), format='png', bbox_inches='tight', pad_inches=0.5)
