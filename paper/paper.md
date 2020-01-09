@@ -14,7 +14,7 @@ authors:
     affiliation: 1
 
 affiliations:
- - name: Department of Physics, University of Oxford, Oxford
+ - name: Oxford Astrophysics, University of Oxford, Denys Wilkinson Building, Keble Rd, Oxford OX1 3RH, UK
    index: 1
 
 date: 9 January 2020
@@ -28,7 +28,7 @@ NASA's Transiting Exoplanet Survey Satellite (*TESS*, [@ricker15]) is the first 
 
 Unlike its predecessor *Kepler*, *TESS* uses very large (20 arcsecond) pixels, meaning that astrophysical false positives (e.g. blends, where the photometric aperture of a bright target is contaminated by a faint eclipsing binary) are expected to be common. Many of these false positive scenarios can be ruled out from a detailed examination of the TESS data (lightcurves and target pixel files), using standard diagnostic tests. 
 
-``LATTE`` is an open source Python package that performs some of these standard diagnostic tests in order to help identify signals caused by transiting exoplanets and weed out astronomical and astrophysical false positive scenarios. The implemented tests are similar to the ‘Data Validation’ steps performed by the Science Processing Operations Center [SPOC; @jenkins16] pipeline, however, while the SPOC pipeline tests are only carried on a selection of 2-minute cadence TESS targets, ``LATTE`` allows for the analysis of any *TESS* target with a valid TIC ID [@Stassun19], include both the 2-minute and 30-minute cadence targets.
+``LATTE`` is an open source Python package that can be used to identify, vet and characterise signals in the *TESS* lightcurves in order to weed out astronomical and astrophysical false positive scenarios.. It allows for fast, in depth analysis of targets that have already been identified as promising candidates by either the main *TESS* pipelines or via altermative methods such as Citizen Science [e.g., @fischer12; @Christiansen2018; @eisner19]. The implemented diagnostic tests are similar to the ‘Data Validation’ steps performed by the Science Processing Operations Center [SPOC; @jenkins16] pipeline, however, while the SPOC pipeline tests are only carried on a selection of 2-minute cadence TESS targets, ``LATTE`` allows for the analysis of any *TESS* target with a valid TIC ID [@Stassun19], include both the 2-minute and 30-minute cadence targets.
 
 # ``LATTE`` 
 
@@ -47,7 +47,7 @@ By default ``LATTE`` runs in 'standard mode' using the pre-selected short-cadenc
 
 ### FFI mode
 
-The FFI mode, which can be selected with a check-box at the time when the TIC ID is entered, downloads the TESS data using TESScut [@brasseur2019]. The data are then detrended using the ``Astropy`` PCA module [@astropy] and an iterative non-linear filter [@Aigrain04] to estimate and subtract residual systematics. Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-identified optimal aperture. By default, the user is prompted to manually select the pixels to be used for both a 'large' and a 'small' photometric extraction aperture by clicking on the desired pixels in the user interface. The two lightcurves (from the 'large' and 'small' apertures) are simultaneously displayed. Alternative, the aperture size can be defined automatically by the program using a threshold flux value and centred on the coordinated of the target star.
+The FFI mode, which can be selected with a check-box at the time when the TIC ID is entered, downloads the TESS data using TESScut [@brasseur2019]. The data are then detrended using the *Astropy PCA* module [@astropy] and an iterative non-linear filter [@Aigrain04] to estimate and subtract residual systematics. Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-identified optimal aperture. By default, the user is prompted to manually select the pixels to be used for two different sized photometric extraction apertures. This is done by clicking on the desired pixels, where the lighter coloured pixels represent a higher flux, in the user interface. The two lightcurves, extracted using the 'large' and 'small' apertures, are simultaneously displayed. Alternative, the aperture size can be defined automatically by the program using a threshold flux value and centred on the coordinated of the target star.
 
 ![The FFI interface which allows the user to manually select the pixels for two seperate apertures (left) which are used to extract two different lightcurves (right).](Fig2.png)
 
@@ -63,9 +63,9 @@ Summary of the ``LATTE`` diagnostic tests:
 
 - **Aperture size test**. A plot showing the lightcurves extracted with two different aperture sizes. In the FFI mode the two different aperture sizes can be chosen manually (see above), while in the standard mode the SPOC pipeline defined aperture and an aperture that is 50% smaller are used. Difference in the transit depth and shape of the two different lightcurves may be indicative of the transit-like events being the result of a blended eclipsing binary. The data are extracted from the Target Pixel Files (TPFs) and are neither detrended nor corrected for systematics.
 
-- **Pixel-level centroid analysis.** A plot showing the average in-transit and average out of-transit flux as well as the difference between the two. A change in spatial distribution of the flux suggests that the transit-like event are caused by a blend with a background eclipsing binary. The data are extracted from the TPFs and are corrected for systematic effects using Principal Component Analysis [e.g. @Stumpe2012]. 
+- **Pixel-level centroid analysis.** A plot showing the average in-transit and average out of-transit flux as well as the difference between the two. A change in spatial distribution of the flux suggests that the transit-like event are caused by a blend with a background eclipsing binary, however, a sub-optimal mask selection can lead to the mis-interpretation of a moving signal. The data are extracted from the TPFs and are corrected for systematic effects using Principal Component Analysis [e.g. @Stumpe2012].
 
-- **Nearby companion stars.** A plot showing the location of nearby stars brighter than TESS magnitude 17 as queried from the Gaia Data Release 2 catalog [@Gaia2018], as well as a the DSS2 red field of view around the target star. The plots are aligned  so that north aligns with the top of the image using *Astropy's reproject* module [@astropy].
+- **Nearby companion stars.** A plot showing the location of nearby stars brighter than TESS magnitude 17 as queried from the Gaia Data Release 2 catalog [@Gaia2018], as well as a the DSS2 red field of view around the target star. The size of the markers indicating the position of the Gaia stars relate to the magnitude of each companion. The plots are aligned  so that north aligns with the top of the image using the *Astropy reproject* module [@astropy].
 
 - **Nearest neighbour lightcurves.** (not available in FFI mode) Lightcurves of the five closest pre-selected 2-minute cadence stars to the selected target. The manifestation of the transit-like event in other nearby lightcurves would suggest that the event is caused by a background event or a blended eclipsing binary.
 
@@ -74,7 +74,7 @@ Summary of the ``LATTE`` diagnostic tests:
 - **(optional) Box-Least-Squares fit.** A plot showing the results from two BLS searches. The data are corrected for residual systematics using an iterative non-linear filter [@Aigrain04] prior to being searched for periodic signals using *Astropy’s BLS* module [@astropy]. The intitial BLS search identifies the times of the highest detected signal-to-noise event and removes these data from the LC. A second search is then carried out in order to search for additional periodic signals.
 
 
-# Future 
+# Future
 
 The next release will allow for the option to model the transit-like events using the open source package Pyaneti [@pyaneti] which uses a Bayesian approach with an MCMC sampling.
 
