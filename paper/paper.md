@@ -36,7 +36,7 @@ The standard vetting test performed by ``LATTE`` provide a useful tool for both 
 
 Upon execution, ``LATTE`` prompts the user enter a TIC ID [@Stassun19] of a target star, as well as the observational sector(s) to analyse. The corresponding data is then downloaded directly from the Mikulski Archive for Space Telescopes (MAST, http://archive.stsci.edu/tess/) and displayed in a Graphical User Interface (GUI), as shown in Figure 1. The user is asked to identify the times of the transit-like events by clicking on the lightcurve plots before storing the transit-times using the 'Add time' button. Additional program settings, such as whether to run a Box-Least-Squares (BLS) algorithm that searches for periodic signals in the lightcurve, can be selected within the GUI (see Figure 1). Once the times of one or more transit-like events have been identified the script automatically downloads and handles the *TESS* data to provide essential exoplanet diagnostic plots and figures.
 
-![User-interface displaying the whole lightcurve (top pannel) and a zoom-in of the lightcurve at around the time of the vertical red line (bottom pannel). The position (time) of this line can be altered by clicking on either of the two lightcurve plots in order to identify the mid-time of the transit-like events. Times are stored and removed with the 'Add time' and 'Remove time' buttons respectively. Further program options are shown to the left of the plots.](Fig1.png)
+![User-interface displaying the whole lightcurve (top pannel) and a zoom-in of the data around the selected time (bottom pannel) as indicated by the vertical red line. The selected time can be changed by clicking on either one of the two lightcurve plots. Times are stored and removed with the 'Add time' and 'Remove time' buttons respectively. Further program options are shown to the left of the lightcurve plots.](Fig1.png)
 
 
 # Different Modes
@@ -49,7 +49,7 @@ By default ``LATTE`` runs in '*standard mode*' using the pre-selected short-cade
 
 The *FFI mode*, which can be selected with a check-box at the time when the TIC ID is entered, downloads the TESS data using TESScut [@brasseur2019]. The data are then detrended using the *Astropy PCA* module [@astropy] and an iterative non-linear filter [@Aigrain04] to estimate and subtract residual systematics. Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-identified optimal aperture. By default, the user is prompted to manually select the pixels to be used for two different sized photometric extraction apertures. This is done by clicking on the desired pixels, where the lighter coloured pixels represent a higher flux, in the user interface. The two lightcurves, extracted using the 'large' and 'small' apertures, are simultaneously displayed. Alternative, the aperture size can be defined automatically by the program using a threshold flux value and centred on the coordinated of the target star.
 
-![The FFI interface which allows the user to manually select the pixels for two seperate apertures (left) which are used to extract two different lightcurves (right).](Fig2.png)
+![The FFI interface which allows the user to manually select the pixels for two seperate apertures (left) which are used to extract two different lightcurves (right). The lighter coloured pixels correspond to higher flux.](Fig2.png)
 
 #  Diagnostic tests
 
