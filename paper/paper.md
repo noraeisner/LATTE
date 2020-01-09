@@ -36,7 +36,7 @@ The standard vetting test performed by ``LATTE`` provide a useful tool for both 
 
 Upon execution, ``LATTE`` prompts the user enter a TIC ID [@Stassun19] of a target star, as well as the observational sector(s) to analyse. The corresponding data is then downloaded directly from the Mikulski Archive for Space Telescopes (MAST, http://archive.stsci.edu/tess/) and displayed in a Graphical User Interface (GUI) as shown in Figure 1. The user is then asked to identify the times of the transit-like events by clicking on the lightcurve plots and storing the times of the transit like events with the 'Add Time' button. Additional options for the running of the program, such as whether to run a Box-Least-Squares (BLS) algorithm that searches for periodic signals in the lightcurve, can be selected within the GUI (see Figure 1). Once one or more transits have been identified and the ‘Done’ button is pressed, the script downloads and handles the *TESS* data to provide essential exoplanet diagnostic plots and figures. 
 
-![Figure 1.](figure.png)
+![Figure 1.](Fig1.png)
 
 
 # Diagnostic Tests
@@ -59,7 +59,7 @@ The ``LATTE`` diagnostic test:
 
 The default setting for ``LATTE`` is to download and analyse the 2-minute cadence pre-selected data where the lightcurves were extracted and detrended by the SPOC pipeline [SPOC, @jenkins16]. The FFI mode, which can be selected with a check-box at the time when the TIC ID is entered, downloads the TESS data using TESScut [@brasseur2019]. The data is then detrended using the ``Astropy`` PCA module [@astropy] and an iterative non-linear filter [@Aigrain04] to estimate and subtract residual systematics. Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-identified optimal aperture. By default, the user is prompted to manually select the pixels to be used for both a 'large' and a 'small' photometric extraction aperture by clicking on the desired pixels in the user interface. The two lightcurves (from the 'large' and 'small' apertures) are simultaneously displayed. Alternative, the aperture size can be defined automatically by the program using a threshold flux value and centred on the coordinated of the target star.
 
-![Figure 1.](figure.png)
+![Figure 1.](Fig2.png)
 
 # Future 
 

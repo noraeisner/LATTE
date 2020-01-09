@@ -1,0 +1,3 @@
+[console_scripts]
+LATTE = LATTE.__main__:main
+

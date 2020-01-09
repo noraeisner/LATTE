@@ -27,7 +27,7 @@ This will open up a box for you that prompts you to enter a TIC ID and indicate 
 
 Once a TIC ID has been entered, the program will tell you in what sectors that target has been observed. If you want to look at all of the sectors, either enter them of simply press enter with nothing in the box. Alternatively, enter the sectors that you are interested in and enter them separated by commas. Remember that LATTE will have to download all the data for each sector so you might not always want to look at all of the sectors. 
 
-Next, you will see a screen that has the full lighcurve as well as a zoom in of the lightcurve. The solid red line across the entire full lightcurve lets you know where on the lighcurver you are zooming in on. Click on the top (full) or bottom (zoomed in) plots to change the location of the zoom in until the red vertical line is cenred on the mid point of transit-event. When you are happy with the location press the 'Add Time' button below the plots in order to record this time. You can delete wrongly entered times with the 'Delete time'. The caved times (in TBJD) will be shown on the screen. The position of the red line can also be changed by dragging the teal coloured 'Transit' slider with your mouse. The y-scale of the plots can be changed with the grey coloured slider.
+Next, you will see a screen that has the full lighcurve as well as a zoom in of the lightcurve. The solid red line across the entire full lightcurve lets you know where on the lighcurver you are zooming in on. Click on the top (full) or bottom (zoomed in) plots to change the location of the zoom in until the red vertical line is cenred on the mid point of transit-event. When you are happy with the location press the 'Add Time' button below the plots in order to record this time. You can delete wrongly entered times with the 'Delete time'. The saved times (in TBJD) will be shown on the screen. The position of the red line can also be changed by dragging the teal coloured 'Transit' slider with your mouse. The y-scale of the plots can be changed with the grey coloured slider.
 
 Additional options are displayed to the left of the plots.
 
@@ -86,18 +86,38 @@ NOTE: all of these arguments (except new-path, auto and targetlist) can be chang
 
 
 ### Output
-   
+
 
 **Figures:**
 
 - Full lightcurve with the times of the momentum dumps marked. 
+
+![Full LC](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_fullLC_md.png)
+
 - Background flux around the times of the marked transit event(s).
+
+![Background Flux](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_background.png)
+
 - Centroid positions around the time of the marked transit event(s).
+
+![Centroid](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_centroids.png)
+
 - The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
+
+![Aperture Size](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_aperture_size.png)
+
 - The average flux in and out of the marked event(s) and the differences between the two.
+
+
 - The average flux of the target pixel file with the locatiosn of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
 - The lightcurves of the 6 closest stars that were also observed by TESS (TP files).
+
+![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_nearest_neighbours.png)
+
 - A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
+
+![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_individual_pixel_LCs_0.png)
+
 - (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
 - (in progress, will be available in next release of LATTE) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
 
