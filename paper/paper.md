@@ -24,7 +24,7 @@ bibliography: paper.bib
 
 # Summary
 
-NASA's Transiting Exoplanet Survey Satellite (*TESS*, [@ricker15]) is the first nearly all-sky space-based transit search mission. During the nominal two year primary mission alone, *TESS* will monitor over 80 per cent of the sky, split up into 26 observational sectors. The prime objective of the mission is to discover transiting exoplanets around 200,000 pre-selected bright nearby stars which are being monitored every two minutes. In addition to the 2-minute cadence observations, *TESS* is obtaining Full Frame Images (FFIs) at a 30-minute cadence.
+NASA's Transiting Exoplanet Survey Satellite [*TESS*, @ricker15] is the first nearly all-sky space-based transit search mission. During the nominal two year primary mission alone, *TESS* will monitor over 80 per cent of the sky, split up into 26 observational sectors. The prime objective of the mission is to discover transiting exoplanets around 200,000 pre-selected bright nearby stars which are being monitored every two minutes. In addition to the 2-minute cadence observations, *TESS* is obtaining Full Frame Images (FFIs) at a 30-minute cadence.
 
 Unlike its predecessor *Kepler*, *TESS* uses very large (20 arcsecond) pixels, meaning that astrophysical false positives (e.g. blends, where the photometric aperture of a bright target is contaminated by a faint eclipsing binary) are expected to be common. Many of these false positive scenarios can be ruled out from a detailed examination of the *TESS* data (lightcurves and target pixel files), using standard diagnostic tests. 
 
