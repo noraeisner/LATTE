@@ -4,30 +4,49 @@ Written by Nora L. Eisner
 
 email: *nora.eisner@new.ox.ac.uk*
 
+
 ### THE CODE
 
 --------
 
-*The aim of this code is to provide a series of diagnostic tests which are used in order to determine the nature of events found in TESS lightcurves.*
+*The aim of this code is to provide a series of diagnostic tests which are used in order to determine the nature of events found in *TESS* lightcurves.*
 
 
 --------
 --------
+### Installation
+
+You can download the code directly from github (https://github.com/noraeisner/LATTE). Alternatively you can install LATTE using pip (https://pypi.org/project/tessLATTE/) via your command line with:
+
+			pip install tessLATTE      
+
+In order for LATTE to work you will need to have the right versions of certain modules installed, so downloading it in a virtual environemt. Note: ensure that the matplotlib version that you are using is v3.2.0rc1 (pip install matplotlib==3.2.0rc1). 
+
+The first time that the program is run you will be prompted to enter a path to a file on your computer where all the output data will be stored (this path can be changed later using --new-path). The first time that the code is run it will also have to download the text data files from MAST (this only has to run once). This may take a couple of minutes so be patient. 
 
 
-How to run it? 
-
-**Normal Mode**
+###How to run it? 
 
 LATTE is simply run through the command line with:
 
 			python3 -m LATTE        
 
-This will open up a box for you that prompts you to enter a TIC ID and indicate whether you would like to extract the information from the 2-minute cadence or 30-minute candence Full Frame Image (FFI) data.
+This will open up a box for you that prompts you to enter a TIC ID and indicate whether you would like to extract the information from the 2-minute cadence ('Standard mode') or 30-minute candence Full Frame Image (FFI) data ('FFI mode').
 
 Once a TIC ID has been entered, the program will tell you in what sectors that target has been observed. If you want to look at all of the sectors, either enter them of simply press enter with nothing in the box. Alternatively, enter the sectors that you are interested in and enter them separated by commas. Remember that LATTE will have to download all the data for each sector so you might not always want to look at all of the sectors. 
 
-Next, you will see a screen that has the full lighcurve as well as a zoom in of the lightcurve. The solid red line across the entire full lightcurve lets you know where on the lighcurver you are zooming in on. Click on the top (full) or bottom (zoomed in) plots to change the location of the zoom in until the red vertical line is cenred on the mid point of transit-event. When you are happy with the location press the 'Add Time' button below the plots in order to record this time. You can delete wrongly entered times with the 'Delete time'. The caved times (in TBJD) will be shown on the screen. The position of the red line can also be changed by dragging the teal coloured 'Transit' slider with your mouse. The y-scale of the plots can be changed with the grey coloured slider.
+**Normal Mode**
+
+The '*normal mode*' looks at the short-cadence *TESS* data which has already been detrended and extracted by the SPOC pipeline. Optimal aperture lightcurve extraction aperture sizes have therefore already been identified and do not need to be selected manually.
+
+
+**FFI Mode**
+
+In *FFI mode* the data is downloaded using TESScut and the data detrended using PCA, a moving average filter and k-sigma clipping. Unlike the *TESS* 2-minute cadence targets, the FFIs do not come with a pre-chosen optimal aperture. By default, the user is given the option to manually select the pixels within each aperture for a 'large' and a 'small' aperture. This GUI opens automatically and the two apertures are selected by clicking on the desired pixels in the interface. The two (large and small aperture) lightcurves are simultaneously displayed. When the FFI mode is run with the command '--auto', the aperture size is chosen manually using a threshold flux value centred at the midpoint of the postage stamp.
+
+### Transit time selection
+
+Once you have identified the TIC ID, the observational sectors and the aperture sizes (*FFI mode* only), you will see a screen that has the full lighcurve as well as a zoom in of the lightcurve. The solid red line across the full lightcurve lets you know where on the lighcurve you are zooming in on. Click on the top (full) or bottom (zoomed in) plots to change the location of the zoom in until the red vertical line is centred on the mid-point of a transit-event. When you are happy with the location press the 'Add Time' button below the plots in order to record this time (in TBJD) . You can delete wrongly entered times with the 'Delete time'. The saved times will be shown on the screen. The position of the red line can also be changed by dragging the teal coloured 'Transit' slider with your mouse. The y-scale of the plots can be changed with the grey coloured slider.
 
 Additional options are displayed to the left of the plots.
 
@@ -51,10 +70,41 @@ Once all the options have been chosen and the transit times stored (you have to 
 The code will then generate download and process all of the data. Note that all the data is downloaded but not stored. The more sectors you analyse in one go the longer the code will take to run.
 
 
+### Output
+
+
+**Figures:**
+
+- Full lightcurve with the times of the momentum dumps marked. 
+
+- Background flux around the times of the marked transit event(s).
+
+- Centroid positions around the time of the marked transit event(s).
+
+- The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
+
+- The average flux in and out of the marked event(s) and the differences between the two.
+
+- The average flux of the target pixel file with the locatiosn of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
+- The lightcurves of the 6 closest stars that were also observed by *TESS* (TP files).
+
+- A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
+
+- (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
+- (in progress, will be available in next release of LATTE) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
+
 **FFI Mode**
 
-In FFI mode the data is downloaded using TESScut and the data detrended using PCA, a moving average filter and k-sigma clipping. 
-Unlike the TESS 2-minute cadence targets, the FFIs do not come with a pre-chosen optimal aperture. By default, the user is given the option to manually select the pixels within each aperture for a 'large' and a 'small' aperture. This GUI opens automatically and the two apertures are selected by clicking on the desired pixels in the interface. The two (large and small aperture) lightcurves are simultaneously displayed. When the FFI mode is run with the command '--auto', the aperture size is chosen manually using a threshold flux value centred at the midpoint of the postage stamp.
+- The FFI mode currently does not plot the nearby stars lightcurves (will be implemented soon).
+- Saves the extracted apertures used
+- Saves the corrected and the uncorrected lightcurves to verify that the detrending is workign correctly - there's are nt stored in the DV reports. 
+
+
+**Tables:**
+
+- Stellar parameters summarized, as well as information to whether the target has been flagged as a TCE or a TOI. The table links to the relevant reports (if applicable) as well as to the exofop page on the star.
+- (optional) Summary of the BLS results. 
+- (optional) Fitting parameters with uncertainties from the modelling. 
 
 
 ### Arguments
@@ -83,38 +133,6 @@ NOTE: all of these arguments (except new-path, auto and targetlist) can be chang
 **--north** If you want all the images to be oriented due north (this is not the default as it takes longer to run)
 
 **--new-path** If you want to define a new path to store the data.
-
-
-### Output
-   
-
-**Figures:**
-
-- Full lightcurve with the times of the momentum dumps marked. 
-- Background flux around the times of the marked transit event(s).
-- Centroid positions around the time of the marked transit event(s).
-- The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
-- The average flux in and out of the marked event(s) and the differences between the two.
-- The average flux of the target pixel file with the locatiosn of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
-- The lightcurves of the 6 closest stars that were also observed by TESS (TP files).
-- A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
-- (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
-- (in progress, will be available in next release of LATTE) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
-
-**FFI Mode**
-
-- The FFI mode currently does not plot the nearby stars lightcurves (will be implemented soon).
-- Saves the extracted apertures used
-- Saves the corrected and the uncorrected lightcurves to verify that the detrending is workign correctly - there's are nt stored in the DV reports. 
-
-
-**Tables:**
-
-- Stellar parameters summarized, as well as information to whether the target has been flagged as a TCE or a TOI. The table links to the relevant reports (if applicable) as well as to the exofop page on the star.
-- (optional) Summary of the BLS results. 
-- (optional) Fitting parameters with uncertainties from the modelling. 
-
-
 
 
 
