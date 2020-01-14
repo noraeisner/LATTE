@@ -578,6 +578,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
     allfbkg_t = []
 
     allflux = []
+    alltime = []
     allflux_flat = []
     allflux_small = []
     apmask_list = []
@@ -738,7 +739,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
         ax[0].set_title("Sector {}".format(sec))
         
         ebx = plt.axes([0.73, 0.025, 0.13, 0.06])
-        exit = Button(ebx, 'Close', color='orange')
+        exit = Button(ebx, 'Done', color='orange')
         exit.on_clicked(close)
         
         plt.show()
@@ -791,7 +792,6 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
         print ("Flatten LC...", end =" ")
         
         fr_inj = flux
-        alltime  = t
         
         T_dur = 0.7  #The transit duration - may need to change but this is a good average duration
         
@@ -803,13 +803,13 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
         # mask to only use the finite values - NaNs disrupt the code
         l = np.isfinite(ff)
         
-        g = interp1d(alltime[l],ff[l],bounds_error=False,fill_value=np.nan)
-        ff = g(alltime)
+        g = interp1d(t[l],ff[l],bounds_error=False,fill_value=np.nan)
+        ff = g(t)
         
         fr = fr_inj / ff
         
         # --- do some sigma clipping to make the LC look better ---- 
-        MAD = median_absolute_deviation(fr)
+        MAD = median_absolute_deviation(fr,ignore_nan = True)
         madrange = (5 * MAD * 1.456)
         ymask = (fr < 1 + madrange) * (fr > 1 - madrange) 
         # ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  
@@ -817,15 +817,15 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
         # plot corrected and uncorrected LC for comparison - allows the user to check whether the detrending worked correctly.
         fix, ax = plt.subplots(3,1,figsize=(16,12))
         
-        ax[0].plot(alltime,fr_inj, '.',label = 'Uncorrected')
-        ax[0].plot(alltime,ff,'.',label = 'Model fit')
+        ax[0].plot(t,fr_inj, '.',label = 'Uncorrected')
+        ax[0].plot(t,ff,'.',label = 'Model fit')
         ax[0].legend(fontsize = 16, loc = 1)
         
-        ax[1].plot(alltime[~ymask],fr[~ymask], 'k.', markersize = 10, label = 'Clipped')
-        ax[1].plot(alltime[ymask],fr[ymask], 'r.',label = 'Corrected')
+        ax[1].plot(t[~ymask],fr[~ymask], 'k.', markersize = 10, label = 'Clipped')
+        ax[1].plot(t[ymask],fr[ymask], 'r.',label = 'Corrected')
         ax[1].legend(fontsize = 16, loc = 1)
         
-        ax[2].plot(alltime[ymask],fr[ymask], '.', color = 'navy', label = 'Clipped + corrected')
+        ax[2].plot(t[ymask],fr[ymask], '.', color = 'navy', label = 'Clipped + corrected')
         ax[2].legend(fontsize = 16, loc = 1)
         
         ax[2].set_xlabel("Time", fontsize = 16)
@@ -861,10 +861,12 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
         allflux_flat.append(list(fr))
         allflux.append(list(flux))
         allflux_small.append(list(flux_small))
+        alltime.append(list(t))
 
     # flatten the lists that are lists of lists.
     allflux_flat = [val for sublist in allflux_flat for val in sublist]
     allflux_small = [val for sublist in allflux_small for val in sublist]
+    alltime = [val for sublist in alltime for val in sublist]
     allflux = [val for sublist in allflux for val in sublist]
     allfbkg = [val for sublist in allfbkg for val in sublist]
     allfbkg_t = [val for sublist in allfbkg_t for val in sublist]
@@ -901,7 +903,7 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
 
     # ----- download the data ------
     # by default you have to manually choose the different aperture sizes
-    if args.auto == True:
+    if args.auto == False:
         alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
     
     # if the auto mode is selected in the command line, the aperture sizes are chosen automatically based on an intensity threshhold.
@@ -913,18 +915,22 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
      # make sure all the plots are closed before starting the next section
     plt.close('all')
 
-    # -------------------------
-    # Plot the interactive plot - uses matplolib
-    # -------------------------
+    # --------------------------------------------
+    # Plot the interactive plot - uses matplolib -
+    # --------------------------------------------
     
     # allflux is detrended
     
     # ------- median absolute deviation in order to determine the clipping
-    MAD = median_absolute_deviation(allflux0)
+
+    MAD = median_absolute_deviation(allflux0, ignore_nan = True)
+
     madrange = (5 * MAD * 1.456)
     
     # make a mask for the points we want to get rid of
     ymask = (allflux0 < 1 + madrange) * (allflux0 > 1 - madrange)
+    
+
 
     alltime = np.array(alltime0)[ymask]
     allflux = np.array(allflux0)[ymask]
@@ -1244,7 +1250,6 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
     if save == False:
         args.save = save
 
-    print (nick_name)
     # check whether the user identified a nickname, or memorable name, for the candidate
 
     if len(nick_name) == 0: # if the box was left untouched
@@ -1253,7 +1258,6 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
     elif len(nick_name[-1]) > 0: # [-1] in case the user pressed enter and then deleted the nickname again
         args.nickname = str(nick_name[-1])
 
-    print (args.nickname)
     # ---------------
 
 
@@ -1994,7 +1998,7 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
     for sec in sector:
 
         # import the data
-        print ("Importing FFI data sector {}...".format(sec))
+        print ("Importing FFI data sector {} ...".format(sec))
 
         # download data using lightkurve
         search_result = lk.search_tesscut(searchtic, sector=sec)
@@ -2356,7 +2360,7 @@ def download_data_FFI(indir,sector, sectors_all, tic, save = False):
         fr = fr_inj / ff
         
         # ------- median absolute deviation in order to determine the clipping
-        MAD = median_absolute_deviation(fr)
+        MAD = median_absolute_deviation(fr,ignore_nan = True)
         madrange = (5 * MAD * 1.456)
         
         # make a mask for the points we want to get rid of
@@ -3979,7 +3983,7 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
 
     else:
         # --- do some sigma clipping to make the LC look better ---- 
-        MAD = median_absolute_deviation(allflux)
+        MAD = median_absolute_deviation(allflux,ignore_nan = True)
         madrange = (5 * MAD * 1.456)
         ymask = (allflux < 1 + madrange) * (allflux > 1 - madrange) 
 
@@ -3995,7 +3999,9 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
     maxf_list = []
 
     for peak in transit_list:
+
         mask_dd = (np.array(time_dd) < peak+0.75) & (np.array(time_dd) > peak-0.75)
+
         minf0 = np.nanmin(np.array(flux_dd)[mask_dd])
         maxf0 = np.nanmax(np.array(flux_dd)[mask_dd])
         

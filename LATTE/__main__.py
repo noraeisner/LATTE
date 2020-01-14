@@ -40,7 +40,7 @@ if __name__ == '__main__':
 	ap.add_argument('--targetlist', type=str, help='the link to the target file list', default='no')
 	ap.add_argument('--noshow', action='store_true', help='if you want to NOT show the plots write --noshow in the command line')
 	ap.add_argument('--o', action='store_true', help='if you call this old files will be overwriten in the non-interactive version')
-	ap.add_argument('--auto', action='store_false', help='automatic aperture selection')
+	ap.add_argument('--auto', action='store_true', help='automatic aperture selection')
 	ap.add_argument('--nickname', type=str, help='give the target a memorable name', default='noname')
 	ap.add_argument('--FFI', action='store_true', help='is this an FIIs?')
 	ap.add_argument('--save', help='is this an FIIs?', default = True)
@@ -52,7 +52,6 @@ if __name__ == '__main__':
 	# ------------------------------------------------
 	# Check what the current path is - when the program is first downloaded the path is set to 'no/path/set/yet' and the user is automatically prompted to change'no/path/set/yet'
 	
-
 
 	def yes_or_no():
 		'''
@@ -68,13 +67,16 @@ if __name__ == '__main__':
 		else: # if anything else is entered assume that this is a 'no' and continue with the old path
 			return False	 
 	
+	# check whether the output path exists
 	if not os.path.exists("_config.txt"):
+
+		# if it doesn't exist ask the user to put it in the command line
 		indir = input("\n \n No output path has been set yet. \n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
 	
 		# SAVE the new output path
 		with open("_config.txt",'w') as f:
 			f.write(str(indir))
-	
+		
 		print("\n New path: " + indir)
 	
 		# this is also the first time that the program is being run, so download all the data that is required.
@@ -99,10 +101,9 @@ if __name__ == '__main__':
 		# -----
 
 	# if the user chooses to redefine the path
-	
 	elif args.new_path == True: 
 	
-		reply = yes_or_no()
+		reply = yes_or_no() # double check that they really want to do that.
 	
 		if reply == True:
 			indir = input("\n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
@@ -114,9 +115,11 @@ if __name__ == '__main__':
 			print("\n New path: " + indir)
 	
 		else:
-	
-			print ("LATTE will continue to run with the old path: {}".format(path))
-			indir = path
+			with open("_config.txt", 'r') as f:
+				indir = str(f.readlines()[-1])
+				
+			print ("LATTE will continue to run with the old path: {}".format(indir))
+
 	else:
 		with open("_config.txt", 'r') as f:
 			indir = str(f.readlines()[-1])
@@ -199,27 +202,27 @@ if __name__ == '__main__':
 				# -----------
 				class TICprompt(simpledialog.Dialog):
 				
-				    def body(self, master):
+					def body(self, master):
 					
 						# make a text box for the TIC ID
-				        tk.Label(master, text="Enter TIC ID:").grid(row=0)
-				        self.e1 = tk.Entry(master)
-				        self.e1.grid(row=0, column=1)
-				        
-				        # make a check button with the option to run this in FFI mode
-				        self.FFIbox = tk.IntVar()
-				        self.answer = tk.Checkbutton(master,text="Check for FFI mode", variable=self.FFIbox)
-				        self.answer.grid(row=1, column=1,  columnspan=2)
+						tk.Label(master, text="Enter TIC ID:").grid(row=0)
+						self.e1 = tk.Entry(master)
+						self.e1.grid(row=0, column=1)
+						
+						# make a check button with the option to run this in FFI mode
+						self.FFIbox = tk.IntVar()
+						self.answer = tk.Checkbutton(master,text="Check for FFI mode", variable=self.FFIbox)
+						self.answer.grid(row=1, column=1,  columnspan=2)
 				
-				    def apply(self):
-				    	# make these global variables so that they can be used outside of this class and applied to the rest of the program
-				        global tkTIC
-				        global tkFFI
-				
-				        ROOT.form=(self.FFIbox.get())
-				        tkTIC = (self.e1.get())
-				        tkFFI =  (self.FFIbox.get())
-        		# -----------
+					def apply(self):
+						# make these global variables so that they can be used outside of this class and applied to the rest of the program
+						global tkTIC
+						global tkFFI
+						
+						ROOT.form=(self.FFIbox.get())
+						tkTIC = (self.e1.get())
+						tkFFI =  (self.FFIbox.get())
+				# -----------
 
 				TICprompt(ROOT)
 				# make the TIC a string
@@ -303,14 +306,20 @@ if __name__ == '__main__':
 	#			RUN WITH INPUT FILE
 	# ---------------------------------------
 	
-	else:
+	else: #if run with input targetlist - either with phase fold information or with transit time information
 
 		try:
 			targetlist = pd.read_csv("{}".format(args.targetlist)) # If a path is defined, open the input file
 		except:
 			print ("This target list can't be found. Check the path you have given and the name and format of the file.")
 
-		# process each target individually. 
+		# check what kind of target list it is - with phase fold information or with period and t0 information
+		if 'period' in targetlist.columns:
+			pp = True # pp = phase fold
+		else:
+			pp = False
+
+		# process each target individually
 		for index, row in targetlist.iterrows():
 			
 			# ---- INPUT PARAMETERS ------
@@ -319,10 +328,11 @@ if __name__ == '__main__':
 
 			existing_files = glob("{}/*{}*".format(indir, tic))
 			
-			# Check whether this file already exist
+			# check whether this file already exist
 			# if it already exists it will only be overwritten if --o function has been enabled to avoid file loss.
 			if (len(existing_files) > 0)  and (args.o != True): 
 				print ("This file already exists therefore SKIP. To overwrite files run this code with --o in the command line.")
+				failed_tics = [] #keep track of the TIC IDs that failed to complete
 				continue
 
 
@@ -348,24 +358,39 @@ if __name__ == '__main__':
 			except:
 				sectors = sectors_all
 	
+			failed_tics = [] #keep track of the TIC IDs that failed to complete
 
 			# ---- IF NO TRANSIT MARKED RUN WITH INTERFACE ----
-			if type(row['transits']) == float:
+			if (pp == False) and (type(row['transits']) == float):
 				utils.interact_LATTE(tic, indir, sectors_all, sectors, args.noshow)
 
 			else:
-				transit_list_in = (row['transits'])
-				transit_list = ast.literal_eval(transit_list_in)
-				
-				# convert the input transit times and sectors into transit_list in the form of a list
+
+				if pp == False: # if the transits were identified and no period information
+			
+					transit_list_in = (row['transits'])
+					transit_list = ast.literal_eval(transit_list_in)
+					
+					# convert the input transit times and sectors into transit_list in the form of a list
 	
-				if (type(transit_list) == float) or (type(transit_list) == int):
-					transit_list = [transit_list]
+					if (type(transit_list) == float) or (type(transit_list) == int):
+						transit_list = [transit_list]
+					else:
+						transit_list = list(transit_list)
 				else:
-					transit_list = list(transit_list)
-				
+					# get up to five markings - more than that will just be cluttered and will take too long
+					transit_list = []
+					period = row['period']
+					t0 = row['t0']
+					for i in range(1,6):
+						transit = t0 + (i*period)
+						if transit < (t0 + 20):
+							transit_list.append(float(transit))
+
+
 				BLS_in = row['BLS']
 				model_in = row['model']
+				FFI_in = row['FFI']
 	
 				# ---- do you want to run a BLS? ----
 				if (BLS_in == 'yes') or (BLS_in == 'True') or (BLS_in == 'true') or (BLS_in == '1'):
@@ -379,22 +404,79 @@ if __name__ == '__main__':
 				else:
 					model = False
 				
+				# ---- run in FFI mode? ----
+				if (FFI_in == 'yes') or (FFI_in == 'True') or (FFI_in == 'true') or (FFI_in == '1'):
+					args.FFI = True
+
+
+				# --- other SETTINGS ---
 				simple = False  # we don't want to run the simple version - that's option is simply to do quick test
 				save = True  # always save the files - no point running this if you're not going to save them
 				DV = True   # we'll make a DV report for all of them
-				args.noshow == True  # don't show these, just save them
-				# ----------------------------------------
-				#			 DOWNLOAD DATA 
-				# ----------------------------------------
-				
-				alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir, sectors, tic)
-				
-				# ----------------------------------------
-				#			   START BREWING ....
-				# ----------------------------------------
-				
-				brew.brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
+				args.noshow = True  # don't show these, just save them
+				args.auto = True # the code will automatically choose it's own apertures in this mode
 
+				print (args)
+
+				if args.FFI == False:
+					try:
+
+						# ----------------------------------------
+						# 			 DOWNLOAD DATA 
+						# ----------------------------------------
+						alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir, sectors, tic)
+					
+						# ----------------------------------------
+						#			   START BREWING ....
+						# ----------------------------------------
+					
+						brew.brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
+					except:
+						failed_tics.append(tic)
+						print ("TIC {} failed to complete. Continue anyway. You can find a list of the failed IDs stored in the output folder.".format(tic))
+						continue
+				else:
+					#try:
+						# ----------------------------------------
+						# 			 DOWNLOAD DATA 
+						# ----------------------------------------
+
+					alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = utils.download_data_FFI(indir, sectors, sectors_all, tic, args)
+					
+					# ----------------------------------------
+					#			   START BREWING ....
+					# ----------------------------------------
+					brew.brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args)
+					#except:
+					#	failed_tics.append(tic)
+					#	print ("TIC {} failed to complete. Continue anyway. You can find a list of the failed IDs stored in the output folder.".format(tic))
+					#	continue						
+		# ----- ALL FILES IN IN FILE PROCESSED -----
+		# save a list of the failed TIC IDs
+
+		if len(failed_tics) > 0: # if any of the targets failed to complete
+			# check if there is already a file with failed tic-ids - we don't want to overwrite it but create a new one
+			failed_outpath = "{}/failed_files".format(indir)
+		
+			# --------
+			if not os.path.exists(failed_outpath): # if this folder doesn't already exist, make it
+				os.makedirs(failed_outpath)
+			# --------
+		
+			failedfiles = np.sort(glob("{}/failed_tics*".format(failed_outpath)))
+			
+			if len(failedfiles) > 0:
+				last_number = int((failedfiles[-1].split('_')[-1][0:-4]))
+			else:
+				last_number = 1
+		
+			with open('{}/failed_tics_{}.csv'.format(failed_outpath,str(last_number+1)), "w") as f:
+				# save
+				writer = csv.writer(f)
+				for val in failed_tics:
+						writer.writerow([val])
+					
+				
 
 	# end by changing the name of the folder to include the nicknane if defined
 	# this allows users to keep track of their targets more easily e.g. Planet Hunters TESS candidates are named after pastries.

@@ -49,45 +49,45 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 		whether or not to write and save a DV report
 	sectors_all  :   list
 		all the sectors in which the target has been/ will be observed
-    alltime  :  list
-        times (not binned)
-    allflux  :  list
-        normalized flux (not binned)
-    allflux_err  :  list
-        normalized flux errors (not binned)
-    all_md  :  list
-        times of the momentum dumps
-    alltimebinned  :  list
-        binned time
-    allfluxbinned  :  list
-        normalized binned flux
-    allx1  :  list
-        CCD column position of target’s flux-weighted centroid. In x direction
-    allx2  :  list
-        The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In x direction
-    ally1  :  list
-        CCD column position of target’s flux-weighted centroid. In y direction
-    ally2  :  list
-        The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In y direction
-    alltimel2  :  list
-        time used for the x and y centroid position plottin
-    allfbkg  :  list
-        background flux
-    start_sec  :  list
-        times of the start of the sector
-    end_sec  :  list
-        times of the end of the sector
-    in_sec  :  list
-        the sectors for which data was downloaded
-    tessmag  :  list
-        TESS magnitude of the target star
-    teff  :  float
-        effective temperature of the tagret star (K)
-    srad  :  float
-        radius of the target star (solar radii)
-	 ra    :    float 
+	alltime  :  list
+		times (not binned)
+	allflux  :  list
+		normalized flux (not binned)
+	allflux_err  :  list
+		normalized flux errors (not binned)
+	all_md  :  list
+		times of the momentum dumps
+	alltimebinned  :  list
+		binned time
+	allfluxbinned  :  list
+		normalized binned flux
+	allx1  :  list
+		CCD column position of target’s flux-weighted centroid. In x direction
+	allx2  :  list
+		The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In x direction
+	ally1  :  list
+		CCD column position of target’s flux-weighted centroid. In y direction
+	ally2  :  list
+		The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In y direction
+	alltimel2  :  list
+		time used for the x and y centroid position plottin
+	allfbkg  :  list
+		background flux
+	start_sec  :  list
+		times of the start of the sector
+	end_sec  :  list
+		times of the end of the sector
+	in_sec  :  list
+		the sectors for which data was downloaded
+	tessmag  :  list
+		TESS magnitude of the target star
+	teff  :  float
+		effective temperature of the tagret star (K)
+	srad  :  float
+		radius of the target star (solar radii)
+	 ra	:	float 
 		the right ascension of the target stars
-	 dec    :   float 
+	 dec	:   float 
 		the declination of the target star
 
 	'''
@@ -150,7 +150,7 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 
 
 	# -----------------------------------
-	#            START PLOTTING          
+	#			START PLOTTING		  
 	# -----------------------------------
 	
 	# create a plot of the fulllighcurves with the momentum dumps (MDs) marked and a zoom-in of the marked transits
@@ -239,19 +239,34 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 	# These plots are saved but do not feature in the DV report.
 	if len (transit_list) > 1: # needs to know a period so can only do this if more than one transit has been marked.
 
-		# find the period
 		period = transit_list[1] - transit_list[0]
 		t0 = transit_list[0] # time of the first marking
-
-		# calculate the phase
-		phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltimebinned])
 		
-		fig, ax = plt.subplots(figsize=(10,6))
-		ax.plot(phased, allfluxbinned,marker='o',color = 'navy', alpha = 0.7, lw = 0, markersize = 2, label = 'binning = 7', markerfacecolor='white')
+		# calculate the phase
+		#phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltime])
+
+		# phased plot where odd and even are different colours
+		phased = (alltimebinned - t0) % period
+		phased2 = (alltimebinned - (t0)) % (period*2)
+		
+		index = phased>0.5*period
+		index2 = phased2 >0.5*(period *2)
+		
+		phased[index] -= period
+		phased2[index2] -= (period *2)
+	
+		fig, ax = plt.subplots(figsize=(5.55,5))
+		#plt.subplots_adjust(left=0.001, right=0.998, top=0.999, bottom=0.005)
+
+		ax.plot(phased,allfluxbinned, 'k.', markersize=5)
+		ax.plot(phased2,allfluxbinned, 'r.', markersize=5)
+	
+		#ax.plot(phased, allflux,marker='o',color = 'navy', alpha = 0.7, lw = 0, markersize = 2, label = 'binning = 7', markerfacecolor='white')
 		plt.title("Phase folded LC")
 		ax.set_xlabel("Phase (days)")
 		ax.set_ylabel("Normalized Flux")
 		plt.plot()
+
 
 		if save == True:
 			plt.savefig('{}/{}/{}_phase_folded.png'.format(indir, tic, tic), format='png')
@@ -356,42 +371,42 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 	sectors_all  :   list
 		all the sectors in which the target has been/ will be observed
 
-    alltime  :  list
-        times
-    allflux_normal  :  list
-        normalized flux extracted with the larger aperture (PCA corrected)
-    allflux_small  : list
-        normalized flux extracted with the smaller aperture (PCA corrected)
-    allflux   : list 
-        normalized detrended flux extracted with the larger aperture
-    all_md  :  list
-        times of the momentum dumps
-    allfbkg  :  list
-        background flux
-    allfbkg_t  :  list
-        times used to plot the background
-    start_sec  :  list
-        times of the start of the sector
-    end_sec  :  list
-        times of the end of the sector
-    in_sec  :  list
-        the sectors for which data was downloaded
-    X1_list  :  list
-        flux vs time for each pixel (for each sector)
-    X4_list  :  list
-        PCA corrected flux vs time for each pixel (for each sector)
-    apmask_list  :  list
-        aperture masks from the pipeline
-    arrshape_list  :  list
-        list of the shape of the array (for each sector)
-    tpf_filt_list   : list
-        list of the filtered (masked) corrected target pixel data - from X4. (for each sector)
-    t_list  :  list
-        list of the time arrays (for each sector)
-    bkg_list  :  list
-        the flux that was used to normalise each pixel - i.e. what is used to make the background plot colour for each pixel.
-    tpf_list   : list 
-        list of the target pixel files (for each sector)
+	alltime  :  list
+		times
+	allflux_normal  :  list
+		normalized flux extracted with the larger aperture (PCA corrected)
+	allflux_small  : list
+		normalized flux extracted with the smaller aperture (PCA corrected)
+	allflux   : list 
+		normalized detrended flux extracted with the larger aperture
+	all_md  :  list
+		times of the momentum dumps
+	allfbkg  :  list
+		background flux
+	allfbkg_t  :  list
+		times used to plot the background
+	start_sec  :  list
+		times of the start of the sector
+	end_sec  :  list
+		times of the end of the sector
+	in_sec  :  list
+		the sectors for which data was downloaded
+	X1_list  :  list
+		flux vs time for each pixel (for each sector)
+	X4_list  :  list
+		PCA corrected flux vs time for each pixel (for each sector)
+	apmask_list  :  list
+		aperture masks from the pipeline
+	arrshape_list  :  list
+		list of the shape of the array (for each sector)
+	tpf_filt_list   : list
+		list of the filtered (masked) corrected target pixel data - from X4. (for each sector)
+	t_list  :  list
+		list of the time arrays (for each sector)
+	bkg_list  :  list
+		the flux that was used to normalise each pixel - i.e. what is used to make the background plot colour for each pixel.
+	tpf_list   : list 
+		list of the target pixel files (for each sector)
 	ra   :   float
 		right ascension of the target star
 	dec   :   float
@@ -400,7 +415,7 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 	'''
 
 	# ----------------------------------------
-	#           SAVE THE DATA FILES 
+	#		   SAVE THE DATA FILES 
 	# ----------------------------------------
 
 
@@ -459,7 +474,7 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 
 
 	# ------------------------------------------
-	#               START PLOTTING
+	#			   START PLOTTING
 	# ------------------------------------------
 	
 	# create a plot of the fulllighcurves with the momentum dumps (MDs) marked and a zoom-in of the marked transits
@@ -500,17 +515,32 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 
 	# If more than one transit has been marked by the user, the LC is phase folded based on the period of the separation of the first two maarked peaks.
 	# These plots are saved but do not feature in the DV report.
-	if len (transit_list) > 1:  # needs to know a period so can only do this if more than one transit has been marked.
 
+  # needs to know a period so can only do this if more than one transit has been marked.
+	if len(transit_list) > 1:
 		# find the period
 		period = transit_list[1] - transit_list[0]
 		t0 = transit_list[0] # time of the first marking
 		
 		# calculate the phase
-		phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltime])
+		#phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltime])
+
+		# phased plot where odd and even are different colours
+		phased = (np.array(alltime) - t0) % period
+		phased2 = (np.array(alltime) - (t0)) % (period*2)
 		
-		fig, ax = plt.subplots(figsize=(10,6))
-		ax.plot(phased, allflux,marker='o',color = 'navy', alpha = 0.7, lw = 0, markersize = 2, label = 'binning = 7', markerfacecolor='white')
+		index = phased>0.5*period
+		index2 = phased2 >0.5*(period *2)
+		
+		phased[index] -= period
+		phased2[index2] -= (period *2)
+	
+		fig, ax = plt.subplots(figsize=(5.55,5))
+
+		ax.plot(phased,np.array(allflux), 'k.', markersize=5)
+		ax.plot(phased2,np.array(allflux), 'r.', markersize=5)
+	
+		#ax.plot(phased, allflux,marker='o',color = 'navy', alpha = 0.7, lw = 0, markersize = 2, label = 'binning = 7', markerfacecolor='white')
 		plt.title("Phase folded LC")
 		ax.set_xlabel("Phase (days)")
 		ax.set_ylabel("Normalized Flux")
@@ -534,20 +564,55 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 	This couldn't be done at the time of the extraction of the TPF arrays as the transit times 
 	had not yet been defined. 
 	'''
+
 	oot_list = [] # out of transit
 	intr_list = []  # in transit
-	T0_list = []  # list of the transit times - make a new list to ensure that thet are in the same sorder.
+
+	X1_list_n = []
+	X4_list_n = []
+	bkg_list_n = []
+	apmask_list_n = []
+	arrshape_list_n = []
+	t_list_n = []
+
+	tpf_filt_list_n = []
+	tpf_list_n = []
+
+	T0_list = []  # list of the transit times - make a new list to ensure that thet are in the same order.
+	
 
 	for T0 in transit_list:
-		for t in t_list:
+		for idx,t in enumerate(t_list):
 			# these times were found to give good approximations for out of transit and in transit
 			# Note: this will NOT be 'perfect' for all events, as it depends on the transit duration which the code doesnt' know at this time but it's a good approximation.
-			if (T0 > np.nanmin(t)) and (T0 < np.nanmax(t)):
+			if (T0 > np.nanmin(t)) and (T0 < np.nanmax(t)): # if T0 is within the time... (should be)
+				
 				oot_list.append((abs(T0-np.array(t)) < 0.55) * (abs(T0-np.array(t)) < 0.3)) 
 				intr_list.append(abs(T0-np.array(t)) < 0.1)
+				
+				X1_list_n.append(X1_list[idx])
+				X4_list_n.append(X4_list[idx])
+				bkg_list_n.append(bkg_list[idx])
+				apmask_list_n.append(apmask_list[idx])
+				arrshape_list_n.append(arrshape_list[idx])
+				t_list_n.append(t)
+
+				tpf_filt_list_n.append(tpf_filt_list[idx])
+				tpf_list_n.append(tpf_list[idx])
+
 				T0_list.append(T0)
 
+	X1_list     	= 	X1_list_n
+	X4_list     	= 	X4_list_n
+	bkg_list    	= 	bkg_list_n
+	apmask_list 	= 	apmask_list_n
+	arrshape_list   =   arrshape_list_n
+	t_list 			=   t_list_n
+	tpf_filt_list 	= 	tpf_filt_list_n
+	tpf_list 		=   tpf_list_n
+	
 	# ------------
+
 
 	# Plot the in and out of transit flux comparison 
 	# By default the images are NOT orented north - this is because the reprojectio takes longer to run and for a simple
@@ -563,7 +628,7 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 	# ------------
 
 	# For each pixel in the TPF, extract and plot a lightcurve around the time of the marked transit event.
-	utils.plot_pixel_level_LC(tic, indir,X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, args)
+	utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, args)
 	print ("Pixel level LCs plot... done.")
 	# ------------
 

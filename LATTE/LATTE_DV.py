@@ -140,6 +140,8 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 	in_out_name = '{}/{}/{}_flux_comparison.png'.format(indir, tic, tic)
 	
 	model_name = '{}/{}/model_out/{}b_tr.png'.format(indir, tic, tic)
+
+	phasefold_name = '{}/{}/{}_phase_folded.png'.format(indir, tic, tic)
 	
 	# ----- LOGOS ------
 	PHT_logo_name  =  'LATTE/LATTE_imgs/PHT_logo.jpg'
@@ -457,6 +459,27 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 		ptext = '<font size=8>%s</font>' % pixLC_text
 		Story.append(Paragraph(ptext, styles["Normal"]))
 	
+	# ------ Phase Folded LC ------
+
+
+	if len(transit_list) > 1:
+
+		# --------------------------------------------
+		# Phase Folded
+		# --------------------------------------------
+		impf = Image(phasefold_name)
+
+		impf._restrictSize(width*0.35, width*0.35)
+
+		Story.append(impf)
+		
+		fig_count += 1
+		Story.append(Spacer(1, 10))
+		flux_aperture_text = "Fig {}. Phase folded lightcurve where the odd and the even transits are shown in different colours. Ensure that the odd and even transits have comparabel shapes and depths.".format(fig_count)
+		
+		ptext = '<font size=8>%s</font>' % flux_aperture_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
+		
 
 	# ------ BLS -------
 	Story.append(PageBreak()) # always start a new page for this analysis

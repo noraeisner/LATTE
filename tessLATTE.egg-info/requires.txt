@@ -2,7 +2,7 @@ numpy
 pandas
 seaborn
 requests
-lightkurve
+lightkurve>1.2.0
 matplotlib
 astroplan
 astroquery
