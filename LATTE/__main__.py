@@ -29,6 +29,7 @@ The above link shows how to change the matplolib cbook __init__ file in order to
  --- pip install matplotlib==3.2.0rc1 (still in testing?)
 '''
 
+
 # -------------------- START ---------------------
 # ------------------------------------------------
 
@@ -52,6 +53,10 @@ if __name__ == '__main__':
 	# ------------------------------------------------
 	# Check what the current path is - when the program is first downloaded the path is set to 'no/path/set/yet' and the user is automatically prompted to change'no/path/set/yet'
 	
+	# get the path to where the package is installed. This is where the configuration file and the images (for the DV report are stored)
+
+	syspath = str(os.path.abspath(utils.__file__))[0:-14]
+
 
 	def yes_or_no():
 		'''
@@ -68,13 +73,13 @@ if __name__ == '__main__':
 			return False	 
 	
 	# check whether the output path exists
-	if not os.path.exists("_config.txt"):
+	if not os.path.exists("{}/_config.txt".format(syspath)):
 
 		# if it doesn't exist ask the user to put it in the command line
 		indir = input("\n \n No output path has been set yet. \n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
 	
 		# SAVE the new output path
-		with open("_config.txt",'w') as f:
+		with open("{}/_config.txt".format(syspath),'w') as f:
 			f.write(str(indir))
 		
 		print("\n New path: " + indir)
@@ -109,19 +114,19 @@ if __name__ == '__main__':
 			indir = input("\n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
 	
 			# SAVE the new output path
-			with open("_config.txt",'w') as f:
+			with open("{}/_config.txt".format(syspath),'w') as f:
 				f.write(str(indir))	
 			
 			print("\n New path: " + indir)
 	
 		else:
-			with open("_config.txt", 'r') as f:
+			with open("{}/_config.txt".format(syspath), 'r') as f:
 				indir = str(f.readlines()[-1])
 				
 			print ("LATTE will continue to run with the old path: {}".format(indir))
 
 	else:
-		with open("_config.txt", 'r') as f:
+		with open("{}/_config.txt".format(syspath), 'r') as f:
 			indir = str(f.readlines()[-1])
 	
 
@@ -142,7 +147,7 @@ if __name__ == '__main__':
 	The program will check what data has already been downloaded and only download new data files.
 	'''
 
-	if (args.new_data != False) and (os.path.exists("_config.txt")): 
+	if (args.new_data != False) and (os.path.exists("{}/_config.txt".format(syspath))): 
 
 		# ----- REFERENCE FILES DOWNLOAD -----
 		utils.data_files(indir)
@@ -295,9 +300,9 @@ if __name__ == '__main__':
 		# this works differently for FFI data and target files as the data has a different format
 
 		if args.FFI == False:
-			utils.interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args)  # the argument of whether to shos the images or not 
+			utils.interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args)  # the argument of whether to shos the images or not 
 		else:
-			utils.interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args)
+			utils.interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
 		
 		# Done
 
@@ -339,7 +344,7 @@ if __name__ == '__main__':
 			# --- WHAT SECTORS WAS IT OBSERVED IN? ---
 
 			sectors_all, ra, dec = utils.tess_point(indir, tic) 
-			sectors_in = row['sectors']
+			sectors_in = str(row['sectors'])
 			
 			try:
 				sectors_in = ast.literal_eval(sectors_in)
@@ -351,18 +356,19 @@ if __name__ == '__main__':
 				# Sucessfully entered sectors
 				# check that the target was actually observed in the stated sector
 				sectors = list(set(sectors_in) & set(sectors_all))
+
 				if len(sectors) == 0:
 					print ("The target was not observed in the sector(s) you stated ({}). \
 							Therefore take all sectors that it was observed in: {}".format(sectors, sectors_all))
-					sectors =sectors_all
+					sectors = sectors_all
 			except:
 				sectors = sectors_all
-	
+
 			failed_tics = [] #keep track of the TIC IDs that failed to complete
 
 			# ---- IF NO TRANSIT MARKED RUN WITH INTERFACE ----
 			if (pp == False) and (type(row['transits']) == float):
-				utils.interact_LATTE(tic, indir, sectors_all, sectors, args.noshow)
+				utils.interact_LATTE(tic, indir, syspath, sectors_all, sectors, args.noshow)
 
 			else:
 
@@ -378,11 +384,11 @@ if __name__ == '__main__':
 					else:
 						transit_list = list(transit_list)
 				else:
-					# get up to five markings - more than that will just be cluttered and will take too long
+					# get up to 3 markings - more than that will just be cluttered and will take too long
 					transit_list = []
 					period = row['period']
 					t0 = row['t0']
-					for i in range(1,6):
+					for i in range(1,4):
 						transit = t0 + (i*period)
 						if transit < (t0 + 20):
 							transit_list.append(float(transit))
@@ -416,8 +422,6 @@ if __name__ == '__main__':
 				args.noshow = True  # don't show these, just save them
 				args.auto = True # the code will automatically choose it's own apertures in this mode
 
-				print (args)
-
 				if args.FFI == False:
 					try:
 
@@ -430,28 +434,29 @@ if __name__ == '__main__':
 						#			   START BREWING ....
 						# ----------------------------------------
 					
-						brew.brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
+						brew.brew_LATTE(tic, indir, syspath,transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 					except:
 						failed_tics.append(tic)
 						print ("TIC {} failed to complete. Continue anyway. You can find a list of the failed IDs stored in the output folder.".format(tic))
 						continue
 				else:
-					#try:
+					try:
 						# ----------------------------------------
 						# 			 DOWNLOAD DATA 
 						# ----------------------------------------
 
-					alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = utils.download_data_FFI(indir, sectors, sectors_all, tic, args)
-					
-					# ----------------------------------------
-					#			   START BREWING ....
-					# ----------------------------------------
-					brew.brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args)
-					#except:
-					#	failed_tics.append(tic)
-					#	print ("TIC {} failed to complete. Continue anyway. You can find a list of the failed IDs stored in the output folder.".format(tic))
-					#	continue						
-		# ----- ALL FILES IN IN FILE PROCESSED -----
+						alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = utils.download_data_FFI(indir, sectors, syspath, sectors_all, tic, args)
+	
+						# ----------------------------------------
+						#			   START BREWING ....
+						# ----------------------------------------
+						brew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args)
+					except:
+						failed_tics.append(tic)
+						print ("TIC {} failed to complete. Continue anyway. You can find a list of the failed IDs stored in the output folder.".format(tic))
+						continue	
+
+		# ----- ALL FILES IN INFILE PROCESSED -----
 		# save a list of the failed TIC IDs
 
 		if len(failed_tics) > 0: # if any of the targets failed to complete
@@ -475,15 +480,14 @@ if __name__ == '__main__':
 				writer = csv.writer(f)
 				for val in failed_tics:
 						writer.writerow([val])
-					
-				
+
 
 	# end by changing the name of the folder to include the nicknane if defined
 	# this allows users to keep track of their targets more easily e.g. Planet Hunters TESS candidates are named after pastries.
 		
 	if not args.nickname == 'noname':
 		os.system("mv {}/{} {}/{}_{}".format(indir, tic, indir, tic, args.nickname))
-	
+
 	print ("\n  Complete! \n ")
 # End.
 

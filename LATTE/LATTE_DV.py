@@ -18,7 +18,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
 
 
-def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI, bls = False, model = False):
+def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI, bls = False, model = False):
 
 	'''
 	funtion that makes compiles all of the information and figures into a comprehensive pdf summary document.
@@ -144,9 +144,9 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 	phasefold_name = '{}/{}/{}_phase_folded.png'.format(indir, tic, tic)
 	
 	# ----- LOGOS ------
-	PHT_logo_name  =  'LATTE/LATTE_imgs/PHT_logo.jpg'
-	LATTE_logo_name = 'LATTE/LATTE_imgs/LATTE_logo.png'
-	TESS_logo_name  = 'LATTE/LATTE_imgs/TESS_logo.png'
+	PHT_logo_name  =  '{}/LATTE_imgs/PHT_logo.jpg'.format(syspath)
+	LATTE_logo_name = '{}/LATTE_imgs/LATTE_logo.png'.format(syspath)
+	TESS_logo_name  = '{}/LATTE_imgs/TESS_logo.png'.format(syspath)
 
 
 	# -------------------------------------------
@@ -396,7 +396,8 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 		fig_count += 1
 		Story.append(Spacer(1, 10))
 		flux_aperture_text = "Fig {}. Diffrence images for target TIC {} for each transit like event. \
-		Left: mean in-transit flux(left). Right: mean out-of-transit flux. Right: difference between the mean out-of-transit and mean in-transit flux.".format(fig_count, tic)
+		Left: mean in-transit flux(left). Middle: mean out-of-transit flux. Right: difference between the mean out-of-transit and mean in-transit flux. \
+		Ensure that the change in brightness occurs on target.".format(fig_count, tic)
 		
 		ptext = '<font size=8>%s</font>' % flux_aperture_text
 		Story.append(Paragraph(ptext, styles["Normal"]))
@@ -502,13 +503,25 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 		Story.append(bls_table)
 
 		fig_count += 1
-		bls1_text = "Fig {}. Box Least Square fitting for whole lightcurve binned to 10 minutes. Top left panel: log liklihood periodogram. \
-						The solid red line indicates the peak period and the dashed orange lines show the integer \
-						harmonics of this period. Middle left panel: Full light curve, unbinned (orange) and binned to 10 minutes (black). \
-						The peak period is highlighted by the solid red line. Bottom left Panel: Phase folded light curve where the found transit-event is fit \
-						with a simple box (red line). The pannels on the right show the same diagnostics, however the diagnostic \
-						was run with the highest detected signal-to-noise transits removed. ".format(fig_count)
+
+		if FFI == False:
+
+			bls1_text = "Fig {}. Box Least Square fitting (BLS) for whole lightcurve binned to 10 minutes. Top left panel: log liklihood periodogram. \
+							The solid red line indicates the peak period and the dashed orange lines show the integer \
+							harmonics of this period. Middle left panel: Full light curve, unbinned (orange) and binned to 10 minutes (black). \
+							The peak period is highlighted by the solid red lines. Bottom left Panel: Phase folded light curve where the found transit-event is fit \
+							with a simple box (red line). The pannels on the right show the same diagnostics, however the diagnostic \
+							was run with the highest detected signal-to-noise transits, from the initial BLS search, removed. ".format(fig_count)
 		
+		else:
+			bls1_text = "Fig {}. Box Least Square fitting (BLS) for whole lightcurve. Top left panel: log liklihood periodogram. \
+							The solid blue line indicates the peak period and the dashed red lines show the integer \
+							harmonics of this period. Middle left panel: Full light curve, unbinned LC (orange) . \
+							The peak period is highlighted by the solid blue lines. Bottom left Panel: Phase folded light curve where the found transit-event is fit \
+							with a simple box (blue line). The pannels on the right show the same diagnostics, however the diagnostic \
+							was run with the highest detected signal-to-noise transits, from the initial BLS search, removed. ".format(fig_count)
+		
+
 		ptext = '<font size=8>%s</font>' % bls1_text
 		Story.append(Paragraph(ptext, styles["Normal"]))
 		
@@ -563,7 +576,7 @@ def LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessm
 		Story.append(Spacer(1, 15))
 
 		table_count += 1
-		Stellartable_text = "Table {}. Summary of the two BLS fits. Fit one is run withthe whole lightcurve and fit two is run with the highest detected signal-to-noise transits removed.".format(table_count)
+		Stellartable_text = "Table {}. Summary of the two BLS fits. Fit one is run with the whole lightcurve and fit two is run with the highest detected signal-to-noise transits removed.".format(table_count)
 		ptext = '<font size=8>%s</font>' % Stellartable_text
 		Story.append(Paragraph(ptext, styles["Normal"]))
 

@@ -20,20 +20,26 @@ You can download the code directly from github (https://github.com/noraeisner/LA
 
 			pip install tessLATTE      
 
-In order for LATTE to work you will need to have the right versions of certain modules installed, so downloading it in a virtual environemt. Note: ensure that the matplotlib version that you are using is v3.2.0rc1 (pip install matplotlib==3.2.0rc1). 
+In order for LATTE to work you will need to have the right versions of certain modules installed, so downloading it in a virtual environemt. **Note: ensure that the matplotlib version that you are using is v3.2.0rc1 (pip install matplotlib==3.2.0rc1).**
 
 The first time that the program is run you will be prompted to enter a path to a file on your computer where all the output data will be stored (this path can be changed later using --new-path). The first time that the code is run it will also have to download the text data files from MAST (this only has to run once). This may take a couple of minutes so be patient. 
 
 
-###How to run it? 
+### How to run it? 
 
 LATTE is simply run through the command line with:
 
 			python3 -m LATTE        
 
-This will open up a box for you that prompts you to enter a TIC ID and indicate whether you would like to extract the information from the 2-minute cadence ('Standard mode') or 30-minute candence Full Frame Image (FFI) data ('FFI mode').
+This will open up a box for you that prompts you to enter a TIC ID and indicate whether you would like to extract the information from the 2-minute cadence ('Standard mode') or 30-minute candence Full Frame Image (FFI) data ('FFI mode')
 
-Once a TIC ID has been entered, the program will tell you in what sectors that target has been observed. If you want to look at all of the sectors, either enter them of simply press enter with nothing in the box. Alternatively, enter the sectors that you are interested in and enter them separated by commas. Remember that LATTE will have to download all the data for each sector so you might not always want to look at all of the sectors. 
+Once a TIC ID has been entered, the program will tell you in what sectors that target has been observed. If you want to look at all of the sectors, either enter them or simply press enter with nothing in the box. Alternatively, enter the sectors that you are interested in and enter them separated by commas. Remember that LATTE will have to download all the data for each sector so you might not always want to look at all of the sectors. 
+
+TESS data is released periodically approximately once a month. When there is a new data release run the program with:
+
+			python3 -m LATTE --new-data
+
+which will automatically download the files that you need to access the new TESS data. 
 
 **Normal Mode**
 

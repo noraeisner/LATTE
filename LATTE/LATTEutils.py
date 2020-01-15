@@ -52,7 +52,7 @@ except:
 # --------------------------------------------
 
 # the main interactive tool used to identify the times of the transit-like events
-def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
+def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     
     '''
     Function to run the Interactive LATTE code using the matplotlib interactive tool.
@@ -481,7 +481,7 @@ def interact_LATTE(tic, indir, sectors_all, sectors, ra, dec, args):
     print ("Check that these are the transits that you want")
     
     #  -----  BREW  ------
-    brew.brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
+    brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 
 # interactive tool to identify the aperture masks when run in the FFI mode
 def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args):
@@ -603,8 +603,8 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
         aperture2 = np.array(np.zeros_like(X1.sum(axis=0)), dtype=bool)
         
         # place a random aperture in the centre to start off with - just as an example.
-        for i in range(int(len(aperture)/2 -1), int(len(aperture)/2 + 1)):
-            for j in range(int(len(aperture)/2 -1), int(len(aperture)/2 + 1)):
+        for i in range(int(len(aperture)/2 ), int(len(aperture)/2 + 2)):
+            for j in range(int(len(aperture)/2 ), int(len(aperture)/2 + 2)):
                 mask.append((i,j))
         # ---------------
 
@@ -875,8 +875,9 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
 
     return alltime, allflux, allflux_small, allflux_flat, all_md, allfbkg,allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
 
+
 # the main interactive tool used to identify the times of the transit-like events when run in FFI mode
-def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
+def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     '''
     Function to run the Interactive LATTE code for the FFI using the matplotlib interactive tool.
     Calls the plot where the transit-event times can be identifies and the plotting/modeling options specified.
@@ -909,7 +910,7 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
     # if the auto mode is selected in the command line, the aperture sizes are chosen automatically based on an intensity threshhold.
     else:
         print ("Start data download.....", end =" ")
-        alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = download_data_FFI(indir, sectors, sectors_all, tic, args)
+        alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = download_data_FFI(indir, sectors, syspath, sectors_all, tic, args)
         print ("done.\n")
     
      # make sure all the plots are closed before starting the next section
@@ -1236,7 +1237,6 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
         save = end_status[4]
         DV = end_status[5]
 
-
     # ---------------
 
     # update the arguments if they are different from the ones entered in the command line: 
@@ -1272,7 +1272,7 @@ def interact_LATTE_FFI(tic, indir, sectors_all, sectors, ra, dec, args):
         args.save = save
 
     #  -----  BREW  ------
-    brew.brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args)
+    brew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args)
 
 
 # --------------------------------------------
@@ -1963,11 +1963,15 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
 
     '''
 
+    # plot using the seaborn library
+    sb.set(style='ticks')
+    sb.set_color_codes('deep')
+    
     future_sectors = list(set(sectors_all) - set(sector))
 
     # dowload the data 
 
-    searchtic = 'TIC' + tic
+    searchtic = 'TIC' + str(tic)
 
     # empty lists to append the data that will be returned and used later    
     start_sec = []
@@ -2002,8 +2006,24 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
 
         # download data using lightkurve
         search_result = lk.search_tesscut(searchtic, sector=sec)
-        tpf = search_result.download(cutout_size=15)
         
+        # sometimes this failes so try multiple times... (faisl due to large data file)
+        count = 0
+        it_workd = False
+
+        while not it_workd and count < 5:  # try up to 4 times to download it
+            try:
+                tpf = search_result.download(cutout_size=15)
+                it_workd = True
+            except:
+                count += 1
+                continue
+
+        if count == 5: # if it fails 4 times, exit the program with an error message
+            print ("ERROR: Could not download the tpf file at this time. Please try again.")
+            sys.exit('')
+        # ---------
+
         # get rid of the 'bad' quality data - use the data flags and only take data where the quality = 0. 
         try:
             quality = tpf.quality
@@ -2101,7 +2121,7 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
 
     return alltime_list, all_md, start_sec, end_sec, in_sec, X1_list, X1flux_list,  X4_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
 
-def download_data_FFI(indir,sector, sectors_all, tic, save = False):
+def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
     '''
     Download the LCs for the target star for all the indicated sectors from the FFIs. This uses the lighkurve package.
     
@@ -2156,12 +2176,16 @@ def download_data_FFI(indir,sector, sectors_all, tic, save = False):
         radius of the target star (solar radii)
 
     '''
+    # plot using the seaborn library
+    sb.set(style='ticks')
+    sb.set_color_codes('deep')
+    
 
     future_sectors = list(set(sectors_all) - set(sector))
 
     # dowload the data 
 
-    searchtic = 'TIC' + tic
+    searchtic = 'TIC' + str(tic)
 
     allfbkg = []
     allfbkg_t = []
@@ -2197,7 +2221,22 @@ def download_data_FFI(indir,sector, sectors_all, tic, save = False):
         # import the data
         print ("Importing FFI data sector {}...".format(sec), end =" ")
         search_result = lk.search_tesscut(searchtic, sector=sec)
-        tpf = search_result.download(cutout_size=15)
+        
+        count = 0
+        it_workd = False
+
+        while not it_workd and count < 5:  # try up to 4 times to download it
+            try:
+                tpf = search_result.download(cutout_size=15)
+                it_workd = True
+            except:
+                count += 1
+                continue
+
+        if count == 5: # if it fails 4 times, exit the program with an error message
+            print ("ERROR: Could not download the tpf file at this time. Please try again.")
+            sys.exit('')
+        # ---------
         
         # get rid of the 'bad' quality data - use the data flags and only take data where the quality = 0. 
         try:
@@ -2268,6 +2307,11 @@ def download_data_FFI(indir,sector, sectors_all, tic, save = False):
                     else:
                         val_small += 0.5
         
+        # if this is run with an input file then the needed folder might not exist yet...
+        if not os.path.exists("{}/{}/".format(indir, tic)): # if this folder doesn't already exist, make it
+            os.makedirs("{}/{}/".format(indir, tic))
+        # ---------
+
         plt.figure(figsize=(5,5))
         mask_plot = tpf.plot(aperture_mask=target_mask, mask_color='k')
         plt.savefig('{}/{}/{}_mask.png'.format(indir, tic, tic), format='png')
@@ -2424,11 +2468,10 @@ def download_data_FFI(indir,sector, sectors_all, tic, save = False):
         
         start_sec.append([alltime[0]])
         end_sec.append([alltime[-1]])
-    
+        
         X1_list.append(X1) #  not corrected
         X4_list.append(X4) #  PCA corrected
         t_list.append(np.array(alltime))  # add it here because this list isn't flattened but the other one is
-
 
     alltime_list = [val for sublist in alltime_list for val in sublist]
     allflux_flat = [val for sublist in allflux_flat for val in sublist]
@@ -4041,9 +4084,8 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
             except:
                 print ('axis limits error (momentun dumps)')
 
-
-            plt.ylabel('Normalized Flux')
-            plt.xlabel('BJD-2457000')
+            #plt.ylabel('Normalized Flux')
+            #plt.xlabel('BJD-2457000')
             plt.title('Transit {}'.format(g+1))
 
         else:

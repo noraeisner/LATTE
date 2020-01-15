@@ -23,7 +23,7 @@ from LATTE import LATTEutils as utils
 warnings.filterwarnings('ignore')
 
 
-def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args):
+def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args):
 	'''
 	This function combines all the results from LATTE and calls all the different functions - 
 	it makes the plots, saves them, runs the BLS model and the pyaneti model before making a PHT DV report (if this option is selected.) 
@@ -337,12 +337,12 @@ def brew_LATTE(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, 
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI = False,  bls = True, model = model)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI = False,  bls = True, model = model)
 		else:
-			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, FFI = False,  bls = False, model = model)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, FFI = False,  bls = False, model = model)
 
 
-def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):
+def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):
 	
 	'''
 	This function that runs LATTE - makes the plots, saves them, runs the BLS model and the pyaneti model before 
@@ -672,9 +672,9 @@ def brew_LATTE_FFI(tic, indir, transit_list, simple, BLS, model, save, DV, secto
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, ra, dec, tessmag, teff, srad, bls_stats1, bls_stats2, False, FFI = True, bls = True, model = model)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, bls_stats1, bls_stats2, False, FFI = True, bls = True, model = model)
 		else:
-			ldv.LATTE_DV(tic, indir, transit_list, sectors_all, ra, dec, tessmag, teff, srad, [0], [0], False, FFI = True, bls = False, model = model)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, [0], [0], False, FFI = True, bls = False, model = model)
 
 	else:
 		print ("\n  Complete! \n ")
