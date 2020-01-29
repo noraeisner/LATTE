@@ -46,7 +46,7 @@ Upon execution, ``LATTE`` prompts the user enter the TIC ID [@Stassun19] of a ta
 ![User-interface displaying the whole lightcurve (top pannel) and a zoom-in of the data around the selected transit-time (bottom pannel) as indicated by the vertical red line. The selected time can be changed by clicking on either one of the two lightcurve plots. Times are stored and removed with the 'Add time' and 'Remove time' buttons respectively. Further program options are shown to the left of the lightcurve plots: '*Simple*' for a quick analysis that doesn't require the TPFs; '*Hide plots*' to prevent the figures from being displayed as they are being produced; '*North*' to reproject the TPF plots due north; '*BLS* to run a Box-Least-Squares algorithm to search for periodic signals; '*Save*' to store the files locally (selected by default); and '*Report*' to create a PDF summary report (selected by default).](Fig1.png)
 
 
-# Different Modes
+## Different Modes
 
 ### Standard mode 
 
@@ -85,9 +85,9 @@ Summary of the ``LATTE`` diagnostic tests:
 
 All of results are summarised in a pdf report. 
 
-# Multiple Targets
+## Input target list
 
-In order to efficiently generate diagnostic plots for multiple targets without having to interactively enter target TIC IDs, ``LATTE`` can be executed with an input file that lists the TIC IDs, the times of the transit-like events, and the observational sectors to consider (if known). In the cases where the times of the transit events or the sectors have not been entered, the user is prompted to enter these manually via the GUI as descibed above. The code has also been written such that it can be parallelized (examples can be found at https://github.com/noraeisner/LATTE.)
+In order to efficiently generate diagnostic plots for multiple targets without having to interactively enter the target TIC IDs, ``LATTE`` can be executed with an input file that lists the TIC IDs, the times of the transit-like events, and the observational sectors to consider (if known). In the cases where the times of the transit events or the sectors have not been entered, the user is prompted to enter these manually via the GUI, as descibed above. For longer target lists the code can also can be parallelized (see https://github.com/noraeisner/LATTE for an example.)
 
 # Future
 
