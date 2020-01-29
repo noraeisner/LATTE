@@ -12,9 +12,6 @@ import lightkurve as lk
 from os.path import exists
 import astropy.io.fits as pf
 import matplotlib.pyplot as plt
-from astroplan import FixedTarget
-from astropy.stats import BoxLeastSquares
-from astroplan.plots import plot_finder_image
 from astropy.stats import median_absolute_deviation
 
 from glob import glob
@@ -25,6 +22,7 @@ from astroquery.mast import Catalogs
 from sklearn.decomposition import PCA
 from scipy.interpolate import interp1d
 from astropy.coordinates import SkyCoord
+from astropy.stats import BoxLeastSquares
 from matplotlib.patches import Rectangle
 from lightkurve import TessTargetPixelFile
 
@@ -34,6 +32,7 @@ from reproject.mosaicking import find_optimal_celestial_wcs
 from matplotlib.ticker import AutoMinorLocator, FormatStrFormatter
 from matplotlib.widgets import Slider, Button, RadioButtons, TextBox, CheckButtons
 
+
 # custom modules
 from LATTE import filters
 from LATTE import LATTEbrew as brew
@@ -42,7 +41,7 @@ from LATTE import LATTEbrew as brew
 # NOTE: in this version the Pyaneti modeling will not work (except on my computer) - this is being handled in the next release.
 
 try:
-    from pyaneti_LATTE import pyaneti
+    from LATTE import pyaneti_LATTE
     pyaneti_installed = True
 except:
     pyaneti_installed = False
@@ -334,7 +333,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     ax[1].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
     ax[1].set_xlabel("BJD-2457000", fontsize = 12)
     ax[1].set_ylabel("Normalised Flux", fontsize = 12)
-    ax[1].vlines(all_md, minf-0.5,minf-0.5 + height*0.3 , colors = 'r', label = "Momentum Dump")
+    ax[1].vlines(all_md, minf-1,minf + height*0.3, lw =1,  colors = 'r', label = "Momentum Dump")
     
     # ---------------
     # Create a label for the 'binning' box to clarify what it does
@@ -810,7 +809,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
         
         # --- do some sigma clipping to make the LC look better ---- 
         MAD = median_absolute_deviation(fr,ignore_nan = True)
-        madrange = (5 * MAD * 1.456)
+        madrange = (5 * MAD * 100)
         ymask = (fr < 1 + madrange) * (fr > 1 - madrange) 
         # ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  ---  
 
@@ -875,7 +874,6 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
 
     return alltime, allflux, allflux_small, allflux_flat, all_md, allfbkg,allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
 
-
 # the main interactive tool used to identify the times of the transit-like events when run in FFI mode
 def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     '''
@@ -926,7 +924,7 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
 
     MAD = median_absolute_deviation(allflux0, ignore_nan = True)
 
-    madrange = (5 * MAD * 1.456)
+    madrange = (5 * MAD * 100)
     
     # make a mask for the points we want to get rid of
     ymask = (allflux0 < 1 + madrange) * (allflux0 > 1 - madrange)
@@ -1124,7 +1122,7 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
     ax[1].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
     ax[1].set_xlabel("BJD-2457000", fontsize = 12)
     ax[1].set_ylabel("Normalised Flux", fontsize = 12)
-    ax[1].vlines(all_md, minf-0.5,minf-0.5 + height*0.3 , colors = 'r', label = "Momentum Dump")
+    ax[1].vlines(all_md, minf-1,minf + height*0.3, lw  = 1, colors = 'r', label = "Momentum Dump")
     # -------------------------------------
 
     # Create a button to close the figure and more onto the next stage of the code.
@@ -1383,7 +1381,6 @@ def data_files(indir):
                 '''
                 f.write(r_TP.content)
 
-
 def tp_files(indir):
     '''
     Function to download all of the TPF data that we want to the local computer.
@@ -1445,7 +1442,6 @@ def tp_files(indir):
                 start = str(r_target_list.content).find('t  Dec')
                 f.write(r_target_list.content[start-3:])
                 print("finished adding TP sector {}".format(sec))
-
 
 def TOI_TCE_files(indir):
     '''
@@ -2405,7 +2401,7 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
         
         # ------- median absolute deviation in order to determine the clipping
         MAD = median_absolute_deviation(fr,ignore_nan = True)
-        madrange = (5 * MAD * 1.456)
+        madrange = (5 * MAD * 100)
         
         # make a mask for the points we want to get rid of
         ymask = (fr < 1 + madrange) * (fr > 1 - madrange)
@@ -3560,6 +3556,7 @@ def plot_background(tic, indir, alltime, allfbkg, transit_list, args):
         else:
             plt.close()
 
+
 # plot the nearby TESS stars as well as the SDSS cutout - reprojected to have North up.
 def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
     
@@ -3595,9 +3592,16 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
     mass   :   float
         mass of the target star (Solar masses)
     '''
-    
+
+    # ----------
+    # import the astroplan module that is needed - this is done here and not at the start at this scipt 
+    # because astroplan cannot be parallelised (issues with python's shelve storage) so import here.
+    from astroplan import FixedTarget
+    from astroplan.plots import plot_finder_image
+    # ----------
+
     # Query nearby Gaia Stars  --------------------
-    
+
     sector = str(transit_sec[0])
 
     starName = "TIC " + str(tic)
@@ -3710,13 +3714,13 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
                 
     return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], catalogData['mass'][0]
 
-
 # same as plot_TESS_stars but not re-projected
 def plot_TESS_stars_not_proj(tic, indir,transit_list, transit_sec, tpf_list, args):
     
     '''
     Plot of the field of view round the target star showing nearby stars that are brighter than magnitude 15.
     
+    This function does not use astroplan (so no SDSS image) meaning that it needs to be used if the code is parallelised
     Parameters
     ----------
     tic : str
@@ -3737,6 +3741,7 @@ def plot_TESS_stars_not_proj(tic, indir,transit_list, transit_sec, tpf_list, arg
 
     '''
 
+
     # always check whether the file already exists... as to not waste computer power and time
     sector = str(transit_sec[0])
 
@@ -3749,25 +3754,6 @@ def plot_TESS_stars_not_proj(tic, indir,transit_list, transit_sec, tpf_list, arg
     ra = catalogData[0]['ra']
     dec = catalogData[0]['dec']
 
-
-    # ----------
-    survey = 'DSS2 Red'
-    fig, ax = plt.subplots()
-    plt.axis("off")
-    
-    args2 = {}
-    args2.setdefault('linewidth', 1)
-    args2.setdefault('color', 'red')
-    
-    # get the SDSS image and save it - this will appear in the report
-    target_coord = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
-    target = FixedTarget(coord=target_coord, name="Survey = {}".format(survey))
-    
-    ax, hdu = plot_finder_image(target, survey = survey, reticle='True', reticle_style_kwargs = args2)
-    
-    plt.savefig('{}/{}/{}_SDSSstar_field.png'.format(indir, tic, tic), format='png', bbox_inches = 'tight', dpi = 100)
-    plt.close()
-
     # ----------
 
     # Create a list of nearby bright stars (tess magnitude less than 14) from the rest of the data for later.
@@ -3776,7 +3762,7 @@ def plot_TESS_stars_not_proj(tic, indir,transit_list, transit_sec, tpf_list, arg
     start = [np.float64(transit_list[0]) - 0.2]
     end = [np.float64(transit_list[0]) + 0.2]
 
-    #background is just the array of the flux of all the pixels (used for backrgoudn in pixel level LC plot so mildly confusing and should change)
+    # background is just the array of the flux of all the pixels (used for backrgoudn in pixel level LC plot so mildly confusing and should change)
     for i, tpf in enumerate(tpf_list):
 
         # plt.subplot(row column number)
@@ -4027,7 +4013,7 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
     else:
         # --- do some sigma clipping to make the LC look better ---- 
         MAD = median_absolute_deviation(allflux,ignore_nan = True)
-        madrange = (5 * MAD * 1.456)
+        madrange = (5 * MAD * 100)
         ymask = (allflux < 1 + madrange) * (allflux > 1 - madrange) 
 
         time_dd = np.array(alltime)[ymask]
@@ -4070,11 +4056,13 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
 
             height_cut = maxf - minf
 
-            plt.plot(np.array(time_dd)[mask_dd], np.array(flux_dd)[mask_dd], 'o', markersize = 4, color = 'orange', alpha = 0.8, label = "unbinned", markerfacecolor='white', zorder=1)
-            plt.plot(np.array(time_dd_binned)[mask_dd_binned], np.array(flux_dd_binned)[mask_dd_binned], marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 5, label = 'binning = 7', markerfacecolor='k', zorder=2)
+            # plot the lines first so that they are behind the data - we need to be able to see the data well...
+            plt.vlines(line_dd, minf-(height_cut/10), minf + height_cut*0.25 , colors = 'r', label = "Momentum Dump", zorder=1)
+            plt.vlines([peak], minf-(height_cut/10),minf + height*0.25 , linewidth = 3, colors = 'k', linestyle = '--', zorder=2, alpha = 0.85)
 
-            plt.vlines(line_dd, minf-(height_cut/10), minf + height_cut*0.25 , colors = 'r', label = "Momentum Dump", zorder=3)
-            plt.vlines([peak], minf-(height_cut/10),minf + height*0.25 , linewidth = 3, colors = 'k', linestyle = '--', zorder=4)
+            # plot the momentum dumps and the markings. 
+            plt.plot(np.array(time_dd)[mask_dd], np.array(flux_dd)[mask_dd], 'o', markersize = 4, color = 'orange', alpha = 0.8, label = "unbinned", markerfacecolor='white', zorder=3)
+            plt.plot(np.array(time_dd_binned)[mask_dd_binned], np.array(flux_dd_binned)[mask_dd_binned], marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 5, label = 'binning = 7', markerfacecolor='k', zorder=4)
 
             plt.xlim(peak-0.75, peak+0.75)
 
@@ -4084,8 +4072,6 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
             except:
                 print ('axis limits error (momentun dumps)')
 
-            #plt.ylabel('Normalized Flux')
-            #plt.xlabel('BJD-2457000')
             plt.title('Transit {}'.format(g+1))
 
         else:
@@ -4098,27 +4084,28 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
         plt.subplot(2,gs,(1,gs))
 
     if args.FFI == False:
-        plt.plot(np.array(time_dd), np.array(flux_dd), 'o', markersize = 2, color = 'orange', alpha = 0.9, label = "unbinned", markerfacecolor='white', zorder=1)
-        plt.plot(np.array(time_dd_binned), np.array(flux_dd_binned), marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 1, label = 'binning = 7', markerfacecolor='k', zorder=2)
+        plt.plot(np.array(time_dd), np.array(flux_dd), 'o', markersize = 2, color = 'orange', alpha = 0.9, label = "unbinned", markerfacecolor='white', zorder=2)
+        plt.plot(np.array(time_dd_binned), np.array(flux_dd_binned), marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 1, label = 'binning = 7', markerfacecolor='k', zorder=3)
     else:
-        plt.plot(np.array(time_dd), np.array(flux_dd), 'o', markersize = 2, color = '#054950', alpha = 0.9, label = "unbinned", markerfacecolor='#054950', zorder=1)
+        plt.plot(np.array(time_dd), np.array(flux_dd), 'o', markersize = 2, color = '#054950', alpha = 0.9, label = "unbinned", markerfacecolor='#054950', zorder=2)
 
     minf_full = np.nanmin(np.array(flux_dd))
     maxf_full = np.nanmax(np.array(flux_dd))
 
     height_full = maxf - minf
 
-    plt.vlines(line_dd, minf_full,minf_full + height_full*0.3, colors = 'r', label = "Momentum Dump", zorder=3)
+    plt.vlines(line_dd, minf_full,minf_full + height_full*0.3, colors = 'r', label = "Momentum Dump", zorder=1)
     plt.ylim(minf_full, maxf_full)
     plt.xlim(np.nanmin(np.array(time_dd)), np.nanmax(np.array(time_dd)))
     plt.xlabel('BJD-2457000')
     plt.ylabel('Normalized Flux')
 
-    plt.vlines(transit_list, minf_full,minf_full + height*0.3 , colors = 'k', linestyle = '--', linewidth = 3, zorder=4)
+    plt.vlines(transit_list, minf_full,minf_full + height*0.3 , colors = 'k', linestyle = '--', linewidth = 3, zorder=2)
 
     plt.savefig("{}/{}/{}_fullLC_md.png".format(indir,tic,tic), format='png', bbox_inches = 'tight')
     
     plt.close()
+
 
 # plot of the two BLS runs including phase folded on most likely period
 def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results, period, duration, t0, args, in_transit = [0], in_transit_notbinned = [0]):
@@ -4598,7 +4585,6 @@ def unnorm(x,m,s):
     y = x * s
     a = y + m
     return a
-
 
 # --------------------------------------------
 # only used for the Jupyter Notebook version

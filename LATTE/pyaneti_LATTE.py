@@ -12,8 +12,7 @@ import sys
 import os
 import sys
 
-sys.path.append('pyaneti_LATTE/')
-from LATTE import pyaneti as pti #FORTRAN module
+
 
 #-------------------------------------------------------------
 #                   INITIALIZATION
@@ -29,11 +28,19 @@ star = tic  # confusing but some places require the star to be called the tic an
 
 indir = str(sys.argv[2])
 
-mstar = str(sys.argv[3])
+syspath = str(sys.argv[3])
 
-teff = str(sys.argv[4])
+mstar = str(sys.argv[4])
 
-srad = str(sys.argv[5])
+teff = str(sys.argv[5])
+
+srad = str(sys.argv[6])
+
+## --------------------
+## now that we know where these file are - fownload the pyaneti files that we need
+sys.path.append('{}/pyaneti_LATTE/'.format(syspath))
+import pyaneti as pti #FORTRAN module
+## --------------------
 
 peak_list = []
 
@@ -41,23 +48,13 @@ for i in range(6,len(sys.argv)): # the first agrument is the name of the program
 	peak_list.append(float(sys.argv[i]))
 
 
-print (peak_list)
-
-#Create path to the input_fit.py file
-#inf_name = 'inpy/'+star+'/input_fit.py'
-
-#Did you create an input_fit.py file?
-#if ( not os.path.isfile( inf_name ) ):
-#  print('You have not created', inf_name)
-#  sys.exit()
-
 #Read the file with all the python functions
 #execfile('pyaneti_LATTE/src/todo-py.py')
-exec(open('pyaneti_LATTE/src/todo-py.py').read())
+exec(open('{}/pyaneti_LATTE/src/todo-py.py'.format(syspath)).read())
 
 #Read the file with the default values
 #execfile('pyaneti_LATTE/src/default.py')
-exec(open('pyaneti_LATTE/src/default.py').read())
+exec(open('{}/pyaneti_LATTE/src/default.py'.format(syspath)).read())
 
 # -------------------
 # PRIORS THAT CHANGE  - LATTE adaption
@@ -113,7 +110,7 @@ print (mstar_mean, rstar_mean, tstar_mean)
 
 #Prepare data
 #execfile('pyaneti_LATTE/src/prepare_data.py')
-exec(open('pyaneti_LATTE/src/prepare_data.py').read())
+exec(open('{}/pyaneti_LATTE/src/prepare_data.py'.format(syspath)).read())
 
 #Create ouput directory
 outdir = indir + '/' + tic + '/model_out'
@@ -137,7 +134,49 @@ joint_fit()
 #-------------------------------------------------------------
 
 #execfile('pyaneti_LATTE/src/output.py')
-exec(open('pyaneti_LATTE/src/output.py').read())
+
+#exec(open('{}/pyaneti_LATTE/src/output.py'.format(syspath)).read())
+
+
+#Print the values
+#execfile('src/print_values.py')
+exec(open('{}/pyaneti_LATTE/src/print_values.py'.format(syspath)).read())
+
+#Create plots
+#execfile('src/plot_data.py')
+#execfile('src/plot_tr.py')
+#execfile('src/plot_rv.py')
+exec(open('{}/pyaneti_LATTE/src/plot_data.py'.format(syspath)).read())
+exec(open('{}/pyaneti_LATTE/src/plot_tr.py'.format(syspath)).read())
+exec(open('{}/pyaneti_LATTE/src/plot_rv.py'.format(syspath)).read())
+
+if ( is_plot_chains ):
+  plot_chains()
+#  plot_postiter()
+
+
+if ( is_corner_plot ):
+  create_corner_plot()
+else:
+  if ( is_plot_posterior ):
+    plot_posterior()
+
+if ( is_plot_correlations ):
+    plot_correlations()
+
+ #PLOT TRANSIT
+if ( total_tr_fit ):
+#  plot_lightcurve_timeseries()
+  create_folded_tr_plots()
+#  if (nbands == 1):
+#    plot_all_transits()
+    #clean_transits(sigma_clean)
+    #create_tango_input()
+
+#PLOT RV CURVE
+if ( total_rv_fit ):
+  plot_rv_timeseries()
+  plot_rv_phasefolded()
 
 #-------------------------------------------------------------
 #             	 END pyaneti.py FILE

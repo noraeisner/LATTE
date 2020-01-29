@@ -18,7 +18,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
 
 
-def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI, bls = False, model = False):
+def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI, bls = False, model = False, mpi = False):
 
 	'''
 	funtion that makes compiles all of the information and figures into a comprehensive pdf summary document.
@@ -51,7 +51,6 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		whether the bls search was run 
 	model  :  bool  (false)
 		whether the transit was modelled (only works if payenti has sucessfully been installed)
-
     Returns
     -------
     LATTE Data Validation report in PDF format.
@@ -93,9 +92,8 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# ------ PARAMS ------
 	ra = float(target_ra)
 	dec = float(target_dec)
-		
-
-
+	
+	
 	def addPageNumber(canvas, doc):
 		"""
 		Add the page numbers to the document
@@ -231,7 +229,12 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		srad = float(srad)
 	except:
 		srad = -999
-		
+	
+	try:
+		teff = float(teff)
+	except:
+		teff = -999
+			
 	data_stellar= [['Parameter',  "Value", "Unit"],
 				   ['TIC ID',	 tic, ],
 				   ['RA',		 ra, "degrees"],
@@ -411,7 +414,12 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	
 		im6 = Image(tess_stars_name)
 		
-		im6._restrictSize(width*0.7, width*0.5)
+		# if not with mpi (two star images)
+		if mpi == False:
+			im6._restrictSize(width*0.7, width*0.5)
+		else:
+			im6._restrictSize(width*0.35, width*0.35)
+
 		Story.append(im6)
 	
 		fig_count += 1

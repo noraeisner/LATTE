@@ -2,37 +2,45 @@
 '''
 
 This script is designed to test the LATTE python code to ensure that all the major function are working as they should. 
-
+run with: python -m unittest tests/test_data_download_LATTE.py
 '''
 
+import os
 import unittest
-from nose.tools import assert_true
 import requests
-
 import warnings
-
-target = __import__("my_sum.py")
+from nose.tools import assert_true
 
 warnings.filterwarnings("ignore")
-from LATTEutils import nn_ticids, download_data
+from LATTE import LATTEutils
 
-# test whether the test
-outdir = "./LATTE_output"
+# get the outir (or indir) path
+syspath = str(os.path.abspath(LATTEutils.__file__))[0:-14]
+
+with open("{}/_config.txt".format(syspath), 'r') as f:
+	outdir = str(f.readlines()[-1])
 
 class TestTESSpoint(unittest.TestCase):
 
-	def test_testpoint(self):
-		output = tess_point(outdir, '55525572')
+	'''
+	Test that TESS point returns the right RA and Dec
 
-		self.assertEqual(output[0], [1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13], "TESS sectors are not correct")
+	Note: requires internet connection
+	'''
+	def test_testpoint(self):
+		output = LATTEutils.tess_point(outdir, '55525572')
+
 		self.assertEqual(output[1], 72.69404300000001, "TESS point RA is not correct")
 		self.assertEqual(output[2], -60.905449, "TESS point Dec is not correct")
 
 
 class TestNearestNeighbours(unittest.TestCase):
 
+	'''
+	test that the code can calculate the nearest neighbour information correctly - involves calculations so ensures that they are correct and work as expected.
+	'''
 	def test_nn(self):
-		output = nn_ticids(outdir, [5], '55525572')
+		output = LATTEutils.nn_ticids(outdir, [5], '55525572')
 
 		self.assertEqual(output[0], [55525572, 55525518, 358806415, 55557836, 55557135, 55522986], "nearest neighbour TIC IDs are incorrect")
 		self.assertEqual(output[1], [0.0, 6.795727328666717, 10.622509290130298, 15.63959237521102, 16.881930554329756, 17.79841005439404], "nearest neighbour distances are incorrect")
@@ -41,9 +49,15 @@ class TestNearestNeighbours(unittest.TestCase):
 
 
 class TestDownloadLC(unittest.TestCase):
+	'''
+	test to ensure that the data download works as it should 
+	- test that it return the right file withthe right values.
 
+	NOTE: will only work if the internet connection works. 
+
+	'''
 	def test_downloadLC(self):
-		alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltimel2, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = download_data("./LATTE_output", [5], '55525572', binfac = 5)
+		alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltimel2, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = LATTEutils.download_data(outdir, [5], '55525572', binfac = 5)
 
 
 		self.assertEqual(float(alltime[0]), 1437.9785214992496, "alltime is incorrect")

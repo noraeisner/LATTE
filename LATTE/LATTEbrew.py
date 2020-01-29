@@ -197,10 +197,13 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		The former also shows the nearby stars with TESS magnitude brighter than 17. Queried from GAIA using astroquery.
 		The function returns the mass of the star (also output from astroquery)- this is a useful input for the Pyaneti modelling		
 		'''
-		_, _, _, mstar = utils.plot_TESS_stars(tic,indir, transit_list, transit_sec, tpf_list, args)
-	
+		if args.mpi == False:
+			_, _, _, mstar = utils.plot_TESS_stars(tic,indir, transit_list, transit_sec, tpf_list, args)
+		else:
+			_, _, _, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+
 		print ("Star Aperture plots... done.")
-	
+		
 		# ------------
 		
 		# Download the Target Pixel File using the raw MAST data - this comes in a different format as the TPFs extracted using Lightkurve
@@ -231,6 +234,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	
 	else:
 		tpf_corrupt = True
+		mstar = 1 # need to define mstar otherwise pyaneti will complain - just make it one as an approximation.
 	# ------------
 	# end of plots that require target pixel files
 	# ------------
@@ -314,14 +318,15 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	'''
 
 	# First check if Pyaneti is installed...
-	if os.path.exists("./pyaneti_LATTE.py"):
+	if os.path.exists("{}/pyaneti_LATTE.py".format(syspath)):
 
 		if model == True:
 			print ("Running Pyaneti modelling - this could take a while so be patient...")
 	
 			transit_list_model =  ("{}".format(str(np.asarray(transit_list)))[1:-1]) # change the list into a string and get rid of the brackets
 			# the code is usually run through the command line so call it using the os.system function.
-			os.system("python3 pyaneti_LATTE.py {} {} {} {} {} {}".format(tic, indir, mstar, teff, srad, transit_list_model))
+			
+			os.system("python3 {}/pyaneti_LATTE.py {} {} {} {} {} {} {}".format(syspath, tic, indir, syspath, mstar, teff, srad, transit_list_model))
 	
 	else:
 		print ("Pyaneti has not been installed so you can't model anything yet. Contact Nora or Oscar for the LATTE version of the Pyaneti code.")
@@ -337,9 +342,9 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI = False,  bls = True, model = model)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI = False,  bls = True, model = model, mpi = args.mpi)
 		else:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, FFI = False,  bls = False, model = model)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, FFI = False,  bls = False, model = model, mpi = args.mpi)
 
 
 def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):
@@ -478,7 +483,7 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 	# ------------------------------------------
 	
 	# create a plot of the fulllighcurves with the momentum dumps (MDs) marked and a zoom-in of the marked transits
-	utils.plot_full_md(tic, indir, alltime,allflux,all_md,alltime,allflux, transit_list, args)
+	utils.plot_full_md(tic, indir, alltime, allflux, all_md, alltime, allflux, transit_list, args)
 
 	# get the sectors that have a transit marked in them
 	transit_sec = utils.transit_sec(in_sec,start_sec, end_sec, transit_list)
@@ -508,7 +513,11 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 	The function returns the TESS magnitude, effective temperature (K), the radius of the star (solar radii)and the 
 	mass of the star (solar mass) (also output from astroquery)- this is a useful input for the Pyaneti modelling		
 	'''
-	tessmag, teff, srad, mstar = utils.plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args)
+
+	if args.mpi == False:
+		tessmag, teff, srad, mstar = utils.plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args)
+	else:
+		tessmag, teff, srad, mstar = utils.plot_TESS_stars_not_proj(tic,indir,transit_list, transit_sec, tpf_list, args)
 
 	print ("Star Aperture plots... done.")
 	# -----------
@@ -651,14 +660,14 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 
 	# first check if Pyaneti is even installed...
 
-	if os.path.exists("./pyaneti_LATTE.py"):
+	if os.path.exists("{}/pyaneti_LATTE.py".format(syspath)):
 
 		if model == True:
 			print ("Running Pyaneti modelling - this could take a while so be patient...")
 			
 			# the code is usually run through the command line so call it using the os.system function.
 			transit_list_model =  ("{}".format(str(np.asarray(transit_list)))[1:-1]) # change the list into a string and get rid of the brackets
-			os.system("python3 pyaneti_LATTE.py {} {} {} {} {} {}".format(tic, indir, mstar, teff, srad, transit_list_model))
+			os.system("python3 {}/pyaneti_LATTE.py {} {} {} {} {} {} {}".format(syspath, tic, indir, syspath, mstar, teff, srad, transit_list_model))
 	
 	else:
 		print ("Pyaneti has not been installed so you can't model anything yet. Ask Nora or Oscar for the LATTE version of the Pyaneti code.")
@@ -672,9 +681,9 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, bls_stats1, bls_stats2, False, FFI = True, bls = True, model = model)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, bls_stats1, bls_stats2, False, FFI = True, bls = True, model = model, mpi = args.mpi)
 		else:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, [0], [0], False, FFI = True, bls = False, model = model)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, [0], [0], False, FFI = True, bls = False, model = model, mpi = args.mpi)
 
 	else:
 		print ("\n  Complete! \n ")

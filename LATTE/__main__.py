@@ -47,6 +47,7 @@ if __name__ == '__main__':
 	ap.add_argument('--save', help='is this an FIIs?', default = True)
 	ap.add_argument('--north', action='store_true', help='write "north" if you want all the images to be aligned North')
 	ap.add_argument('--new-path', action = 'store_true', help ='enter to change the output path')
+	ap.add_argument('--mpi', action = 'store_true', help ='enter if the program is run with mpi')
 
 	args = ap.parse_args()
 
@@ -56,7 +57,6 @@ if __name__ == '__main__':
 	# get the path to where the package is installed. This is where the configuration file and the images (for the DV report are stored)
 
 	syspath = str(os.path.abspath(utils.__file__))[0:-14]
-
 
 	def yes_or_no():
 		'''
@@ -433,7 +433,7 @@ if __name__ == '__main__':
 						# ----------------------------------------
 						#			   START BREWING ....
 						# ----------------------------------------
-					
+						
 						brew.brew_LATTE(tic, indir, syspath,transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 					except:
 						failed_tics.append(tic)
