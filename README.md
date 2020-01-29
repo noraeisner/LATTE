@@ -4,6 +4,8 @@ Written by Nora L. Eisner
 
 email: *nora.eisner@new.ox.ac.uk*
 
+![LATTE logo](https://github.com/noraeisner/LATTE/blob/master/LATTE/LATTE_imgs/LATTE_logo_small.png)
+
 
 ### THE CODE
 
@@ -16,7 +18,7 @@ email: *nora.eisner@new.ox.ac.uk*
 --------
 ### Installation
 
-You can download the code directly from github (https://github.com/noraeisner/LATTE). Alternatively you can install LATTE using pip (https://pypi.org/project/tessLATTE/) via your command line with:
+You can download the code directly from github. Alternatively you can install LATTE using pip (https://pypi.org/project/tessLATTE/) via your command line with:
 
 			pip install tessLATTE      
 
@@ -31,15 +33,9 @@ LATTE is simply run through the command line with:
 
 			python3 -m LATTE        
 
-This will open up a box for you that prompts you to enter a TIC ID and indicate whether you would like to extract the information from the 2-minute cadence ('Standard mode') or 30-minute candence Full Frame Image (FFI) data ('FFI mode')
+This will open up a box for you that prompts you to enter a TIC ID and indicate whether you would like to extract the information from the 2-minute cadence ('Standard mode') or 30-minute candence Full Frame Image (FFI) data ('FFI mode').
 
 Once a TIC ID has been entered, the program will tell you in what sectors that target has been observed. If you want to look at all of the sectors, either enter them or simply press enter with nothing in the box. Alternatively, enter the sectors that you are interested in and enter them separated by commas. Remember that LATTE will have to download all the data for each sector so you might not always want to look at all of the sectors. 
-
-TESS data is released periodically approximately once a month. When there is a new data release run the program with:
-
-			python3 -m LATTE --new-data
-
-which will automatically download the files that you need to access the new TESS data. 
 
 **Normal Mode**
 
@@ -83,18 +79,31 @@ The code will then generate download and process all of the data. Note that all 
 
 - Full lightcurve with the times of the momentum dumps marked. 
 
+![Full LC](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_fullLC_md.png)
+
 - Background flux around the times of the marked transit event(s).
+
+![Background Flux](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_background.png)
 
 - Centroid positions around the time of the marked transit event(s).
 
+![Centroid](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_centroids.png)
+
 - The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
 
+![Aperture Size](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_aperture_size.png)
+
 - The average flux in and out of the marked event(s) and the differences between the two.
+
 
 - The average flux of the target pixel file with the locatiosn of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
 - The lightcurves of the 6 closest stars that were also observed by *TESS* (TP files).
 
+![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_nearest_neighbours.png)
+
 - A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
+
+![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_individual_pixel_LCs_0.png)
 
 - (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
 - (in progress, will be available in next release of LATTE) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
