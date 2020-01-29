@@ -83,7 +83,7 @@ Summary of the ``LATTE`` diagnostic tests:
 - **Box-Least-Squares fit.** A plot showing the results from two BLS searches. The data are corrected for residual systematics using an iterative non-linear filter [@Aigrain04] prior to being searched for periodic signals using the *Astropy BLS* module [@astropy]. The intitial BLS search identifies the times of the highest detected signal-to-noise event and removes these data from the lightcurve. A second search is then carried out in order to search for additional periodic signals.
 
 
-All of results are summarised in a pdf report. 
+All of the results are summarised in a pdf report. 
 
 ## Input target list
 
