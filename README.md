@@ -46,6 +46,12 @@ The '*normal mode*' looks at the short-cadence *TESS* data which has already bee
 
 In *FFI mode* the data is downloaded using TESScut and the data detrended using PCA, a moving average filter and k-sigma clipping. Unlike the *TESS* 2-minute cadence targets, the FFIs do not come with a pre-chosen optimal aperture. By default, the user is given the option to manually select the pixels within each aperture for a 'large' and a 'small' aperture. This GUI opens automatically and the two apertures are selected by clicking on the desired pixels in the interface. The two (large and small aperture) lightcurves are simultaneously displayed. When the FFI mode is run with the command '--auto', the aperture size is chosen manually using a threshold flux value centred at the midpoint of the postage stamp.
 
+
+## Input target list
+
+In order to efficiently generate diagnostic plots for multiple targets without having to interactively enter the target TIC IDs, ``LATTE`` can be executed with an input file that lists the TIC IDs, the times of the transit-like events, and the observational sectors to consider (if known). See example. In the cases where the times of the transit events or the sectors have not been entered, the user is prompted to enter these manually via the GUI, as descibed above. For longer target lists the code can also be parallelized (see example).
+
+
 ### Transit time selection
 
 Once you have identified the TIC ID, the observational sectors and the aperture sizes (*FFI mode* only), you will see a screen that has the full lighcurve as well as a zoom in of the lightcurve. The solid red line across the full lightcurve lets you know where on the lighcurve you are zooming in on. Click on the top (full) or bottom (zoomed in) plots to change the location of the zoom in until the red vertical line is centred on the mid-point of a transit-event. When you are happy with the location press the 'Add Time' button below the plots in order to record this time (in TBJD) . You can delete wrongly entered times with the 'Delete time'. The saved times will be shown on the screen. The position of the red line can also be changed by dragging the teal coloured 'Transit' slider with your mouse. The y-scale of the plots can be changed with the grey coloured slider.
@@ -148,6 +154,9 @@ NOTE: all of these arguments (except new-path, auto and targetlist) can be chang
 **--north** If you want all the images to be oriented due north (this is not the default as it takes longer to run)
 
 **--new-path** If you want to define a new path to store the data.
+
+**--mpi** If the code is parallelized (see example), this needs to be entered in the command line. This is because the module that reprojects the TPFs, astroplan, cannot be parallelized due to problems with multiple processes accessing python's shelve storage at the same time.
+
 
 
 

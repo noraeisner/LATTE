@@ -2998,8 +2998,11 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
     # -----------------------
 
     durations = np.linspace(0.05, 0.2, 10)
+    periods = np.arange(0.5, (np.nanmax(alltimebinned) - np.nanmin(alltimebinned)), 0.01)
+
     model = BoxLeastSquares(alltimebinned, allfluxbinned)
-    results = model.autopower(durations, frequency_factor=5.0)
+    results = model.power(periods, durations)
+
 
     index = np.argmax(results.power)
     period = results.period[index]
@@ -3025,7 +3028,7 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
     
     # Re-run the algorithm, and plot the results
     model2 = BoxLeastSquares(alltimebinned[~in_transit], allfluxbinned[~in_transit])
-    results2 = model2.autopower(durations, frequency_factor=5.0)
+    results2 = model2.power(periods, durations)
     
     # Extract the parameters of the best-fit model
     index = np.argmax(results2.power)
@@ -3079,9 +3082,18 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
     alltime = np.array(alltime)[mask]
     allflux = np.array(allflux)[mask]
     
+    #durations = np.linspace(0.05, 0.2, 10)
+    #model = BoxLeastSquares(alltime, allflux)
+    #results = model.autopower(durations, frequency_factor=5.0)
+
+    # define the durations and the period to test. The period ranges from 0.5 days to the length of the available data
     durations = np.linspace(0.05, 0.2, 10)
+    periods = np.arange(0.5, (np.nanmax(alltimebinned) - np.nanmin(alltimebinned)), 0.01)
+
     model = BoxLeastSquares(alltime, allflux)
-    results = model.autopower(durations, frequency_factor=5.0)
+    #results = model.autopower(durations, frequency_factor=5.0)
+    results = model.power(periods, durations)
+
 
     index = np.argmax(results.power)
     period = results.period[index]
@@ -3103,7 +3115,7 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
     in_transit = model.transit_mask(alltime, period, 2*duration, t0)
     # Re-run the algorithm, and plot the results
     model2 = BoxLeastSquares(alltime[~in_transit], allflux[~in_transit])
-    results2 = model2.autopower(durations, frequency_factor=5.0)
+    results2 = model2.power(periods, durations)
     
     # Extract the parameters of the best-fit model
     index = np.argmax(results2.power)

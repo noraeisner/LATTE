@@ -31,15 +31,18 @@ bibliography: paper.bib
 
 # Summary
 
+Begin your paper with a summary of the high-level functionality of your software for a non-specialist reader. Avoid jargon in this section.
+
+
 NASA's Transiting Exoplanet Survey Satellite [*TESS*, @ricker15] is the first nearly all-sky space-based transit search mission. During the nominal two year primary mission alone, *TESS* will monitor over 80 per cent of the sky, split up into 26 observational sectors. The prime objective of the mission is to discover transiting exoplanets around 200,000 pre-selected bright nearby stars which are being monitored every two minutes. In addition to these short-cadence observations, *TESS* is obtaining Full Frame Images (FFIs) every thirty minutes.
 
-Unlike its predecessor *Kepler*, *TESS* uses very large (20 arcsecond) pixels, meaning that astrophysical false positives (e.g. blends, where the photometric aperture of a bright target is contaminated by a faint eclipsing binary) are expected to be common. Many of these false positive scenarios can be ruled out from detailed examination of the *TESS* data (lightcurves and target pixel files) using standard diagnostic tests. 
+Unlike its predecessor *Kepler*, *TESS* uses very large (20 arcsecond) pixels, meaning that astrophysical false positives (e.g. blends, where the signal of a target is contaminated by a faint eclipsing binary) are expected to be common. Many of these false positive scenarios can be ruled out from detailed examination of the *TESS* data (lightcurves and target pixel files) using standard diagnostic tests. 
 
 ``LATTE`` is an open source Python package that performs these standard diagnostic tests to help identify, vet and characterise signals in the *TESS* lightcurves in order to weed out instumental and astrophysical false positives. The program is designed to allow for a fast, in depth analysis of targets that have already been identified as promising candidates by the main *TESS* pipelines or via alternative methods such as citizen science [e.g., @fischer12; @Christiansen2018; @eisner19]. The implemented diagnostic tests are similar to the ‘Data Validation’ steps performed by the Science Processing Operations Center [SPOC; @jenkins16] pipeline. However, while the SPOC pipeline tests are performed on a selection of two-minute cadence *TESS* targets only, ``LATTE`` allows for the analysis of any *TESS* target with a valid TIC ID [@Stassun19], including both the two-minute and thirty-minute cadence targets.
 
 # ``LATTE`` 
 
-The standard vetting tests performed by ``LATTE`` provide a useful tool for both researchers and students. Furthermore, ``LATTE`` was developed with the growing exoplanet citizen science community [e.g., @fischer12; @Christiansen2018; @eisner19] in mind and thus all interactions with the code are done via a user-friendly interface, requiring minimal knowledge of python coding.
+The standard vetting tests performed by ``LATTE`` provide a useful tool for both researchers and students. Furthermore, ``LATTE`` was developed with the growing exoplanet citizen science community [e.g., @fischer12; @Christiansen2018; @eisner19] in mind and thus all interactions with the code are done via a user-friendly interface, requiring minimal experience in python programming.
 
 Upon execution, ``LATTE`` prompts the user enter the TIC ID [@Stassun19] of a target star, as well as the observational sector(s) to analyse. The corresponding data is then downloaded directly from the Mikulski Archive for Space Telescopes (MAST, http://archive.stsci.edu/tess/) and displayed in a Graphical User Interface (GUI), as shown in Figure 1. The user is asked to identify the times of the transit-like events by directly clicking on the lightcurve plots and recording the transit-times using the 'Add time' button. Additional settings, such as whether to run a Box-Least-Squares (BLS) algorithm that searches for periodic signals in the lightcurve, can be selected within the GUI (see left side of Figure 1). Once the times of one or more transit-like events have been identified the program automatically downloads and handles the *TESS* data to provide standard exoplanet diagnostic plots and statistics.
 
@@ -89,6 +92,13 @@ All of the results are summarised in a pdf report.
 
 In order to efficiently generate diagnostic plots for multiple targets without having to interactively enter the target TIC IDs, ``LATTE`` can be executed with an input file that lists the TIC IDs, the times of the transit-like events, and the observational sectors to consider (if known). In the cases where the times of the transit events or the sectors have not been entered, the user is prompted to enter these manually via the GUI, as descibed above. For longer target lists the code can also can be parallelized (see https://github.com/noraeisner/LATTE for an example.)
 
+# Installation and command line execution
+
+``LATTE`` is developed publicly through a GitHub repository, which provides the user with example input and output files, as well as the opportunity to highlight arising issues with the code. The main aspects of the code have been tested using the *unittest* package. ``LATTE`` can be installed either directly from the GitHub repository or via the pip command on PyPi (https://pypi.org/project/tessLATTE/).
+
+Once installed, the program is easily excecuted via the command line (e.g. python3 -m LATTE). Further command line options, such as to run the code with an input target list, can be entered in order execute the code with more advances settings. For further information on these options please see the documentations provided on the GitHub page. The first time that the code is executed, the user is prompted to enter a local path that directs to a location on the computer where the data and output files will be stored. Additionaly, on the initial run, ``LATTE``  automatically downloads text files that are required for the program run and may, therefore, take a couple of minutes to set-up. 
+
+
 # Future
 
 The next release will allow for the option to model the transit-like events using the open source package *Pyaneti* [@pyaneti] which uses a Bayesian approach with an MCMC sampling to determine the parameters of the best-fit.
@@ -97,6 +107,7 @@ The next release will allow for the option to model the transit-like events usin
 # Acknowledgements
 
 I thank all of the Planet Hunters *TESS* volunteers whose dedication to the project encouraged me to write this analysis tool. I am also extremely grateful to all of the support provided by the Zooniverse team and the Oxford exoplanet group.
+
 
 # References
 
