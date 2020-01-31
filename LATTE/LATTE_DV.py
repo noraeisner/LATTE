@@ -141,11 +141,12 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 
 	phasefold_name = '{}/{}/{}_phase_folded.png'.format(indir, tic, tic)
 	
+	apertures_name = '{}/{}/{}_apertures_0.png'.format(indir, tic, tic)
+	
 	# ----- LOGOS ------
 	PHT_logo_name  =  '{}/LATTE_imgs/PHT_logo.jpg'.format(syspath)
 	LATTE_logo_name = '{}/LATTE_imgs/LATTE_logo.png'.format(syspath)
 	TESS_logo_name  = '{}/LATTE_imgs/TESS_logo.png'.format(syspath)
-
 
 	# -------------------------------------------
 	# Make a PDF summary file
@@ -375,15 +376,32 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		fig_count += 1
 		Story.append(Spacer(1, 10))
 		flux_aperture_text = "Fig {}. The lighcurve around the time of each transit-like event extracted with the SPOC pipeline \
-			defined aperture (binned:blue, unbinned:grey) and the with an aperture that is 50% smaller (red). The flux is extracted \
+			defined aperture (binned:blue, unbinned:grey) and the with an aperture that is 40 per cent smaller (red). The flux is extracted \
 			from the target pixel files (TPFs) and has not been detrended or \
 			corrected for systematics. The vertical orange line indicates the time of the transit-like event.".format(fig_count)
 		
 		ptext = '<font size=8>%s</font>' % flux_aperture_text
 		Story.append(Paragraph(ptext, styles["Normal"]))
 		
+		# plot the apertures (only currently available in normal mode)
+		if FFI == False:
+			im45 = Image(apertures_name)
+		
+			im45._restrictSize(width*0.45, width*0.45)
 	
-	
+			Story.append(im45)
+			
+			fig_count += 1
+			Story.append(Spacer(1, 10))
+			aperture_text = "Fig {}. The apertures used to extract the lightcurves. The blue aperture on the right shows the \
+			optimum aperture determined by the SPOC pipeline, which is used for the extraction of 2-minute cadence light curves shown in Figure 1. \
+			The red outline on the left shows an aperture that is around 40 per cent smaller than the SPOC pipeline aperture which was used to extract the \
+			red lightcurve shown in Figure {}.".format(fig_count, (fig_count-1))
+			
+			ptext = '<font size=8>%s</font>' % aperture_text
+			Story.append(Paragraph(ptext, styles["Normal"]))
+		
+		
 		# --------------------------------------------
 		# In and Out of Transit Comparison
 		# --------------------------------------------

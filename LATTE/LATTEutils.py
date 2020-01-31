@@ -20,6 +20,7 @@ from astropy.io import fits
 from astropy import units as u
 from astroquery.mast import Catalogs
 from sklearn.decomposition import PCA
+from scipy.optimize import minimize_scalar
 from scipy.interpolate import interp1d
 from astropy.coordinates import SkyCoord
 from astropy.stats import BoxLeastSquares
@@ -2286,7 +2287,6 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
                 threshhold = val_small
                 break 
             else:
-                #print (np.sum(target_mask))
                 
                 if np.sum(target_mask_small) < 2:
         
@@ -2714,15 +2714,27 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic):
             print ("\n !!! This target pixel file is corrupt and cannot be downloaded at this time. Please try again later or a different file. \n")
             return -111, -111, -111, -111, -111, -111, -111 # flag an error message
 
+        # if the transit is within that sector then add it to the list to be used later
         for T0 in transit_list:
             if (T0 > np.nanmin(tpf.time)) and (T0 < np.nanmax(tpf.time)):
                 tpf_list.append(tpf)
 
         try:
-            lc = tpf.to_lightcurve()
-            median_image = np.nanmedian(tpf.flux, axis=0)
-            smaller_mask = median_image > np.nanpercentile(median_image, 50)
-
+            # calculate the masks that we want to look at - three masks (small, pipeline mask and large)
+            # determine the size of the tess pipeline mask - this correlates with the magnitude of the target star
+            tess_ap_size = np.sum(tpf.pipeline_mask)
+            
+            # aim to make the big aperture around 40 % smaller than the TESS pipeline aperture
+            small_ap_count = round(tess_ap_size * 0.60) # 60% of pipeline aperture
+    
+            # we are using the lighkurve optimization to extract the aperture.
+            # this places an aperture on the central pixel and selects the brightest surrounding ones based on a threshhold value 
+            # determine this threshhold value based on the number of pixels that we want using scipy minimizaton and the 'find aperure' function as defined below under 'other functions'
+            small_ap_thresh_val = minimize_scalar(find_aperture, bounds = [0,10], args = (small_ap_count, tpf)).x
+            
+            # using the optimal threshhold values, determine the masks
+            smaller_mask = tpf.create_threshold_mask(threshold=small_ap_thresh_val, reference_pixel='center')
+    
             # TESS binned
             TESS_unbinned = tpf.to_lightcurve(aperture_mask=tpf.pipeline_mask).flatten(window_length=100001)
             TESS_unbinned = TESS_unbinned.remove_outliers(6)
@@ -2734,7 +2746,7 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic):
             # Use a custom aperture binned
             small_binned = tpf.to_lightcurve(aperture_mask=smaller_mask).flatten(window_length=100001)
             small_binned = small_binned.remove_outliers(6).bin(7)
-        
+    
             TESS_unbinned_t = TESS_unbinned.time
             TESS_binned_t = TESS_binned.time
             small_binned_t = small_binned.time
@@ -2747,7 +2759,41 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic):
             TESS_unbinned_l.append(TESS_unbinned.flux)
             TESS_binned_l.append(TESS_binned.flux)
             small_binned_l.append(small_binned.flux)
-        
+            
+    
+            # ----------
+            # make get the mean image
+            im = np.mean(tpf.flux, axis = 0)
+            # set up the plot - these are stored and one of the images saved in the report      
+            fig, ax = plt.subplots(1,2, figsize=(10,5), subplot_kw={'xticks': [], 'yticks': []})
+            kwargs = {'interpolation': 'none', 'vmin': im.min(), 'vmax': im.max()}
+            color = ['red', 'deepskyblue']
+            label = ['small (~60 %)', 'pipeline (100 %)']
+            
+    
+            for i,arr in enumerate([smaller_mask,tpf.pipeline_mask]):
+            
+                mask = np.zeros(shape=(arr.shape[0], arr.shape[1]))
+                mask= arr
+                
+                f = lambda x,y: mask[int(y),int(x)]
+                g = np.vectorize(f)
+                
+                x = np.linspace(0,mask.shape[1], mask.shape[1]*100)
+                y = np.linspace(0,mask.shape[0], mask.shape[0]*100)
+                X, Y= np.meshgrid(x[:-1],y[:-1])
+                Z = g(X[:-1],Y[:-1])
+                
+                ax[i].set_title('Aperture: {}'.format(label[i]), fontsize = 18)
+                ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'upper')
+                ax[i].contour(Z, [0.5], colors=color[i], linewidths=[4], 
+                            extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
+                
+            # save the figure
+            plt.savefig('{}/{}/{}_apertures_{}.png'.format(indir, tic, tic, idx), format='png', bbox_inches = 'tight')
+            plt.clf()
+            plt.close()
+
         except:
             continue
         
@@ -3852,8 +3898,7 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         The time of the transit is highlighted in red/gold for each pixel LC.
     '''
 
-    #only plot this for the first transit -- alter here to plot for all or others.
-
+    # loop through the transits and make plot for each ( only the first is currently displayed in the pdf report)
     for idx, X1 in enumerate(X1_list):
 
         mapimg = apmask_list[idx]
@@ -3873,6 +3918,7 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         
         plt.tight_layout()
 
+        # see if the backrgound of this plot can be the average pixel flux (if there are too many nans this will fail and the background will just be black which is also okay)
         try:
             color = plt.cm.viridis(np.linspace(0, 1,int(np.nanmax(bkg))-int(np.nanmin(bkg))+1))
             simplebkg = False
@@ -4597,6 +4643,18 @@ def unnorm(x,m,s):
     y = x * s
     a = y + m
     return a
+
+def find_aperture(val, ap_count, tpf):
+    '''
+    function that finds the desired aperture. 
+    Used with a scipy minimization to find the threshhold value that results in the numbre of pixels wanted for the aperture.
+    '''
+
+    # calculate the mask centerd on the central pixel (on target)
+    target_mask = tpf.create_threshold_mask(threshold=val, reference_pixel='center')
+
+    # determine how many pixels this threshhold results in and compare to desired mask size
+    return abs(np.sum(target_mask) - ap_count)
 
 # --------------------------------------------
 # only used for the Jupyter Notebook version
