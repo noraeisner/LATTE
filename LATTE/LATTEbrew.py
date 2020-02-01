@@ -247,23 +247,10 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		t0 = transit_list[0] # time of the first marking
 		
 		# calculate the phase
-		#phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltime])
+		phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltimebinned])
 
-		# phased plot where odd and even are different colours
-		phased = (alltimebinned - t0) % period
-		phased2 = (alltimebinned - (t0)) % (period*2)
-		
-		index = phased>0.5*period
-		index2 = phased2 >0.5*(period *2)
-		
-		phased[index] -= period
-		phased2[index2] -= (period *2)
-	
 		fig, ax = plt.subplots(figsize=(5.55,5))
-		#plt.subplots_adjust(left=0.001, right=0.998, top=0.999, bottom=0.005)
-
-		ax.plot(phased,allfluxbinned, 'k.', markersize=5)
-		ax.plot(phased2,allfluxbinned, 'r.', markersize=5)
+		ax.plot(phased, allfluxbinned, marker='.',color = 'k', alpha = 1, lw = 0, markersize = 4, label = 'None', markerfacecolor='k')
 	
 		#ax.plot(phased, allflux,marker='o',color = 'navy', alpha = 0.7, lw = 0, markersize = 2, label = 'binning = 7', markerfacecolor='white')
 		plt.title("Phase folded LC")
@@ -611,9 +598,9 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 
 				T0_list.append(T0)
 
-	X1_list     	= 	X1_list_n
-	X4_list     	= 	X4_list_n
-	bkg_list    	= 	bkg_list_n
+	X1_list	 	= 	X1_list_n
+	X4_list	 	= 	X4_list_n
+	bkg_list		= 	bkg_list_n
 	apmask_list 	= 	apmask_list_n
 	arrshape_list   =   arrshape_list_n
 	t_list 			=   t_list_n

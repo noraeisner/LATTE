@@ -1280,7 +1280,6 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
 
 # The Functions needed to get the files that know how to acess the data
 
-
 def data_files(indir):
     '''
     Function to download all of the data that we want to the local computer.
@@ -1685,7 +1684,8 @@ def nn_ticids(indir, transit_sec, tic):
 # --------------------------------------------
 
 # The functions to download the actual data
-def download_data(indir,sector, tic, binfac = 5):
+def download_data(indir,sector, tic, binfac = 5, test = 'no'):
+    
     '''
     Download the LCs for the target star for all the indicated sectors
     
@@ -1699,6 +1699,9 @@ def download_data(indir,sector, tic, binfac = 5):
         TIC (Tess Input Catalog) ID of the target
     binfac  :  int
         The factor by which the data should be binned. Default = 5 (which is what is shown on PHT)
+    
+    test   :   str
+        in order to test the function with unittests we want to run it with an input file (string to input file)
 
     Returns
     -------
@@ -1750,42 +1753,51 @@ def download_data(indir,sector, tic, binfac = 5):
             new_shape[1], arr.shape[1] // new_shape[1])
         return arr.reshape(shape).mean(-1).mean(1)
     
-    dwload_link = []
-    
-    # search the LC download file for the URL to download the LC from MAST for the given target star.
-    # if we are looking at all of the sectors search, the file that has all of the LC URLs in it.
-    if sector == 'all':
-        # locate the file string
-        lc_all = np.genfromtxt('{}/data/tesscurl_sector_all_lc.sh'.format(indir), dtype = str)
-    
-        for i in lc_all:
-            if str(tic) in str(i[6]):
-                dwload_link.append(i[6])
+    # -!-!-!-!-!-!-!-
+    if test != 'no':
+        dwload_link = [test]  # in the unittest define a link to a pre downloaded file
+    # -!-!-!-!-!-!-!-
 
-    # otherwise only load the files specific for each sector that we are looking at - this is to avoid loading the larger file.
-    else:
-        future_sectors = []
-        # locate the file string
-        for s in sector:
-            try:
-                lc_sec = np.genfromtxt('{}/data/tesscurl_sector_{}_lc.sh'.format(indir, str(s)), dtype = str)
-                
-                for i in lc_sec:
-                    if str(tic) in str(i[6]):
-                        dwload_link.append(i[6])
-            except:
-                future_sectors.append(s)
-    
-        if len(future_sectors):
-            print ("In the future, TIC {} will be observed in sector(s) {}".format(tic, future_sectors))
-    
-    if len(dwload_link) == 0:
-        print ("TIC {} was not observed in Sector(s):   {}. Try again with different sectors.".format(tic, sector))
+    # if not a test find the link needed to access the data 
+    else: 
 
-        print ("\n (Also check that the data file have been downloaded - run code with '--new-data' in the command line)")
-        raise SystemExit
-
+        dwload_link = []
+        
+        # search the LC download file for the URL to download the LC from MAST for the given target star.
+        # if we are looking at all of the sectors search, the file that has all of the LC URLs in it.
+        if sector == 'all':
+            # locate the file string
+            lc_all = np.genfromtxt('{}/data/tesscurl_sector_all_lc.sh'.format(indir), dtype = str)
+        
+            for i in lc_all:
+                if str(tic) in str(i[6]):
+                    dwload_link.append(i[6])
+    
+        # otherwise only load the files specific for each sector that we are looking at - this is to avoid loading the larger file.
+        else:
+            future_sectors = []
+            # locate the file string
+            for s in sector:
+                try:
+                    lc_sec = np.genfromtxt('{}/data/tesscurl_sector_{}_lc.sh'.format(indir, str(s)), dtype = str)
+                    
+                    for i in lc_sec:
+                        if str(tic) in str(i[6]):
+                            dwload_link.append(i[6])
+                except:
+                    future_sectors.append(s)
+        
+            if len(future_sectors):
+                print ("In the future, TIC {} will be observed in sector(s) {}".format(tic, future_sectors))
+        
+        if len(dwload_link) == 0:
+            print ("TIC {} was not observed in Sector(s):   {}. Try again with different sectors.".format(tic, sector))
+    
+            print ("\n (Also check that the data file have been downloaded - run code with '--new-data' in the command line)")
+            raise SystemExit
+    
     # define all the empty lists to append to in order to return the data that will be requrides later on in the script
+    
     alltimebinned = []
     allfluxbinned = []
     
@@ -1808,11 +1820,18 @@ def download_data(indir,sector, tic, binfac = 5):
     # loop through all the download links - all the data that we want to access
     for lcfile in dwload_link:
         
-        # use the downlload link to download the file from the server - need an internet connection for this to work
-        response = requests.get(lcfile)
-    
-        # open the file using the response url  
-        lchdu  = pf.open(response.url) # this needs to be a URL - not a file
+        # !-!-!-!-!-!-!-
+        # if this a test run, download the file already on the system
+        if test != 'no':
+            lchdu  = pf.open(lcfile)
+        # !-!-!-!-!-!-!-
+
+        else:
+            # use the downlload link to download the file from the server - need an internet connection for this to work
+            response = requests.get(lcfile)
+        
+            # open the file using the response url  
+            lchdu  = pf.open(response.url) # this needs to be a URL - not a file
         
         # open and view columns in lightcurve extension
         lcdata = lchdu[1].data
@@ -2628,7 +2647,7 @@ def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
     
     return alltime, allflux, all_md, alltimebinned, allfluxbinned, outtics, tessmag_list, distance
 
-def download_tpf_lightkurve(indir, transit_list, sector, tic):
+def download_tpf_lightkurve(indir, transit_list, sector, tic, test = 'no'):
     ''' 
     function to download the tpf data using LightKurve. This is used in order to extract the LC in different aperture sizes. 
  
@@ -2661,38 +2680,49 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic):
         list of the tpd files - these are needed in order to access the projection for the rotation of images later. 
 
     '''
-    
-    dwload_link = []
-    
-    if sector == 'all':
-        # locate the file string
-        tpf_all = np.genfromtxt('{}/data/tesscurl_sector_all_tp.sh'.format(indir), dtype = str)
-    
-        for i in tpf_all:
-            if str(tic) in str(i[6]):
-                dwload_link.append(i[6])
-        
+
+    # -!-!-!-!-!-!-!-
+    # if this is a test run, download the file that's already on the system as to not rely on the server response
+    if test != 'no':
+        dwload_link_tp = [test]  # in the unittest define a link to a pre downloaded file
+    # -!-!-!-!-!-!-!-
+
+    # if not test, find the link needed to downlaod the data
+
     else:
-
-        future_sectors = []
-        # locate the file string
-        for s in sector:
-            try:
-                tpf_sec = np.genfromtxt('{}/data/tesscurl_sector_{}_tp.sh'.format(indir, str(s)), dtype = str)
-            except:
-                future_sectors.append(s)
-            for i in tpf_sec:
+        dwload_link = []
+        
+        if sector == 'all':
+            # locate the file string
+            tpf_all = np.genfromtxt('{}/data/tesscurl_sector_all_tp.sh'.format(indir), dtype = str)
+        
+            for i in tpf_all:
+                if str(tic) in str(i[6]):
+                    dwload_link.append(i[6])
+            
+        else:
+    
+            future_sectors = []
+            # locate the file string
+            for s in sector:
                 try:
-                    if str(tic) in str(i[6]):
-                        dwload_link.append(i[6])
+                    tpf_sec = np.genfromtxt('{}/data/tesscurl_sector_{}_tp.sh'.format(indir, str(s)), dtype = str)
                 except:
-                    print("{} was not observed in Sector {}".format(tic, sec))
-
-        if len(future_sectors) > 0:
-            print ("In the future, this TIC {} will be observed in sector(s) {}".format(tic, future_sectors))
-
-    if len(dwload_link) == 0:
-        print ("\n (Also check that the data file have been downloaded - run code with '--new-data' in the command line)")
+                    future_sectors.append(s)
+                for i in tpf_sec:
+                    try:
+                        if str(tic) in str(i[6]):
+                            dwload_link.append(i[6])
+                    except:
+                        print("{} was not observed in Sector {}".format(tic, sec))
+    
+            if len(future_sectors) > 0:
+                print ("In the future, this TIC {} will be observed in sector(s) {}".format(tic, future_sectors))
+    
+        if len(dwload_link) == 0:
+            print ("\n (Also check that the data file have been downloaded - run code with '--new-data' in the command line)")
+    
+        dwload_link_tp = dwload_link
 
 
     TESS_unbinned_t_l = []
@@ -2703,7 +2733,6 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic):
     small_binned_l= []
     tpf_list = []
  
-    dwload_link_tp = dwload_link
     
     for idx,file in enumerate(dwload_link_tp):
 
@@ -2809,7 +2838,7 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic):
 
     return TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list
 
-def download_tpf_mast(indir, transit_sec, transit_list, tic):
+def download_tpf_mast(indir, transit_sec, transit_list, tic, test = 'no'):
     '''
     Download the TPF LCs for the target star for all the indicated sectors. Not using Lightkurve
     
@@ -2859,21 +2888,29 @@ def download_tpf_mast(indir, transit_sec, transit_list, tic):
     T0_list = []
     tpf_filt_list = []
 
-    #print ("peak list {}".format(transit_sec))
 
-    dwload_link_tp = []
+    # -!-!-!-!-!-!-!-
+    # if this is a test run, download the file that's already on the system as to not rely on the server response
+    if test != 'no':
+        dwload_link_tp = [test]  # in the unittest define a link to a pre downloaded file
+    # -!-!-!-!-!-!-!-
 
-    for sec in transit_sec: #the sector that this image is in
 
-        tpf_all = np.genfromtxt('{}/data/tesscurl_sector_{}_tp.sh'.format(indir,sec), dtype = str)
-        
-        for i in tpf_all:
-        
-            if str(tic) in str(i[6]):
-                dwload_link_tp.append(i[6])
+    # if not test, find the link needed to downlaod the data
+    else:
+
+        dwload_link_tp = []
+    
+        for sec in transit_sec: #the sector that this image is in
+    
+            tpf_all = np.genfromtxt('{}/data/tesscurl_sector_{}_tp.sh'.format(indir,sec), dtype = str)
+            
+            for i in tpf_all:
+            
+                if str(tic) in str(i[6]):
+                    dwload_link_tp.append(i[6])
     
     # download each file (i.e. each sector)
-
     for file in dwload_link_tp:
 
         tpf = pf.open(file)   # open the file
@@ -4376,6 +4413,8 @@ def plot_bls_FFI(tic, indir, alltime, allflux, model, results, period, duration,
     ax.set_ylabel("de-trended flux (ppt)");
     
     ax = axes[2]
+
+    # -----------
     # phase fold
     x = (alltime - t0 + 0.5*period) % period - 0.5*period
 
@@ -4655,88 +4694,5 @@ def find_aperture(val, ap_count, tpf):
 
     # determine how many pixels this threshhold results in and compare to desired mask size
     return abs(np.sum(target_mask) - ap_count)
-
-# --------------------------------------------
-# only used for the Jupyter Notebook version
-def transit_finder(transit, alltime, all_md, allflux,alltimebinned, allfluxbinned, start_sec, end_sec, flux_min = None, flux_max = None):
-    '''
-    # only used for the Jupyter Notebook version
-    '''
-
-    # WHOLE LC
-    fig, ax = plt.subplots(figsize=(6,4))
-    ax.plot(alltime, allflux, marker='o',lw = 0, markersize = 1, color = 'orange', alpha = 0.5, label = 'unbinned', markerfacecolor='white')
-    
-    ax.plot(alltimebinned, allfluxbinned, marker='o',color = 'k', alpha = 0.6, lw = 0, markersize = 1, label = 'binning = 7', markerfacecolor='k')
-        
-    #ax.set_ylim(np.nanmin(allflux),np.nanmax(allflux)-0.002)
-        
-    for p, peak in enumerate(start_sec):
-        ax.axvline(end_sec[p], color = 'k', linewidth = 0.2, alpha =1, label= 'Sector limits')
-
-    minf = np.nanmin(np.array(allflux))
-    maxf = np.nanmax(np.array(allflux))
-    height = maxf - minf
-
- 
-    ax.tick_params(axis="y",direction="inout", labelsize = 12) #, pad= -20)
-    ax.tick_params(axis="x",direction="inout", labelsize = 12) #, pad= -17)   
-    ax.tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
-    ax.set_xlabel("Time (BJD-2457000)", fontsize = 12)
-    ax.set_ylabel("Normalised Flux", fontsize = 12)
-    
-    ax.axvline(transit-1, color = 'b', linewidth = 2)
-    ax.axvline(transit+1, color = 'b', linewidth = 2)
-    
-    ax.axvline(transit, color = 'r', linewidth = 2)
-    
-    minorLocator = AutoMinorLocator()
-    ax.xaxis.set_minor_locator(minorLocator)
-    ax.tick_params(direction='in', which ='minor', colors='grey',length=3, labelsize=13)
-    ax.vlines(all_md, minf,minf + height*0.3 , colors = 'r', label = "Momentum Dump")
-
-    minorLocator = AutoMinorLocator()
-    ax.yaxis.set_minor_locator(minorLocator)
-    
-    if flux_min != None:
-        ax.set_ylim(flux_min,flux_max)
-
-    plt.show()
-    
-    # Zoomed in 
-    fig, ax = plt.subplots(figsize=(6,4))
-    ax.plot(alltime, allflux, marker='o',lw = 0, markersize = 4, color = 'orange', alpha = 0.8, label = 'unbinned', markerfacecolor='white')
-    
-    ax.plot(alltimebinned, allfluxbinned, marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3, label = 'binning = 7', markerfacecolor='k')
-    
-    ax.vlines(all_md, minf,minf + height*0.3 , colors = 'r', label = "Momentum Dump")
-
-    if flux_min != None:
-        ax.set_ylim(flux_min,flux_max)
-    
-    ax.axvline(transit, color = 'r', linewidth = 2)
-        
-    for p, peak in enumerate(start_sec):
-        ax.axvline(end_sec[p], color = 'k', linewidth = 0.2, alpha =1, label= 'Sector limits')
-    
-    ax.tick_params(axis="y",direction="inout", labelsize = 12) #, pad= -20)
-    ax.tick_params(axis="x",direction="inout", labelsize = 12) #, pad= -17)   
-    ax.tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
-    ax.set_xlabel("Time (BJD-2457000)", fontsize = 12)
-    ax.set_ylabel("Normalised Flux", fontsize = 12)
-    
-    ax.set_xlim(transit-1, transit+1)
-    mask = (np.array(alltimebinned) > transit-1) & (np.array(alltimebinned) < transit+1)
- 
-    minorLocator = AutoMinorLocator()
-    ax.xaxis.set_minor_locator(minorLocator)
-    ax.tick_params(direction='in', which ='minor', colors='grey',length=3, labelsize=13)
-    
-    minorLocator = AutoMinorLocator()
-    ax.yaxis.set_minor_locator(minorLocator)
-    
-    print ("TRANSIT: {}".format(transit))
-    plt.show()
-
 
 

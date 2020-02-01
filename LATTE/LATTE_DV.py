@@ -387,7 +387,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		if FFI == False:
 			im45 = Image(apertures_name)
 		
-			im45._restrictSize(width*0.45, width*0.45)
+			im45._restrictSize(width*0.4, width*0.4)
 	
 			Story.append(im45)
 			

@@ -87,12 +87,15 @@ The code will then generate download and process all of the data. Note that all 
 
 - Centroid positions around the time of the marked transit event(s).
 
-- The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
+- The lightcurve around the time of the marked event(s) extracted in two different aperture sizes (in 'normal' mode: TESS pipeline aperture and an aperture that is ~ 40 % smaller)
+
+- The outlines of the two used apertues. 
 
 - The average flux in and out of the marked event(s) and the differences between the two.
 
-- The average flux of the target pixel file with the locatiosn of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
-- The lightcurves of the 6 closest stars that were also observed by *TESS* (TP files).
+- The average flux of the target pixel file with the locations of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
+
+- The lightcurves of the 5 closest stars that were also observed by *TESS* (TP files).
 
 - A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
 

@@ -3,6 +3,9 @@
 
 This script is designed to test the LATTE python code to ensure that all the major function are working as they should. 
 run with: python -m unittest tests/test_data_download_LATTE.py
+
+# NOTE: requires intenet connection
+
 '''
 
 import os
