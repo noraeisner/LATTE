@@ -392,29 +392,30 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		ptext = '<font size=8>%s</font>' % flux_aperture_text
 		Story.append(Paragraph(ptext, styles["Normal"]))
 		
-		# plot the apertures (only currently available in normal mode)
-		if FFI == False:
-			im45 = Image(apertures_name)
+		# --------------------------------------------
+		# Apertures Sizes
+		# --------------------------------------------
+		im45 = Image(apertures_name)
 		
-			im45._restrictSize(width*0.4, width*0.4)
-	
-			Story.append(im45)
+		im45._restrictSize(width*0.4, width*0.4)
+		
+		Story.append(im45)
+		
+		fig_count += 1
+		Story.append(Spacer(1, 10))
+		aperture_text = "Fig {}. The apertures used to extract the lightcurves. The blue aperture on the right shows the \
+		optimum aperture determined by the SPOC pipeline, which is used for the extraction of 2-minute cadence light curves shown in Figure 1. \
+		The red outline on the left shows an aperture that is around 40 per cent smaller than the SPOC pipeline aperture which was used to extract the \
+		red lightcurve shown in Figure {}.".format(fig_count, (fig_count-1))
+		
+		ptext = '<font size=8>%s</font>' % aperture_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
 			
-			fig_count += 1
-			Story.append(Spacer(1, 10))
-			aperture_text = "Fig {}. The apertures used to extract the lightcurves. The blue aperture on the right shows the \
-			optimum aperture determined by the SPOC pipeline, which is used for the extraction of 2-minute cadence light curves shown in Figure 1. \
-			The red outline on the left shows an aperture that is around 40 per cent smaller than the SPOC pipeline aperture which was used to extract the \
-			red lightcurve shown in Figure {}.".format(fig_count, (fig_count-1))
 			
-			ptext = '<font size=8>%s</font>' % aperture_text
-			Story.append(Paragraph(ptext, styles["Normal"]))
-		
-		
 		# --------------------------------------------
 		# In and Out of Transit Comparison
 		# --------------------------------------------
-	
+		
 		Story.append(Spacer(1, 12))
 		im5 = Image(in_out_name)
 	

@@ -583,11 +583,11 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
     allflux_small = []
     apmask_list = []
 
-    for i, X4 in enumerate(X4_list): 
-        tpf = tpf_list[i]
-        t = t_list[i]
-        X1 = X1flux_list[i]
-        sec = sectors[i]
+    for index, X4 in enumerate(X4_list): 
+        tpf = tpf_list[index]
+        t = t_list[index]
+        X1 = X1flux_list[index]
+        sec = sectors[index]
 
         global mask
         global mask2
@@ -764,7 +764,6 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
         # rename it and plot and save the chosen apertures
         target_mask = aperture 
         
-
         # ----------
         # plot the mean image and plot the extraction apertures on top of it so that one can verify that the used apertures make sense
         im = np.mean(tpf.flux, axis = 0)
@@ -774,8 +773,8 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
         color = ['red', 'deepskyblue']
         label = ['small (~60 %)', 'pipeline (100 %)']
         
-    
-        for i,arr in enumerate([smaller_mask,target_mask]):
+        # plot both the large and the small apertures
+        for idx,arr in enumerate([target_mask_small,target_mask]):
         
             mask = np.zeros(shape=(arr.shape[0], arr.shape[1]))
             mask= arr
@@ -788,13 +787,13 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
             X, Y= np.meshgrid(x[:-1],y[:-1])
             Z = g(X[:-1],Y[:-1])
             
-            ax[i].set_title('Aperture: {}'.format(label[i]), fontsize = 18)
-            ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'upper')
-            ax[i].contour(Z, [0.5], colors=color[i], linewidths=[4], 
+            ax[idx].set_title('Aperture: {}'.format(label[idx]), fontsize = 18)
+            ax[idx].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'upper')
+            ax[idx].contour(Z, [0.5], colors=color[idx], linewidths=[4], 
                         extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
         
         # save the figure
-        plt.savefig('{}/{}/{}_apertures_{}.png'.format(indir, tic, tic, idx), format='png', bbox_inches = 'tight')
+        plt.savefig('{}/{}/{}_apertures_{}.png'.format(indir, tic, tic, index), format='png', bbox_inches = 'tight')
         plt.clf()
         plt.close('all')
 
@@ -2269,7 +2268,7 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
     momentum_dumps_list = "{}/data/tess_mom_dumps.txt".format(indir)
     mom_df = pd.read_csv(momentum_dumps_list, comment = '#', delimiter = '\t')
 
-    for sec in sector:
+    for idx, sec in enumerate(sector):
 
         # import the data
         print ("Importing FFI data sector {}...".format(sec), end =" ")
@@ -2350,6 +2349,7 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
         color = ['red', 'deepskyblue']
         label = ['small (~60 %)', 'pipeline (100 %)']
         
+        # plot both the small and the
         for i, arr in enumerate([target_mask_small,target_mask]):
         
             mask = np.zeros(shape=(arr.shape[0], arr.shape[1]))
