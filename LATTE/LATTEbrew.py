@@ -198,11 +198,19 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		The function returns the mass of the star (also output from astroquery)- this is a useful input for the Pyaneti modelling		
 		'''
 		if args.mpi == False:
-			_, _, _, mstar = utils.plot_TESS_stars(tic,indir, transit_list, transit_sec, tpf_list, args)
+			test_astroquery, _, _, mstar = utils.plot_TESS_stars(tic,indir, transit_list, transit_sec, tpf_list, args)
 		else:
-			_, _, _, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+			test_astroquery, _, _, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
 
-		print ("Star Aperture plots... done.")
+		# keep track of whether astroquery is working (sometimes the site is down and we don't want this to stop us from running the code)
+		astroquery_corrupt = False
+
+		if test_astroquery == -999:
+			astroquery_corrupt = True
+			print ("Star Aperture plots... failed.")
+		
+		else:
+			print ("Star Aperture plots... done.")
 		
 		# ------------
 		
@@ -211,7 +219,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic)
 		
 		# ------------
-	
+		
 		'''
 		plot the in and out of transit flux comparison.
 		By default the images are NOT orented north - this is because the reprojectio takes longer to run and for a simple
@@ -329,9 +337,9 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI = False,  bls = True, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI = False,  bls = True, model = model, mpi = args.mpi)
 		else:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, FFI = False,  bls = False, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = model, mpi = args.mpi)
 
 
 def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):
@@ -506,7 +514,17 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 	else:
 		tessmag, teff, srad, mstar = utils.plot_TESS_stars_not_proj(tic,indir,transit_list, transit_sec, tpf_list, args)
 
-	print ("Star Aperture plots... done.")
+	# keep track of whether astroquery is working (sometimes the site is down and we don't want this to stop us from running the code)
+	astroquery_corrupt = False
+
+	if tessmag == -999:
+		astroquery_corrupt = True
+		print ("Star Aperture plots... failed.")
+	
+	else:
+		print ("Star Aperture plots... done.")
+		
+
 	# -----------
 
 	# If more than one transit has been marked by the user, the LC is phase folded based on the period of the separation of the first two maarked peaks.
@@ -668,9 +686,9 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, bls_stats1, bls_stats2, False, FFI = True, bls = True, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, bls_stats1, bls_stats2, False, astroquery_corrupt, FFI = True, bls = True, model = model, mpi = args.mpi)
 		else:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, [0], [0], False, FFI = True, bls = False, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, [0], [0], False, astroquery_corrupt, FFI = True, bls = False, model = model, mpi = args.mpi)
 
 	else:
 		print ("\n  Complete! \n ")

@@ -764,13 +764,40 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
         # rename it and plot and save the chosen apertures
         target_mask = aperture 
         
-        mask_plot = tpf.plot(aperture_mask=target_mask.T, mask_color='k')
-        plt.savefig('{}/{}/{}_mask.png'.format(indir, tic, tic), format='png')
+
+        # ----------
+        # plot the mean image and plot the extraction apertures on top of it so that one can verify that the used apertures make sense
+        im = np.mean(tpf.flux, axis = 0)
+        # set up the plot - these are stored and one of the images saved in the report      
+        fig, ax = plt.subplots(1,2, figsize=(10,5), subplot_kw={'xticks': [], 'yticks': []})
+        kwargs = {'interpolation': 'none', 'vmin': im.min(), 'vmax': im.max()}
+        color = ['red', 'deepskyblue']
+        label = ['small (~60 %)', 'pipeline (100 %)']
+        
+    
+        for i,arr in enumerate([smaller_mask,target_mask]):
+        
+            mask = np.zeros(shape=(arr.shape[0], arr.shape[1]))
+            mask= arr
+            
+            f = lambda x,y: mask[int(y),int(x)]
+            g = np.vectorize(f)
+            
+            x = np.linspace(0,mask.shape[1], mask.shape[1]*100)
+            y = np.linspace(0,mask.shape[0], mask.shape[0]*100)
+            X, Y= np.meshgrid(x[:-1],y[:-1])
+            Z = g(X[:-1],Y[:-1])
+            
+            ax[i].set_title('Aperture: {}'.format(label[i]), fontsize = 18)
+            ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'upper')
+            ax[i].contour(Z, [0.5], colors=color[i], linewidths=[4], 
+                        extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
+        
+        # save the figure
+        plt.savefig('{}/{}/{}_apertures_{}.png'.format(indir, tic, tic, idx), format='png', bbox_inches = 'tight')
+        plt.clf()
         plt.close('all')
 
-        mask_plot = tpf.plot(aperture_mask=target_mask_small.T, mask_color='k')
-        plt.savefig('{}/{}/{}_mask_small.png'.format(indir, tic, tic), format='png')
-        plt.close('all')
         # ---------------
 
         # extract the flux lightcurves using the above defined apertures and 
@@ -875,6 +902,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
 
     return alltime, allflux, allflux_small, allflux_flat, all_md, allfbkg,allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
 
+
 # the main interactive tool used to identify the times of the transit-like events when run in FFI mode
 def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     '''
@@ -912,7 +940,7 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
         alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = download_data_FFI(indir, sectors, syspath, sectors_all, tic, args)
         print ("done.\n")
     
-     # make sure all the plots are closed before starting the next section
+    # make sure all the plots are closed before starting the next section
     plt.close('all')
 
     # --------------------------------------------
@@ -1653,10 +1681,19 @@ def nn_ticids(indir, transit_sec, tic):
     target_ra = float(target['RA']) 
     target_dec = float(target['Dec'])
     
+    # ------------
+
     # make a list of the closest stars to the target (only stars that are TESS target stars are considered)
-    tic_list_close = tic_list[tic_idx - 100:tic_idx + 101]
-    
-    # fucntion to alculated the angular separation from the target to the stars to find the nearest neighbours
+    # ensure that the TIC ID is not at the end or begining of the tic list - otherwise we can't take 100 from wither side. 
+    if tic_idx < 101:
+        tic_list_close = tic_list[0:tic_idx + 101]
+    elif tic_idx > (len(tic_list) + 1):
+        tic_list_close = tic_list[tic_idx - 100 :len(tic_list)]
+    else:
+        tic_list_close = tic_list[tic_idx - 100:tic_idx + 101]
+    # ------------
+
+    # function to alculated the angular separation from the target to the stars to find the nearest neighbours
     def star_sep(row, ra, dec):
         
         ra2 = float(row['RA'])
@@ -2270,74 +2307,73 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
         X1 = tpf.flux
         arrshape_list.append(X1.shape)
 
-        #identify the target mask - this will need to be imporved - a bit 'hacky' at the moment. 
+        # identify the target mask - this will need to be imporved - a bit 'hacky' at the moment. 
+        # the exctractiom mask size is based on the based on the average aperture size of the TESS pipeline apertures as afunction of radius. 
+        # this can be loosely quanified as: 
+        # magnitude = m*apsize + c   --> apsize = (magnitude - c) / m
+        
+        m = -0.415 # determined empirically
+        c = 15.311
+        
+        # get the magnitude of this target
+        magnitude = tpf.header['TESSMAG']
+        #magnitude = 10
 
-        val = 1
-        for i in range(0,50):
-            
-            target_mask = tpf.create_threshold_mask(threshold=val, reference_pixel='center')
-            #print (np.sum(target_mask))
-            #print ("val {}".format(val))
-            if (np.sum(target_mask) < 9) and (np.sum(target_mask) > 7):
-                threshhold = val
-                break 
-            else:
-                if np.sum(target_mask) < 6:
-                    if val < 1:
-                        val -= 0.05
-                    else:
-                        val -= 0.5
-                elif np.sum(target_mask) > 9:
-                    if val > 20:
-                        val += 5
-                    elif val > 50:
-                        val += 20
-                    else:
-                        val += 0.5
-               
+        # find the optimum aperture size
+        large_ap_count = (magnitude - c) / m
+        
+        # aim to make the big aperture around 40 % smaller than the large aperture
+        small_ap_count = round(large_ap_count * 0.60) # 60% of pipeline aperture
+    
+        # we are using the lighkurve optimization to extract the aperture.
+        # this places an aperture on the central pixel and selects the brightest surrounding ones based on a threshhold value 
+        # determine this threshhold value based on the number of pixels that we want using scipy minimizaton and the 'find aperure' function as defined below under 'other functions'
+        large_ap_thresh_val = minimize_scalar(find_aperture, bounds = [0,10], args = (large_ap_count, tpf)).x
+        small_ap_thresh_val = minimize_scalar(find_aperture, bounds = [0,10], args = (small_ap_count, tpf)).x
+        
+        # using the optimal threshhold values, determine the masks
+        target_mask = tpf.create_threshold_mask(threshold=large_ap_thresh_val, reference_pixel='center')
+        target_mask_small = tpf.create_threshold_mask(threshold=small_ap_thresh_val, reference_pixel='center')
+    
 
-        val_small = val
-        
-        for i in range(0,40):
-            
-            target_mask_small = tpf.create_threshold_mask(threshold=val_small, reference_pixel='center')
-            
-            if (np.sum(target_mask_small) < 4) and (np.sum(target_mask_small) > 2):
-                threshhold = val_small
-                break 
-            else:
-                
-                if np.sum(target_mask_small) < 2:
-        
-                    if val_small < 1:
-                        val_small -= 0.05
-                    else:
-                        val_small -= 0.5
-                elif np.sum(target_mask_small) > 4:
-        
-                    if val_small > 20:
-                        val_small += 5
-                    elif val_small > 50:
-                        val_small += 20
-                    else:
-                        val_small += 0.5
-        
         # if this is run with an input file then the needed folder might not exist yet...
         if not os.path.exists("{}/{}/".format(indir, tic)): # if this folder doesn't already exist, make it
             os.makedirs("{}/{}/".format(indir, tic))
         # ---------
 
-        plt.figure(figsize=(5,5))
-        mask_plot = tpf.plot(aperture_mask=target_mask, mask_color='k')
-        plt.savefig('{}/{}/{}_mask.png'.format(indir, tic, tic), format='png')
-        plt.clf()
-        plt.close()
+        # ----------
+        # plot the mean image and plot the extraction apertures on top of it so that one can verify that the used apertures make sense
+        im = np.mean(tpf.flux, axis = 0)
+        # set up the plot - these are stored and one of the images saved in the report      
+        fig, ax = plt.subplots(1,2, figsize=(10,5), subplot_kw={'xticks': [], 'yticks': []})
+        kwargs = {'interpolation': 'none', 'vmin': im.min(), 'vmax': im.max()}
+        color = ['red', 'deepskyblue']
+        label = ['small (~60 %)', 'pipeline (100 %)']
         
-        plt.figure(figsize=(5,5))
-        mask_plot = tpf.plot(aperture_mask=target_mask_small, mask_color='k')
-        plt.savefig('{}/{}/{}_mask_small.png'.format(indir, tic, tic), format='png')
+        for i, arr in enumerate([target_mask_small,target_mask]):
+        
+            mask = np.zeros(shape=(arr.shape[0], arr.shape[1]))
+            mask = arr
+            
+            f = lambda x,y: mask[int(y),int(x)]
+            g = np.vectorize(f)
+            
+            x = np.linspace(0,mask.shape[1], mask.shape[1]*100)
+            y = np.linspace(0,mask.shape[0], mask.shape[0]*100)
+            X, Y= np.meshgrid(x[:-1],y[:-1])
+            Z = g(X[:-1],Y[:-1])
+            
+            ax[i].set_title('Aperture: {}'.format(label[i]), fontsize = 18)
+            ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'upper')
+            ax[i].contour(Z, [0.5], colors=color[i], linewidths=[4], 
+                        extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
+            
+        # save the figure
+        plt.savefig('{}/{}/{}_apertures_{}.png'.format(indir, tic, tic, idx), format='png', bbox_inches = 'tight')
         plt.clf()
         plt.close()
+
+        # ---------------
 
         bkg = X1
         bkg = bkg.mean(axis = 0)
@@ -2791,7 +2827,7 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic, test = 'no'):
             
     
             # ----------
-            # make get the mean image
+            # plot the mean image and plot the extraction apertures on top of it so that one can verify that the used apertures make sense
             im = np.mean(tpf.flux, axis = 0)
             # set up the plot - these are stored and one of the images saved in the report      
             fig, ax = plt.subplots(1,2, figsize=(10,5), subplot_kw={'xticks': [], 'yticks': []})
@@ -2817,7 +2853,7 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic, test = 'no'):
                 ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'upper')
                 ax[i].contour(Z, [0.5], colors=color[i], linewidths=[4], 
                             extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
-                
+            
             # save the figure
             plt.savefig('{}/{}/{}_apertures_{}.png'.format(indir, tic, tic, idx), format='png', bbox_inches = 'tight')
             plt.clf()
@@ -3080,8 +3116,8 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
     allfluxbinned = np.array(allfluxbinned)[mask_binned]
     # -----------------------
 
-    durations = np.linspace(0.05, 0.2, 10)
-    periods = np.arange(0.5, (np.nanmax(alltimebinned) - np.nanmin(alltimebinned)), 0.01)
+    durations = np.linspace(0.05, 0.5, 15) # ????? CHECK THESE 
+    periods = np.arange(0.51, (np.nanmax(alltimebinned) - np.nanmin(alltimebinned)), 0.01)
 
     model = BoxLeastSquares(alltimebinned, allfluxbinned)
     results = model.power(periods, durations)
@@ -3702,8 +3738,15 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
     starName = "TIC " + str(tic)
     radSearch = 5/60 #radius in degrees
 
-    catalogData = Catalogs.query_object(starName, radius = radSearch, catalog = "TIC")
-    
+    # this function depends on astroquery working, and sometimes it doesn't. 
+    # for when it doesn't work (or simply can't connect to it), just skip plotting the other TESS stars. 
+    try:
+        catalogData = Catalogs.query_object(starName, radius = radSearch, catalog = "TIC")
+    except:
+        print ("Currently cannot connect to Astroquery.")
+        # return values that we know aren't real so that we can tell the code that the plotting didn't work
+        return -999, -999, -999, 1
+
     # ra and dec of the target star
     ra = catalogData[0]['ra']
     dec = catalogData[0]['dec']

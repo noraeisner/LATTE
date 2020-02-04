@@ -1,15 +1,10 @@
 import os
 import sys
 import time 
-import mock
 import datetime
 import unittest
-import requests
-import argparse
-
-from glob import glob
 from dateutil import parser
-from argparse import ArgumentParser
+
 
 import warnings
 warnings.filterwarnings("ignore")

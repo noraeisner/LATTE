@@ -117,6 +117,9 @@ class TestDataImport_TP_lighkurve(unittest.TestCase):
         self.assertEqual(float(TESS_unbinned_l[0]), float(0.9975904130977179))
         self.assertEqual(float(TESS_binned_l[0]), float(0.9986087992155438))
         self.assertEqual(float(small_binned_l[0]), float(0.9971978343909532))
+
+
+
 # ---------------------
 if __name__ == "__main__":
 

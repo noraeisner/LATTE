@@ -1,0 +1,4 @@
+Var,Val,Pos,Neg,Unit
+M_*,1.0,0.1,0.1,solar mass
+R_*,1.9325,0.1,0.1,solar radii
+T_*,5824.0,150.0,150.0,K

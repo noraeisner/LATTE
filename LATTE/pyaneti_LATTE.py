@@ -36,17 +36,22 @@ teff = str(sys.argv[5])
 
 srad = str(sys.argv[6])
 
+
 ## --------------------
 ## now that we know where these file are - fownload the pyaneti files that we need
 sys.path.append('{}/pyaneti_LATTE/'.format(syspath))
 import pyaneti as pti #FORTRAN module
 ## --------------------
 
+# find the transit list from the input params
 peak_list = []
 
-for i in range(6,len(sys.argv)): # the first agrument is the name of the program, the second is the tic ID, the third the directory, the fourth mstar, fifth teff and sixth rad
+for i in range(7,len(sys.argv)): # the first agrument is the name of the program, the second is the tic ID, the third the directory, the fourth mstar, fifth teff and sixth rad
 	peak_list.append(float(sys.argv[i]))
 
+print ("-----------------------")
+print (peak_list)
+print ("-----------------------")
 
 #Read the file with all the python functions
 #execfile('pyaneti_LATTE/src/todo-py.py')

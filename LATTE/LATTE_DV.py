@@ -18,7 +18,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
 
 
-def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, FFI, bls = False, model = False, mpi = False):
+def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI, bls = False, model = False, mpi = False, test = 'no'):
 
 	'''
 	funtion that makes compiles all of the information and figures into a comprehensive pdf summary document.
@@ -144,9 +144,18 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	apertures_name = '{}/{}/{}_apertures_0.png'.format(indir, tic, tic)
 	
 	# ----- LOGOS ------
-	PHT_logo_name  =  '{}/LATTE_imgs/PHT_logo.jpg'.format(syspath)
-	LATTE_logo_name = '{}/LATTE_imgs/LATTE_logo.png'.format(syspath)
-	TESS_logo_name  = '{}/LATTE_imgs/TESS_logo.png'.format(syspath)
+	# if this is a unittest run, find the files for the logos stored in the test folder
+	if test != 'no':
+		PHT_logo_name  =  '{}/LATTE_imgs/PHT_logo.jpg'.format(test)
+		LATTE_logo_name = '{}/LATTE_imgs/LATTE_logo.png'.format(test)
+		TESS_logo_name  = '{}/LATTE_imgs/TESS_logo.png'.format(test)
+
+	# otherwise they're located in the place where the program is insatlled. 
+	else:
+		PHT_logo_name  =  '{}/LATTE_imgs/PHT_logo.jpg'.format(syspath)
+		LATTE_logo_name = '{}/LATTE_imgs/LATTE_logo.png'.format(syspath)
+		TESS_logo_name  = '{}/LATTE_imgs/TESS_logo.png'.format(syspath)
+
 
 	# -------------------------------------------
 	# Make a PDF summary file
@@ -427,25 +436,27 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# --------------------------------------------
 		# tess stars + SDSS star field
 		# --------------------------------------------
-		
-		Story.append(Spacer(1, 12))
-	
-		im6 = Image(tess_stars_name)
-		
-		# if not with mpi (two star images)
-		if mpi == False:
-			im6._restrictSize(width*0.7, width*0.5)
-		else:
-			im6._restrictSize(width*0.35, width*0.35)
+		# can only put this in the report if astroquery is working. 
+		if astroquery_corrupt == False:
 
-		Story.append(im6)
-	
-		fig_count += 1
-		tess_stars_text = "Fig {}. Left: The locations of nearby GAIA DR2 stars with mag < 15 (orange circle) within the Tess \
-		Cut Out around TIC {} (red star). Only shown for one sector. Right: SDSS image of the surrounding field.".format(fig_count, tic)
+			Story.append(Spacer(1, 12))
 		
-		ptext = '<font size=8>%s</font>' % tess_stars_text
-		Story.append(Paragraph(ptext, styles["Normal"]))
+			im6 = Image(tess_stars_name)
+			
+			# if not with mpi (two star images)
+			if mpi == False:
+				im6._restrictSize(width*0.7, width*0.5)
+			else:
+				im6._restrictSize(width*0.35, width*0.35)
+	
+			Story.append(im6)
+		
+			fig_count += 1
+			tess_stars_text = "Fig {}. Left: The locations of nearby GAIA DR2 stars with mag < 15 (orange circle) within the Tess \
+			Cut Out around TIC {} (red star). Only shown for one sector. Right: SDSS image of the surrounding field.".format(fig_count, tic)
+			
+			ptext = '<font size=8>%s</font>' % tess_stars_text
+			Story.append(Paragraph(ptext, styles["Normal"]))
 		
 	
 	# --------------------------------------------

@@ -7,3 +7,5 @@ test_nickname.py
 build
 dist
 LATTE.egg-info
+README_pip.md
+MANIFEST.in
