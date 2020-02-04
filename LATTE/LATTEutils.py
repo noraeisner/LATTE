@@ -625,7 +625,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
                 # the 'patches' are the highlighted select pixels
                 # remove all the previous highlighted pixels and replot them all
                 [p.remove() for p in reversed(ax[1].patches)]
-
+            
                 # if the pixel has already been selected, get rid of it from the list instead of adding it. 
                 # otherwise add it to the list of desired mask pixels.
                 if (len(mask) > 0) and (events in list(mask)): 

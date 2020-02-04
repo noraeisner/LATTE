@@ -402,16 +402,21 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		Story.append(im45)
 		
 		fig_count += 1
+
 		Story.append(Spacer(1, 10))
-		aperture_text = "Fig {}. The apertures used to extract the lightcurves. The blue aperture on the right shows the \
-		optimum aperture determined by the SPOC pipeline, which is used for the extraction of 2-minute cadence light curves shown in Figure 1. \
-		The red outline on the left shows an aperture that is around 40 per cent smaller than the SPOC pipeline aperture which was used to extract the \
-		red lightcurve shown in Figure {}.".format(fig_count, (fig_count-1))
-		
+
+		if FFI == False:
+			aperture_text = "Fig {}. The apertures used to extract the lightcurves. The blue aperture on the right shows the \
+			optimum aperture determined by the SPOC pipeline, which is used for the extraction of 2-minute cadence light curves shown in Figure 1. \
+			The red outline on the left shows an aperture that is around 40 per cent smaller than the SPOC pipeline aperture which was used to extract the \
+			red lightcurve shown in Figure {}.".format(fig_count, (fig_count-1))
+		else:
+			aperture_text = "Fig {}. The larger (right hand side, blue) and the smaller (left hamd side, red) apertures used to extract the lightcurves shown in Figure {}.".format(fig_count, (fig_count-1))
+
 		ptext = '<font size=8>%s</font>' % aperture_text
 		Story.append(Paragraph(ptext, styles["Normal"]))
 			
-			
+		
 		# --------------------------------------------
 		# In and Out of Transit Comparison
 		# --------------------------------------------
