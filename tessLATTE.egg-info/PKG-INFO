@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: tessLATTE
-Version: 0.1.11
+Version: 0.1.12
 Summary: Lightcurve Analysis Tool for Transiting Exoplanets
 Home-page: https://github.com/noraeisner/LATTE
 Author: Nora L. Eisner
@@ -95,12 +95,15 @@ Description: # LATTE
         
         - Centroid positions around the time of the marked transit event(s).
         
-        - The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
+        - The lightcurve around the time of the marked event(s) extracted in two different aperture sizes (in 'normal' mode: TESS pipeline aperture and an aperture that is ~ 40 % smaller)
+        
+        - The outlines of the two used apertues. 
         
         - The average flux in and out of the marked event(s) and the differences between the two.
         
-        - The average flux of the target pixel file with the locatiosn of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
-        - The lightcurves of the 6 closest stars that were also observed by *TESS* (TP files).
+        - The average flux of the target pixel file with the locations of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
+        
+        - The lightcurves of the 5 closest stars that were also observed by *TESS* (TP files).
         
         - A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
         
