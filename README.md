@@ -101,10 +101,15 @@ The code will then generate download and process all of the data. Note that all 
 
 - The apertures used for the extraction. Please note that for very bright and very faint stars the aperture selection for the smaller aperture may not work correctly so these should be checked in order to correctly interperet the results.
 
+![Apertures](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_apertures_0.png)
 
 - The average flux in and out of the marked event(s) and the differences between the two.
 
+![In and out of transit flux comaprison](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_flux_comparison.png)
+
 - The average flux of the target pixel file with the locations of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
+
+![Nearby stars](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_star_field.png)
 
 - The lightcurves of the 6 closest stars that were also observed by *TESS* (TP files).
 
