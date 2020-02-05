@@ -9,5 +9,5 @@ dist
 LATTE.egg-info
 README_pip.md
 MANIFEST.in
-_config.txt
-LATTE/_config.txt
+./_config.txt
+./LATTE/_config.txt
