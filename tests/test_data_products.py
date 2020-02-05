@@ -1,11 +1,17 @@
 
+# -----------------------------
+'''
+This code makes sure that everytime that the returned data is what it is expected to be. 
+
+This test case is carried out with a pre-downloaded lighcurve file from TIC 55525572 Sector 5.
+
+
+run using: python -m unittest tests/test_data_products.py
+
 '''
 
-This script is designed to test the LATTE python code to ensure that all the major function are working as they should. 
+# -------------
 
-python -m unittest tests/test_data_products.py
-
-'''
 
 import os
 import mock
@@ -24,22 +30,9 @@ import LATTE.LATTEutils as utils
 # get the outir (or indir) path
 syspath = str(os.path.abspath(utils.__file__))[0:-14]
 
-#with open("{}/_config.txt".format(syspath), 'r') as f:
-#    indir = str(f.readlines()[-1])
-
 
 indir = "./output"        
-# -----------------------------
-'''
-This code makes sure that everytime that the data is called to plot something, the data is still what I expect it to be. 
 
-This test case is carried out with a pre-downloaded lighcurve file from TIC 55525572 Sector 5.
-
-Run each plotting function and make sure that it produces the output file that I would expect it to produce. 
- - don't check the actual file as this is computer dependednt and therefore not a robust test. 
-'''
-
-# -------------
 # test with these input parameters (this data is already downloaded so it's only testing that the data extraction from the FITS files works)
 tic = '55525572'
 sector = '5'
@@ -50,7 +43,7 @@ transit_sec = '5'
 
 class TestDataImport_LC(unittest.TestCase):
     '''
-    Test the extraction of the information from the LC file (already on the system)
+    Test the extraction of the information from the LC file (which is already on the system)
     '''
 
     def test_LC_request_response(self):
@@ -73,7 +66,7 @@ class TestDataImport_LC(unittest.TestCase):
 
 class TestDataImport_TP(unittest.TestCase):
     '''
-    Test the extraction of the information from the TP file (already on the system)
+    Test the extraction of the information from the TP file (which is already on the system)
     '''
 
     def test_LC_request_response(self):
@@ -94,7 +87,7 @@ class TestDataImport_TP(unittest.TestCase):
 
 class TestDataImport_TP_lighkurve(unittest.TestCase):
     '''
-    Test the extraction of the information from the TP file (already on the system)
+    Test the extraction of the information from the TP file (which is already on the system)
     '''
 
     def test_LC_request_response(self):

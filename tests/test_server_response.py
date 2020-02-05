@@ -1,7 +1,10 @@
 
 '''
 
-This script is designed to test the LATTE python code to ensure that all the major function are working as they should. 
+This script is designed to test the LATTE python code to ensure that the server response is working. 
+
+NOTE: requires connection to the internet and to the archive database. If these tests fail, first check that these connections 
+are working by accessing the website: https://archive.stsci.edu/missions/tess/download_scripts/ in a browser.
 
 '''
 import os

@@ -1,3 +1,14 @@
+
+'''
+Test whether the pyaneti modeling is working correctly. Pyaneti is not available in the current verison of the code. 
+
+-- NOTE: this is testing whether it is working for single transit events and not multi transit
+
+-- requires pyaneti to be installed.
+
+-- this test is not complete as pyaneti is not included in the first release of the data.
+'''
+
 import os
 import sys
 import time 
@@ -18,15 +29,6 @@ import LATTE.LATTEutils as utils
 syspath = str(os.path.abspath(utils.__file__))[0:-14]
 
 indir = "./test_output"    
-
-# -----------------------------
-'''
-Test whether the pyaneti modeling is working correctly. Pyaneti is not available in the current verison of the code. 
-
--- NOTE: this is testing whether it is working for single transit events and not multi transit
-         -- for multi transit, there is a prior on the data - check these are working. 
-
-'''
 
 # -------------
 # test with these input parameters (this data is already downloaded so it's only testing that the plotting part works)

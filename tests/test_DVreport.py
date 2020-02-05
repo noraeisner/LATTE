@@ -1,3 +1,9 @@
+# -----------------------------
+'''
+A test to see whether the DV reports are generated as we would expect them to be. 
+This uses previously generated input files and therfore doesn't test the generatino of the files, but only the compilation of the report. 
+'''
+
 import os
 import sys
 import time 
@@ -17,11 +23,6 @@ from LATTE import LATTE_DV as ldv
 syspath = str(os.path.abspath(ldv.__file__))[0:-14]
 
 indir = "./test_output"		
-# -----------------------------
-'''
-A test to see whether the DV reports are generated as we would expect them to be. 
-This uses previously generated input files and therfore doesn't test the generatino of the files, but only the compilation of the report. 
-'''
 
 # -------------
 # test with these input parameters (this data is already downloaded so it's only testing that the plotting part works)
@@ -76,6 +77,7 @@ class TestDVreport(unittest.TestCase):
 		# time difference in minutes
 		time_since_creation_DV =  ((t_now - t_create_DV).seconds / 60)
 
+		# make sure that the new DV report was made less than 0.1 minutes ago - we want to make sure it's a new file and not am old one.
 		self.assertLess(time_since_creation_DV, 0.1, "No full LC plot was generated in the last 60 seconds") # a less than b
 
 

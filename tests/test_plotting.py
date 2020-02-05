@@ -1,3 +1,13 @@
+# -----------------------------
+'''
+
+This test case is carried out with a pre-downloaded lighcurve file from TIC 55525572 Sector 5.
+
+Testing whether the plots are produced as expected. 
+
+python -m unittest tests/test_plotting.py
+'''
+
 import os
 import sys
 import time 
@@ -17,18 +27,7 @@ import LATTE.LATTEutils as utils
 syspath = str(os.path.abspath(utils.__file__))[0:-14]
 
 indir = "./test_output"		
-# -----------------------------
-'''
-This code makes sure that everytime that the data is called to plot something, the data is still what I expect it to be. 
 
-This test case is carried out with a pre-downloaded lighcurve file from TIC 55525572 Sector 5.
-
-
-Run each plotting function and make sure that it produces the output file that I would expect it to produce. 
- - don't check the actual file as this is computer dependednt and therefore not a robust test. 
-
-python -m unittest tests/test_plotting.py
-'''
 
 # -------------
 # test with these input parameters (this data is already downloaded so it's only testing that the plotting part works)
@@ -38,7 +37,6 @@ sectors = [5]
 transit_list = [1454.7]
 transit_sec = '5'
 # -------------
-
 
 # create a mock 'argparser' becasuse the argparse function doesn't work within the unittest module 
 # for now use all of the default values. 
@@ -118,6 +116,7 @@ class TestDataPlotting(unittest.TestCase):
 		time_since_creation_bkg =  ((t_now - t_create_ap_LC).seconds / 60) 
 		time_since_creation_pixel =  ((t_now - t_create_apertures).seconds / 60) 
 
+		# check that the expected files were created less than a minute ago
 		self.assertLess(time_since_creation_full_LC, 1, "No (new) full LC plot was made in the last five minutes") # a less than b
 		self.assertLess(time_since_creation_centroid, 1, "No (new) centroid plot was made in the last five minutes") # a less than b
 		self.assertLess(time_since_creation_bkg, 1, "No (new) background plot was made in the last five minutes") # a less than b
