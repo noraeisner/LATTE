@@ -4,8 +4,6 @@ Written by Nora L. Eisner
 
 email: *nora.eisner@new.ox.ac.uk*
 
-![LATTE logo](https://github.com/noraeisner/LATTE/blob/master/LATTE/LATTE_imgs/LATTE_logo_small.png)
-
 
 ### THE CODE
 
@@ -18,7 +16,7 @@ email: *nora.eisner@new.ox.ac.uk*
 --------
 ### Installation
 
-You can download the code directly from github. Alternatively you can install LATTE using pip (https://pypi.org/project/tessLATTE/) via your command line with:
+You can download the code directly from github (https://github.com/noraeisner/LATTE). Alternatively you can install LATTE using pip (https://pypi.org/project/tessLATTE/) via your command line with:
 
 			pip install tessLATTE      
 
@@ -33,9 +31,15 @@ LATTE is simply run through the command line with:
 
 			python3 -m LATTE        
 
-This will open up a box for you that prompts you to enter a TIC ID and indicate whether you would like to extract the information from the 2-minute cadence ('Standard mode') or 30-minute candence Full Frame Image (FFI) data ('FFI mode').
+This will open up a box for you that prompts you to enter a TIC ID and indicate whether you would like to extract the information from the 2-minute cadence ('Standard mode') or 30-minute candence Full Frame Image (FFI) data ('FFI mode')
 
 Once a TIC ID has been entered, the program will tell you in what sectors that target has been observed. If you want to look at all of the sectors, either enter them or simply press enter with nothing in the box. Alternatively, enter the sectors that you are interested in and enter them separated by commas. Remember that LATTE will have to download all the data for each sector so you might not always want to look at all of the sectors. 
+
+TESS data is released periodically approximately once a month. When there is a new data release run the program with:
+
+			python3 -m LATTE --new-data
+
+which will automatically download the files that you need to access the new TESS data. 
 
 **Normal Mode**
 
@@ -45,12 +49,6 @@ The '*normal mode*' looks at the short-cadence *TESS* data which has already bee
 **FFI Mode**
 
 In *FFI mode* the data is downloaded using TESScut and the data detrended using PCA, a moving average filter and k-sigma clipping. Unlike the *TESS* 2-minute cadence targets, the FFIs do not come with a pre-chosen optimal aperture. By default, the user is given the option to manually select the pixels within each aperture for a 'large' and a 'small' aperture. This GUI opens automatically and the two apertures are selected by clicking on the desired pixels in the interface. The two (large and small aperture) lightcurves are simultaneously displayed. When the FFI mode is run with the command '--auto', the aperture size is chosen manually using a threshold flux value centred at the midpoint of the postage stamp.
-
-
-## Input target list
-
-In order to efficiently generate diagnostic plots for multiple targets without having to interactively enter the target TIC IDs, ``LATTE`` can be executed with an input file that lists the TIC IDs, the times of the transit-like events, and the observational sectors to consider (if known). See example. In the cases where the times of the transit events or the sectors have not been entered, the user is prompted to enter these manually via the GUI, as descibed above. For longer target lists the code can also be parallelized (see example).
-
 
 ### Transit time selection
 
@@ -85,31 +83,21 @@ The code will then generate download and process all of the data. Note that all 
 
 - Full lightcurve with the times of the momentum dumps marked. 
 
-![Full LC](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_fullLC_md.png)
-
 - Background flux around the times of the marked transit event(s).
-
-![Background Flux](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_background.png)
 
 - Centroid positions around the time of the marked transit event(s).
 
-![Centroid](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_centroids.png)
+- The lightcurve around the time of the marked event(s) extracted in two different aperture sizes (in 'normal' mode: TESS pipeline aperture and an aperture that is ~ 40 % smaller)
 
-- The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
-
-![Aperture Size](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_aperture_size.png)
+- The outlines of the two used apertues. 
 
 - The average flux in and out of the marked event(s) and the differences between the two.
 
+- The average flux of the target pixel file with the locations of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
 
-- The average flux of the target pixel file with the locatiosn of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
-- The lightcurves of the 6 closest stars that were also observed by *TESS* (TP files).
-
-![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_nearest_neighbours.png)
+- The lightcurves of the 5 closest stars that were also observed by *TESS* (TP files).
 
 - A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
-
-![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_individual_pixel_LCs_0.png)
 
 - (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
 - (in progress, will be available in next release of LATTE) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
@@ -154,9 +142,6 @@ NOTE: all of these arguments (except new-path, auto and targetlist) can be chang
 **--north** If you want all the images to be oriented due north (this is not the default as it takes longer to run)
 
 **--new-path** If you want to define a new path to store the data.
-
-**--mpi** If the code is parallelized (see example), this needs to be entered in the command line. This is because the module that reprojects the TPFs, astroplan, cannot be parallelized due to problems with multiple processes accessing python's shelve storage at the same time.
-
 
 
 
