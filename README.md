@@ -20,7 +20,7 @@ email: *nora.eisner@new.ox.ac.uk*
 
 You can download the code directly from github. Alternatively you can install LATTE using pip (https://pypi.org/project/tessLATTE/) via your command line with:
 
-			pip install tessLATTE      
+	pip install tessLATTE      
 
 In order for LATTE to work you will need to have the right versions of certain modules installed, so downloading it in a virtual environemt. **Note: ensure that the matplotlib version that you are using is v3.2.0rc1 (pip install matplotlib==3.2.0rc1).**
 
@@ -31,7 +31,7 @@ The first time that the program is run you will be prompted to enter a path to a
 
 LATTE is simply run through the command line with:
 
-			python3 -m LATTE        
+	python3 -m LATTE      or     python3 -m LATTE --new-data     (if run for the first time)
 
 This will open up a box for you that prompts you to enter a TIC ID and indicate whether you would like to extract the information from the 2-minute cadence ('Standard mode') or 30-minute candence Full Frame Image (FFI) data ('FFI mode').
 
