@@ -16,11 +16,12 @@ email: *nora.eisner@new.ox.ac.uk*
 
 --------
 --------
+
 ### Installation
 
-You can download the code directly from github. Alternatively you can install LATTE using pip (https://pypi.org/project/tessLATTE/) via your command line with:
+LATTE requires python3 to be installed on your computer, which can be download from https://www.python.org/downloads/. Once you have python3, you can download the code directly from github. Alternatively you can install LATTE using pip (https://pypi.org/project/tessLATTE/) via your command line with:
 
-	pip install tessLATTE      
+	pip3 install tessLATTE      
 
 In order for LATTE to work you will need to have the right versions of certain modules installed, so downloading it in a virtual environemt. **Note: ensure that the matplotlib version that you are using is v3.2.0rc1 (pip install matplotlib==3.2.0rc1).**
 
@@ -31,7 +32,7 @@ The first time that the program is run you will be prompted to enter a path to a
 
 LATTE is simply run through the command line with:
 
-	python3 -m LATTE      or     python3 -m LATTE --new-data     (if run for the first time)
+	python3 -m LATTE      or     python3 -m LATTE --new-data     (if run for the first time or when new data is released)
 
 This will open up a box for you that prompts you to enter a TIC ID and indicate whether you would like to extract the information from the 2-minute cadence ('Standard mode') or 30-minute candence Full Frame Image (FFI) data ('FFI mode').
 
@@ -49,8 +50,11 @@ In *FFI mode* the data is downloaded using TESScut and the data detrended using 
 
 ## Input target list
 
-In order to efficiently generate diagnostic plots for multiple targets without having to interactively enter the target TIC IDs, ``LATTE`` can be executed with an input file that lists the TIC IDs, the times of the transit-like events, and the observational sectors to consider (if known). See example. In the cases where the times of the transit events or the sectors have not been entered, the user is prompted to enter these manually via the GUI, as descibed above. For longer target lists the code can also be parallelized (see example).
+In order to efficiently generate diagnostic plots for multiple targets without having to interactively enter the target TIC IDs, ``LATTE`` can be executed with an input file that lists the TIC IDs, the times of the transit-like events, and the observational sectors to consider (if known). See example. In the cases where the times of the transit events or the sectors have not been entered, the user is prompted to enter these manually via the GUI, as descibed above. For longer target lists the code can also be parallelized (see example). If you want to run it with this mode, enter: 
 
+	python3 -m LATTE --targetlist*=path/to/the/csv/input/file*
+
+The program will skip targets that have already been analysed by you, so if you want to overwrite data add '--o' to the command.
 
 ### Transit time selection
 
@@ -138,41 +142,29 @@ The code will then generate download and process all of the data. Note that all 
 
 ### Arguments
 
-NOTE: all of these arguments (except new-path, auto and targetlist) can be changed as option in the GUI. They are arguments in case the same options wish to be run multiple times and the user therfore wishes to identify them in the command line when the program is executed.
-
+NOTE: all of these arguments (except new-path, auto and targetlist, new-data) can be changed as option in the GUI. They are arguments in case the same options wish to be run multiple times and the user therfore wishes to identify them in the command line when the program is executed.
 
 !!!!!!  **--new-data**  The code requires multiple text files to be stored on your computer in order to run - these are downloaded automatically from the MAST server. The first time the proghram is run, and any time that there is new data available, add **--new-data** to the command line when running the program. The code checks what data has already been downloaded and doesn't re-download anything that already exists.
 
-**--tic** You can skip the box to enter the tic ID by entering it in the command line with e.g. --tic=55525572. 
-
-**--sector** You can skip entering the sectors by entering them in the command line with e.g. --sector=2,5. You will need to know in what sectors this target was observed.
+**--auto** When looking at the FFIs, the default option is that you choose both the large and small apertures interactivelty. In order for the system to choose them run the command with '--auto'. 
 
 **--targetlist***=path/to/the/csv/input/file* instead of entering the information manually everytime, you can provide LATTE with an input file which lists all the TIC IDs and the times of the transit events. Look at the example file to see the required format of the information.
 
-**--noshow** if you do not want the figures to pop up on your screen you can run the program with this command in the command line. The program will run significantly faster with this run. If this option is chosen the files are always saved. 
+**--new-path** If you want to define a new path to store the data.
 
 **--o** If the input target list option is chosen, the program will check whether each target has already been analysed, in which case it will skip this target. If you do not wish to skip targets that have already been assessed use this in order to specify the 'overwrite' option. When the program is run interactively (not with an input file) this option has no effect.
 
-**--auto** When looking at the FFIs, the default option is that you choose both the large and small apertures interactivelty. In order for the system to choose them run the command with '--auto'. 
+**--noshow** if you do not want the figures to pop up on your screen you can run the program with this command in the command line. The program will run significantly faster with this run. If this option is chosen the files are always saved (also option in the GUI)
 
-**--nickname** In order to keep track of all of the candidates, it can be useful to asign them a nickname. This can be entered here which will simply change the name of the folder at the end. 
+**--nickname** In order to keep track of all of the candidates, it can be useful to asign them a nickname. This can be entered here which will simply change the name of the folder at the end (also option in the GUI)
 
-**--FFI** If you want to look at a FFI write '--FFI' in the command line. 
+**--FFI** If you want to look at an FFI write '--FFI' in the command line (also option in the GUI) 
 
 **--north** If you want all the images to be oriented due north (this is not the default as it takes longer to run)
 
-**--new-path** If you want to define a new path to store the data.
-
 **--mpi** If the code is parallelized (see example), this needs to be entered in the command line. This is because the module that reprojects the TPFs, astroplan, cannot be parallelized due to problems with multiple processes accessing python's shelve storage at the same time.
 
+**--tic** You can skip the box to enter the tic ID by entering it in the command line with e.g. --tic=55525572. 
 
-
-
-
-
-
-
-
-
-
+**--sector** You can skip entering the sectors by entering them in the command line with e.g. --sector=2,5. You will need to know in what sectors this target was observed (option in the GUI)
 
