@@ -1,3 +1,3 @@
 TICID,sectors,transits,BLS,model,FFI
-55525572,5,1622.49,,0,yes
-336732616,1,"1327.28,1330.79",yes,0,no 
+55525572,5,,,0,yes
+336732616,1,,yes,0,no 

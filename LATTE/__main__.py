@@ -368,7 +368,7 @@ if __name__ == '__main__':
 
 			# ---- IF NO TRANSIT MARKED RUN WITH INTERFACE ----
 			if (pp == False) and (type(row['transits']) == float):
-				utils.interact_LATTE(tic, indir, syspath, sectors_all, sectors, args.noshow)
+				utils.interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
 
 			else:
 
