@@ -243,6 +243,8 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	else:
 		tpf_corrupt = True
 		mstar = 1 # need to define mstar otherwise pyaneti will complain - just make it one as an approximation.
+		astroquery_corrupt = True
+	
 	# ------------
 	# end of plots that require target pixel files
 	# ------------

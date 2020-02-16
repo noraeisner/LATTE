@@ -373,12 +373,12 @@ if __name__ == '__main__':
 			else:
 
 				if pp == False: # if the transits were identified and no period information
-			
+					
 					transit_list_in = (row['transits'])
 					transit_list = ast.literal_eval(transit_list_in)
 					
 					# convert the input transit times and sectors into transit_list in the form of a list
-	
+					
 					if (type(transit_list) == float) or (type(transit_list) == int):
 						transit_list = [transit_list]
 					else:
@@ -393,7 +393,7 @@ if __name__ == '__main__':
 						if transit < (t0 + 20):
 							transit_list.append(float(transit))
 
-
+				
 				BLS_in = row['BLS']
 				model_in = row['model']
 				FFI_in = row['FFI']
