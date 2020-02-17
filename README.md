@@ -23,9 +23,9 @@ LATTE requires python3 to be installed on your computer, which can be download f
 
 	pip3 install tessLATTE      
 
-In order for LATTE to work you will need to have the right versions of certain modules installed, so downloading it in a virtual environemt. **Note: ensure that the matplotlib version that you are using is v3.2.0rc1 (pip install matplotlib==3.2.0rc1).**
+In order for LATTE to work you will need to have the right versions of certain modules installed, so downloading it in a virtual environemt. **Note: ensure that the matplotlib version that you are using is v3.2.0rc1 (pip install matplotlib==3.2.0rc1). You will also need a module called TKinter installed. If this is not already installed please use: sudo apt-get install python3-tk .**
 
-The first time that the program is run you will be prompted to enter a path to a file on your computer where all the output data will be stored (this path can be changed later using --new-path). The first time that the code is run it will also have to download the text data files from MAST (this only has to run once). This may take a couple of minutes so be patient. 
+The first time that the program is run you will be prompted to enter a path to a file on your computer where all the output data will be stored (this path can be changed later using --new-path). The first time that the code is run it will also have to download the text data files from MAST, which are around 325M. This download will only have to run in full once but may take a couple of minutes to complete.
 
 
 ### How to run it? 
