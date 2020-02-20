@@ -27,6 +27,10 @@ In order for LATTE to work you will need to have the right versions of certain m
 
 The first time that the program is run you will be prompted to enter a path to a file on your computer where all the output data will be stored (this path can be changed later using --new-path). The first time that the code is run it will also have to download the text data files from MAST, which are around 325M. This download will only have to run in full once but may take a couple of minutes to complete.
 
+If the code doesn't run when you first install it, this could be due to an SSL issue. To check, please try eecuting the following command in from your command line: **python -m tess_stars2px -t 261136679**
+
+If this returns an error stating *"ssl.SSLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed"* you need to change your SSL settings by following these [instructions](https://timonweb.com/tutorials/fixing-certificate_verify_failed-error-when-trying-requests_html-out-on-mac/). 
+
 
 ### How to run it? 
 
