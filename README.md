@@ -142,9 +142,9 @@ The code will then generate download and process all of the data. Note that all 
 
 ### Arguments
 
-NOTE: all of these arguments (except new-path, auto and targetlist, new-data) can be changed as option in the GUI. They are arguments in case the same options wish to be run multiple times and the user therfore wishes to identify them in the command line when the program is executed.
+NOTE: all of these arguments (except new-path, auto and targetlist, new-data) can be changed as option in the GUI. They are arguments in case the same options wish to be run multiple times and the user therefore wishes to identify them in the command line when the program is executed.
 
-!!!!!!  **--new-data**  The code requires multiple text files to be stored on your computer in order to run - these are downloaded automatically from the MAST server. The first time the proghram is run, and any time that there is new data available, add **--new-data** to the command line when running the program. The code checks what data has already been downloaded and doesn't re-download anything that already exists.
+**--new-data**  The code requires multiple text files to be stored on your computer in order to run - these are downloaded automatically from the MAST server. The first time the proghram is run, and any time that there is new data available, add **--new-data** to the command line when running the program. The code checks what data has already been downloaded and doesn't re-download anything that already exists.
 
 **--auto** When looking at the FFIs, the default option is that you choose both the large and small apertures interactivelty. In order for the system to choose them run the command with '--auto'. 
 
@@ -167,4 +167,43 @@ NOTE: all of these arguments (except new-path, auto and targetlist, new-data) ca
 **--tic** You can skip the box to enter the tic ID by entering it in the command line with e.g. --tic=55525572. 
 
 **--sector** You can skip entering the sectors by entering them in the command line with e.g. --sector=2,5. You will need to know in what sectors this target was observed (option in the GUI)
+
+### Perform automated tests
+
+The code has been tested using the python unittest module. There are a number of tests including testing the connections to the servers where data is downloaded as well as tests that process pre-downloaded data in order to ensure that the outputs are as expected. All of the tests can be run using the command: 
+
+	python3 -m unittest
+
+
+### Contributing
+
+If you believe that you have found any bugs in the code or if you need help or have any questions or suggestions, please feel free to file a new Github issue. You can also raise an issue or a pull request which fixes the issue. Please see CONTRIBUTING.md for more details. 
+
+
+### Future Work
+
+The next release will allow for the option to model the transit-like events using the open source package *Pyaneti* [@pyaneti] which uses a Bayesian approach with an MCMC sampling to determine the parameters of the best-fit.
+
+
+### License 
+
+LATTE can be used under GNU LESSER GENERAL PUBLIC LICENSE V3 License.
+
+
+### Acknowledgements
+
+We thank all of the Planet Hunters *TESS* volunteers whose dedication to the project encouraged me to write this analysis tool. We am also extremely grateful to all of the support provided by the Zooniverse team and the Oxford exoplanet group.
+
+
+
+
+
+
+
+
+
+
+
+
+
 

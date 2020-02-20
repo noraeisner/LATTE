@@ -4,7 +4,7 @@
 This script is designed to test that the data is downloaded correctly.
 
 
-run with: python -m unittest tests/test_data_download_LATTE.py
+run with: python -m unittest tests/test_data_download.py
 
 # NOTE: requires intenet connection
 

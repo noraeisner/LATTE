@@ -38,7 +38,7 @@ tessmag = 9.8200
 teff  = 5824
 srad  = 1.9325
 tpf_corrupt  = False
-
+astroquery_corrupt = False
 # -------------
 
 # create a mock 'argparser' becasuse the argparse function doesn't work within the unittest module 
@@ -58,7 +58,7 @@ class TestDVreport(unittest.TestCase):
 	
 	def test_DVreport(self):
 
-		ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, FFI = False,  bls = False, model = False, mpi = None, test = './tests/')
+		ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = False, mpi = None, test = './tests/')
 
 		# now that it has been run, test to make sure that the report was created. 
 		# check that a NEW report was made, and not just an old one that exists from a previous test run 
