@@ -22,7 +22,7 @@ from LATTE import LATTE_DV as ldv
 # get the outir (or indir) path
 syspath = str(os.path.abspath(ldv.__file__))[0:-14]
 
-indir = "./test_output"		
+indir = "./LATTE/test_output"		
 
 # -------------
 # test with these input parameters (this data is already downloaded so it's only testing that the plotting part works)
@@ -58,7 +58,7 @@ class TestDVreport(unittest.TestCase):
 	
 	def test_DVreport(self):
 
-		ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = False, mpi = None, test = './tests/')
+		ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = False, mpi = None, test = './LATTE/tests/')
 
 		# now that it has been run, test to make sure that the report was created. 
 		# check that a NEW report was made, and not just an old one that exists from a previous test run 

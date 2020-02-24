@@ -16,7 +16,7 @@ import LATTE.LATTEutils as utils
 # get the outir (or indir) path
 syspath = str(os.path.abspath(utils.__file__))[0:-14]
 
-indir = "./test_output"    
+indir = "./LATTE/test_output"    
 
 # -----------------------------
 '''
@@ -54,7 +54,7 @@ class TestBoxLeastSquareTest(unittest.TestCase):
 
         # get data needed to run the BLS - use other unittest to make sure that te data handling works as expected to get to this point. 
 
-        alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir,sector, tic, binfac = 5, test = './tests/tic55525572_lc.fits')
+        alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir,sector, tic, binfac = 5, test = './LATTE/tests/tic55525572_lc.fits')
 
         # run the BLS
         # the plotting is called from within this 

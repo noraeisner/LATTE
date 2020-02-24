@@ -1,11 +1,11 @@
 Metadata-Version: 2.1
 Name: tessLATTE
-Version: 0.1.12
+Version: 0.1.13
 Summary: Lightcurve Analysis Tool for Transiting Exoplanets
 Home-page: https://github.com/noraeisner/LATTE
 Author: Nora L. Eisner
 Author-email: nora.eisner@new.ox.ac.uk
-License: GNU Lesser General Public LIcense v3.0
+License: GNU Lesser General Public License v3.0
 Description: # LATTE
         
         Written by Nora L. Eisner
@@ -35,8 +35,12 @@ Description: # LATTE
         
         The first time that the program is run you will be prompted to enter a path to a file on your computer where all the output data will be stored (this path can be changed later using --new-path). The first time that the code is run it will also have to download the text data files from MAST, which are around 325M. This download will only have to run in full once but may take a couple of minutes to complete.
         
+        If the code doesn't run when you first install it, this could be due to an SSL issue. To check, please try executing the following command from your command line: **python -m tess_stars2px -t 261136679**.
         
-        ### How to run it? 
+        If this command returns the error: *"ssl.SSLError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed"*, you will need to change your SSL settings, which can be done following these [instructions](https://timonweb.com/tutorials/fixing-certificate_verify_failed-error-when-trying-requests_html-out-on-mac/). 
+        
+        
+        ### How to run it?
         
         LATTE is simply run through the command line with:
         
@@ -97,39 +101,21 @@ Description: # LATTE
         
         - Full lightcurve with the times of the momentum dumps marked. 
         
-        ![Full LC](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_fullLC_md.png)
-        
         - Background flux around the times of the marked transit event(s).
-        
-        ![Background Flux](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_background.png)
         
         - Centroid positions around the time of the marked transit event(s).
         
-        ![Centroid](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_centroids.png)
-        
         - The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
-        
-        ![Aperture Size](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_aperture_size.png)
         
         - The apertures used for the extraction. Please note that for very bright and very faint stars the aperture selection for the smaller aperture may not work correctly so these should be checked in order to correctly interperet the results.
         
-        ![Apertures](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_apertures_0.png)
-        
         - The average flux in and out of the marked event(s) and the differences between the two.
-        
-        ![In and out of transit flux comaprison](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_flux_comparison.png)
         
         - The average flux of the target pixel file with the locations of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
         
-        ![Nearby stars](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_star_field.png)
-        
         - The lightcurves of the 6 closest stars that were also observed by *TESS* (TP files).
         
-        ![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_nearest_neighbours.png)
-        
         - A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
-        
-        ![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_individual_pixel_LCs_0.png)
         
         - (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
         - (in progress, will be available in next release of LATTE) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
@@ -150,9 +136,9 @@ Description: # LATTE
         
         ### Arguments
         
-        NOTE: all of these arguments (except new-path, auto and targetlist, new-data) can be changed as option in the GUI. They are arguments in case the same options wish to be run multiple times and the user therfore wishes to identify them in the command line when the program is executed.
+        NOTE: all of these arguments (except new-path, auto and targetlist, new-data) can be changed as option in the GUI. They are arguments in case the same options wish to be run multiple times and the user therefore wishes to identify them in the command line when the program is executed.
         
-        !!!!!!  **--new-data**  The code requires multiple text files to be stored on your computer in order to run - these are downloaded automatically from the MAST server. The first time the proghram is run, and any time that there is new data available, add **--new-data** to the command line when running the program. The code checks what data has already been downloaded and doesn't re-download anything that already exists.
+        **--new-data**  The code requires multiple text files to be stored on your computer in order to run - these are downloaded automatically from the MAST server. The first time the proghram is run, and any time that there is new data available, add **--new-data** to the command line when running the program. The code checks what data has already been downloaded and doesn't re-download anything that already exists.
         
         **--auto** When looking at the FFIs, the default option is that you choose both the large and small apertures interactivelty. In order for the system to choose them run the command with '--auto'. 
         
@@ -175,6 +161,47 @@ Description: # LATTE
         **--tic** You can skip the box to enter the tic ID by entering it in the command line with e.g. --tic=55525572. 
         
         **--sector** You can skip entering the sectors by entering them in the command line with e.g. --sector=2,5. You will need to know in what sectors this target was observed (option in the GUI)
+        
+        ### Perform automated tests
+        
+        The code has been tested using the python unittest module. There are a number of tests including testing the connections to the servers where data is downloaded as well as tests that process pre-downloaded data in order to ensure that the outputs are as expected. All of the tests can be run using the command: 
+        
+        	python3 -m unittest
+        
+        
+        ### Contributing
+        
+        If you believe that you have found any bugs in the code or if you need help or have any questions or suggestions, please feel free to file a new Github issue. You can also raise an issue or a pull request which fixes the issue. Please see CONTRIBUTING.md on the GitHub page for more details. 
+        
+        
+        ### Future Work
+        
+        The next release will allow for the option to model the transit-like events using the open source package *Pyaneti* [@pyaneti] which uses a Bayesian approach with an MCMC sampling to determine the parameters of the best-fit. 
+        
+        Future releases will also allow for modeling and removal of periodic trends in the light curve. This is useful for the detection and circumbinary planets and for the analysis of multi-star systems. 
+        
+        
+        ### License 
+        
+        LATTE can be used under GNU Lesser General Public License v3.0
+        
+        
+        ### Acknowledgements
+        
+        I thank all of the Planet Hunters *TESS* volunteers whose dedication to the project encouraged me to write this analysis tool. I am also extremely grateful to all of the support provided by the Zooniverse team and the Oxford exoplanet group.
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
 Platform: UNKNOWN

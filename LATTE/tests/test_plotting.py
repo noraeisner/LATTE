@@ -26,7 +26,7 @@ import LATTE.LATTEutils as utils
 # get the outir (or indir) path
 syspath = str(os.path.abspath(utils.__file__))[0:-14]
 
-indir = "./test_output"		
+indir = "./LATTE/test_output"		
 
 
 # -------------
@@ -56,11 +56,11 @@ class TestDataPlotting(unittest.TestCase):
 	def test_plot(self):
 
 		# download data needed to generate the plots
-		alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir,sector, tic, binfac = 5, test = './tests/tic55525572_lc.fits')
-		X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic, test = './tests/tic55525572_tp.fits')
+		alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir,sector, tic, binfac = 5, test = './LATTE/tests/tic55525572_lc.fits')
+		X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic, test = './LATTE/tests/tic55525572_tp.fits')
 		
 		# this function downloads the data and saved plots that show the aperture sizes (for the large and small apertures)
-		TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic, test = './tests/tic55525572_tp.fits')
+		TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic, test = './LATTE/tests/tic55525572_tp.fits')
 		# ---------
 
 		# create the plots that the normal routine makes

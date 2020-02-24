@@ -1,1 +1,1 @@
-graft LATTE/LATTE_imgs tests test_output
+graft LATTE/LATTE_imgs LATTE/tests LATTE/test_output

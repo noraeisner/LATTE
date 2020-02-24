@@ -31,7 +31,7 @@ import LATTE.LATTEutils as utils
 syspath = str(os.path.abspath(utils.__file__))[0:-14]
 
 
-indir = "./output"        
+indir = "./LATTE/output"        
 
 # test with these input parameters (this data is already downloaded so it's only testing that the data extraction from the FITS files works)
 tic = '55525572'
@@ -48,7 +48,7 @@ class TestDataImport_LC(unittest.TestCase):
 
     def test_LC_request_response(self):
         # Call the service, which will send a request to the server.
-        alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir,sector, tic, binfac = 5, test = './tests/tic55525572_lc.fits')
+        alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir,sector, tic, binfac = 5, test = './LATTE/tests/tic55525572_lc.fits')
 
         # If the request is sent successfully, then I expect a response to be returned.
         self.assertEqual(float(alltime[100]),       float(1438.1174094083246), 'LC data is not what it should be.')
@@ -72,7 +72,7 @@ class TestDataImport_TP(unittest.TestCase):
     def test_LC_request_response(self):
 
         # Call the service, which will send a request to the server.
-        X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic, test = './tests/tic55525572_tp.fits')
+        X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic, test = './LATTE/tests/tic55525572_tp.fits')
 
         # If the request is sent successfully, then I expect a response to be returned.
         self.assertEqual(float(X1_list[0][0][0]),float(23.402481079101562), 'TP data is not what it should be.')
@@ -93,7 +93,7 @@ class TestDataImport_TP_lighkurve(unittest.TestCase):
     def test_LC_request_response(self):
 
         # Call the service, which will send a request to the server.
-        TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic, test = './tests/tic55525572_tp.fits')
+        TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic, test = './LATTE/tests/tic55525572_tp.fits')
         
         print(float(TESS_unbinned_t_l[0]))
         print(float(TESS_binned_t_l[0]))
