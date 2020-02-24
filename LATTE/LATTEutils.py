@@ -1562,7 +1562,9 @@ def momentum_dumps_info(indir):
             lcdata = lchdu[1].data                 
             quality = lcdata['QUALITY']
             time    = lcdata['TIME']
-        
+            
+            lchdu.close()
+            
             mom_dump_mask = np.bitwise_and(quality, 2**5) >= 1                               
             
             momdump = (list(time[mom_dump_mask]))
@@ -1902,6 +1904,8 @@ def download_data(indir,sector, tic, binfac = 5, test = 'no'):
         srad    = lchdu[0].header['RADIUS']   # stellar radius in the FITS header (solar radii) 
 
         flux     = lcdata['SAP_FLUX']
+
+        lchdu.close()
 
         # store the sector we are looking at
         in_sec.append(sec)
@@ -2654,6 +2658,7 @@ def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
         
         tessmag = lchdu[0].header['TESSMAG']
         
+        lchdu.close()
 
         # binned data
         N       = len(time)

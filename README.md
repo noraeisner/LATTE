@@ -174,11 +174,15 @@ NOTE: all of these arguments (except new-path, auto and targetlist, new-data) ca
 
 ### Perform automated tests
 
-The code has been tested using the python unittest module. There are a number of tests including testing the connections to the servers where data is downloaded as well as tests that process pre-downloaded data in order to ensure that the outputs are as expected. All of the tests can be run using the command: 
+The code has been tested using the python unittest module. There are a number of tests including testing the connections to the servers where data is downloaded as well as tests that process pre-downloaded data in order to ensure that the outputs are as expected. In order to execute the tests please clone the GitHub LATTE repository. You must then be in the parent LATTE directory and from there you can run all the tests using: 
 
 	python3 -m unittest
 
+or individual tests using, for example: 
+	
+	python3 -m unittest LATTE/tests/test_DVreport.py
 
+	
 ### Contributing
 
 If you believe that you have found any bugs in the code or if you need help or have any questions or suggestions, please feel free to file a new Github issue. You can also raise an issue or a pull request which fixes the issue. Please see CONTRIBUTING.md for more details. 
