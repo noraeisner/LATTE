@@ -188,15 +188,17 @@ If you believe that you have found any bugs in the code or if you need help or h
 
 The next release will allow for the option to model the transit-like events using the open source package *Pyaneti* [@pyaneti] which uses a Bayesian approach with an MCMC sampling to determine the parameters of the best-fit.
 
+Future releases will also allow for modeling and removal of periodic trends in the light curve. This is useful for the detection and circumbinary planets and for the analysis of multi-star systems. 
+
 
 ### License 
 
-LATTE can be used under GNU LESSER GENERAL PUBLIC LICENSE V3 License.
+LATTE can be used under GNU Lesser General Public License v3.0
 
 
 ### Acknowledgements
 
-We thank all of the Planet Hunters *TESS* volunteers whose dedication to the project encouraged me to write this analysis tool. We am also extremely grateful to all of the support provided by the Zooniverse team and the Oxford exoplanet group.
+I thank all of the Planet Hunters *TESS* volunteers whose dedication to the project encouraged me to write this analysis tool. I am also extremely grateful to all of the support provided by the Zooniverse team and the Oxford exoplanet group.
 
 
 

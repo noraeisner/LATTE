@@ -225,7 +225,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
         
             line_binned.set_xdata(cutout(val)[4])
             line_binned.set_ydata(cutout(val)[5])
-        
+            
             # ---------------
             # only ever plot one line so get rid of the old ones before plotting the new ones...
             if (len (ax[0].lines) > 1) or (len(ax[1].lines) > 1):

@@ -14,7 +14,6 @@ import os
 import unittest
 import requests
 import warnings
-from nose.tools import assert_true
 
 warnings.filterwarnings("ignore")
 from LATTE import LATTEutils
