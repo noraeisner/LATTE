@@ -182,7 +182,8 @@ or individual tests using, for example:
 	
 	python3 -m unittest LATTE/tests/test_DVreport.py
 
-	
+Before running the tests makes sure that you have configured an output path (*python3 -m LATTE --new-path*) and that the data files are downloaded (*python3 -m LATTE --new-data*). 
+
 ### Contributing
 
 If you believe that you have found any bugs in the code or if you need help or have any questions or suggestions, please feel free to file a new Github issue. You can also raise an issue or a pull request which fixes the issue. Please see CONTRIBUTING.md for more details. 
