@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: tessLATTE
-Version: 0.1.13
+Version: 0.1.14
 Summary: Lightcurve Analysis Tool for Transiting Exoplanets
 Home-page: https://github.com/noraeisner/LATTE
 Author: Nora L. Eisner
@@ -101,21 +101,39 @@ Description: # LATTE
         
         - Full lightcurve with the times of the momentum dumps marked. 
         
+        ![Full LC](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_fullLC_md.png)
+        
         - Background flux around the times of the marked transit event(s).
+        
+        ![Background Flux](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_background.png)
         
         - Centroid positions around the time of the marked transit event(s).
         
+        ![Centroid](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_centroids.png)
+        
         - The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
+        
+        ![Aperture Size](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_aperture_size.png)
         
         - The apertures used for the extraction. Please note that for very bright and very faint stars the aperture selection for the smaller aperture may not work correctly so these should be checked in order to correctly interperet the results.
         
+        ![Apertures](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_apertures_0.png)
+        
         - The average flux in and out of the marked event(s) and the differences between the two.
+        
+        ![In and out of transit flux comaprison](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_flux_comparison.png)
         
         - The average flux of the target pixel file with the locations of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
         
+        ![Nearby stars](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_star_field.png)
+        
         - The lightcurves of the 6 closest stars that were also observed by *TESS* (TP files).
         
+        ![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_nearest_neighbours.png)
+        
         - A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
+        
+        ![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_individual_pixel_LCs_0.png)
         
         - (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
         - (in progress, will be available in next release of LATTE) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
@@ -164,19 +182,24 @@ Description: # LATTE
         
         ### Perform automated tests
         
-        The code has been tested using the python unittest module. There are a number of tests including testing the connections to the servers where data is downloaded as well as tests that process pre-downloaded data in order to ensure that the outputs are as expected. All of the tests can be run using the command: 
+        The code has been tested using the python unittest module. There are a number of tests including testing the connections to the servers where data is downloaded as well as tests that process pre-downloaded data in order to ensure that the outputs are as expected. In order to execute the tests please clone the GitHub LATTE repository. You must then be in the parent LATTE directory and from there you can run all the tests using: 
         
         	python3 -m unittest
         
+        or individual tests using, for example: 
+        	
+        	python3 -m unittest LATTE/tests/test_DVreport.py
+        
+        Before running the tests makes sure that you have configured an output path (*python3 -m LATTE --new-path*) and that the data files are downloaded (*python3 -m LATTE --new-data*). 
         
         ### Contributing
         
-        If you believe that you have found any bugs in the code or if you need help or have any questions or suggestions, please feel free to file a new Github issue. You can also raise an issue or a pull request which fixes the issue. Please see CONTRIBUTING.md on the GitHub page for more details. 
+        If you believe that you have found any bugs in the code or if you need help or have any questions or suggestions, please feel free to file a new Github issue. You can also raise an issue or a pull request which fixes the issue. Please see CONTRIBUTING.md for more details. 
         
         
         ### Future Work
         
-        The next release will allow for the option to model the transit-like events using the open source package *Pyaneti* [@pyaneti] which uses a Bayesian approach with an MCMC sampling to determine the parameters of the best-fit. 
+        The next release will allow for the option to model the transit-like events using the open source package *Pyaneti* [@pyaneti] which uses a Bayesian approach with an MCMC sampling to determine the parameters of the best-fit.
         
         Future releases will also allow for modeling and removal of periodic trends in the light curve. This is useful for the detection and circumbinary planets and for the analysis of multi-star systems. 
         

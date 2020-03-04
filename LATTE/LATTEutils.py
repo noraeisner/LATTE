@@ -1548,7 +1548,8 @@ def momentum_dumps_info(indir):
         with open("{}/data/temp.txt".format(indir), 'r') as f:
             string = f.readlines()[-1]
             first_sec = int(string[0:2])
-            
+
+
     for sec in range(first_sec+1,27): # 27 because that's how many TESS sectors there will be in total
         
         try:

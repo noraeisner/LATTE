@@ -51,17 +51,17 @@ class TestDataImport_LC(unittest.TestCase):
         alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir,sector, tic, binfac = 5, test = './LATTE/tests/tic55525572_lc.fits')
 
         # If the request is sent successfully, then I expect a response to be returned.
-        self.assertEqual(float(alltime[100]),       float(1438.1174094083246), 'LC data is not what it should be.')
-        self.assertEqual(float(allflux[100]),       float(1.0003796815872192))
-        self.assertEqual(float(allflux_err[100]),   float(0.0011117355898022652))
-        self.assertEqual(float(all_md[0]),          float(1441.0243360822994))
-        self.assertEqual(float(alltimebinned[100]), float(1438.6757392292352))
-        self.assertEqual(float(allfluxbinned[100]), float(0.9995232224464417))
-        self.assertEqual(float(allx1[100]),         float(-0.010814569022272735))
-        self.assertEqual(float(allx2[100]),         float(-0.011804798617959023))
-        self.assertEqual(float(ally1[100]),         float(-0.024266568269581512))
-        self.assertEqual(float(ally2[100]),         float(-0.02981671877205372))
-        self.assertEqual(float(alltime12[100]),     float(1438.1312982026025))
+        self.assertAlmostEqual(float(alltime[100]),       float(1438.1174094083246), places=5, msg='LC data is not what it should be.')
+        self.assertAlmostEqual(float(allflux[100]),       float(1.0003796815872192), places=5)
+        self.assertAlmostEqual(float(allflux_err[100]),   float(0.0011117355898022652), places=5)
+        self.assertAlmostEqual(float(all_md[0]),          float(1441.0243360822994), places=5)
+        self.assertAlmostEqual(float(alltimebinned[100]), float(1438.6757392292352), places=5)
+        self.assertAlmostEqual(float(allfluxbinned[100]), float(0.9995232224464417), places=5)
+        self.assertAlmostEqual(float(allx1[100]),         float(-0.010814569022272735), places=5)
+        self.assertAlmostEqual(float(allx2[100]),         float(-0.011804798617959023), places=5)
+        self.assertAlmostEqual(float(ally1[100]),         float(-0.024266568269581512), places=5)
+        self.assertAlmostEqual(float(ally2[100]),         float(-0.02981671877205372), places=5)
+        self.assertAlmostEqual(float(alltime12[100]),     float(1438.1312982026025), places=5)
 
 
 class TestDataImport_TP(unittest.TestCase):
@@ -75,14 +75,14 @@ class TestDataImport_TP(unittest.TestCase):
         X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic, test = './LATTE/tests/tic55525572_tp.fits')
 
         # If the request is sent successfully, then I expect a response to be returned.
-        self.assertEqual(float(X1_list[0][0][0]),float(23.402481079101562), 'TP data is not what it should be.')
-        self.assertEqual(float(oot_list[0][0]),float(0.0))
-        self.assertEqual(float(intr_list[0][0]),float(0.0))
-        self.assertEqual(float(bkg_list[0][0][0]),float(29.239688873291016))
-        self.assertEqual(float(apmask_list[0][0][0]),float(0.0))
-        self.assertEqual(float(arrshape_list[0][0]),float(18944.0))
-        self.assertEqual(float(t_list[0][0]),float(1437.9924102871835))
-        self.assertEqual(float(T0_list[0]),float(1454.7))
+        self.assertAlmostEqual(float(X1_list[0][0][0]),float(23.402481079101562), places=5, msg ='TP data is not what it should be.')
+        self.assertAlmostEqual(float(oot_list[0][0]),float(0.0))
+        self.assertAlmostEqual(float(intr_list[0][0]),float(0.0))
+        self.assertAlmostEqual(float(bkg_list[0][0][0]),float(29.239688873291016), places=5)
+        self.assertAlmostEqual(float(apmask_list[0][0][0]),float(0.0))
+        self.assertAlmostEqual(float(arrshape_list[0][0]),float(18944.0))
+        self.assertAlmostEqual(float(t_list[0][0]),float(1437.9924102871835), places=5,)
+        self.assertAlmostEqual(float(T0_list[0]),float(1454.7))
 
 
 class TestDataImport_TP_lighkurve(unittest.TestCase):
@@ -104,12 +104,12 @@ class TestDataImport_TP_lighkurve(unittest.TestCase):
 
         
         # If the request is sent successfully, then I expect a response to be returned.
-        self.assertEqual(float(TESS_unbinned_t_l[0]), float(1437.9924102871835), 'TP lighkurve data is not what it should be.')
-        self.assertEqual(float(TESS_binned_t_l[0]), float(1437.9972713631325))
-        self.assertEqual(float(small_binned_t_l[0]), float(1437.9972713631325))
-        self.assertEqual(float(TESS_unbinned_l[0]), float(0.9975904130977179))
-        self.assertEqual(float(TESS_binned_l[0]), float(0.9986087992155438))
-        self.assertEqual(float(small_binned_l[0]), float(0.9971978343909532))
+        self.assertAlmostEqual(float(TESS_unbinned_t_l[0]), float(1437.9924102871835), msg='TP lighkurve data is not what it should be.')
+        self.assertAlmostEqual(float(TESS_binned_t_l[0]), float(1437.9972713631325), places=5)
+        self.assertAlmostEqual(float(small_binned_t_l[0]), float(1437.9972713631325), places=5)
+        self.assertAlmostEqual(float(TESS_unbinned_l[0]), float(0.9975904130977179), places=5)
+        self.assertAlmostEqual(float(TESS_binned_l[0]), float(0.9986087992155438), places=5)
+        self.assertAlmostEqual(float(small_binned_l[0]), float(0.9971978343909532), places=5)
 
 
 
