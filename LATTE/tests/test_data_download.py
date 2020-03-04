@@ -46,8 +46,15 @@ class TestNearestNeighbours(unittest.TestCase):
 	def test_nn(self):
 		output = LATTEutils.nn_ticids(outdir, [5], '55525572')
 
-		self.assertEqual(output[0], [55525572, 55525518, 358806415, 55557836, 55557135, 55522986], "nearest neighbour TIC IDs are incorrect")
-		self.assertEqual(output[1], [0.0, 6.795727328666717, 10.622509290130298, 15.63959237521102, 16.881930554329756, 17.79841005439404], "nearest neighbour distances are incorrect")
+		self.assertEqual(output[0], [55525572, 55525518, 358806415, 55557836, 55557135, 55522986], msg="nearest neighbour TIC IDs are incorrect")
+
+		self.assertEqual(output[1][0], 0.0, msg="nearest neighbour distances are incorrect")
+		self.assertAlmostEqual(output[1][1], 6.795727328666717, places=5, msg="nearest neighbour distances are incorrect")
+						
+		self.assertAlmostEqual(output[1][2], 10.622509290130298,places=5, msg="nearest neighbour distances are incorrect")
+		self.assertAlmostEqual(output[1][3], 15.63959237521102, places=5, msg="nearest neighbour distances are incorrect")
+						
+
 		self.assertAlmostEqual(output[2], 72.6941, places=3, msg="RA is incorrect")
 		self.assertAlmostEqual(output[3], -60.9055, places=3, msg="DEC is incorrect")
 
