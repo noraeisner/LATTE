@@ -3213,7 +3213,7 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
 
     # define the durations and the period to test. The period ranges from 0.5 days to the length of the available data
     durations = np.linspace(0.05, 0.2, 10)
-    periods = np.arange(0.5, (np.nanmax(alltimebinned) - np.nanmin(alltimebinned)), 0.01)
+    periods = np.arange(0.5, (np.nanmax(alltime) - np.nanmin(alltime)), 0.01)
 
     model = BoxLeastSquares(alltime, allflux)
     #results = model.autopower(durations, frequency_factor=5.0)
