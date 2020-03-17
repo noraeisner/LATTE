@@ -13,7 +13,7 @@ email: *nora.eisner@new.ox.ac.uk*
 
 *The aim of this code is to provide a series of diagnostic tests which are used in order to determine the nature of events found in *TESS* lightcurves.*
 
-``LATTE`` is an open source Python package that performs standard diagnostic tests to help identify, vet and characterise signals in the *TESS* lightcurves in order to weed out instrumental and astrophysical false positives. The program is designed to allow for a fast, in depth analysis of targets that have already been identified as promising candidates by the main *TESS* pipelines or via alternative methods such as citizen science. The code automatically downloads the data products for any chosen TIC ID (short or long cadence TESS data) and produces a number of diagnostic plots (outlined below) that are compiled in a concise report. 
+LATTE is an open source Python package that performs standard diagnostic tests to help identify, vet and characterise signals in the *TESS* lightcurves in order to weed out instrumental and astrophysical false positives. The program is designed to allow for a fast, in depth analysis of targets that have already been identified as promising candidates by the main *TESS* pipelines or via alternative methods such as citizen science. The code automatically downloads the data products for any chosen TIC ID (short or long cadence TESS data) and produces a number of diagnostic plots (outlined below) that are compiled in a concise report. 
 
 The implemented diagnostic tests are similar to the ‘Data Validation’ steps performed by the Science Processing Operations Center (SPOC)pipeline for the short-cadence data, and by the quick-look pipeline (QLP) for the long-cadence data. However, while the SPOC pipeline tests are performed on a selection of two-minute cadence *TESS* targets only, LATTE allows for the analysis of any *TESS* target with a valid TIC ID, including both the two-minute and thirty-minute cadence targets.
 
@@ -202,6 +202,12 @@ NOTE: all of these arguments (except new-path, auto and targetlist, new-data) ca
 **--sector** You can skip entering the sectors by entering them in the command line with e.g. --sector=2,5. You will need to know in what sectors this target was observed (option in the GUI)
 
 
+### Example
+
+The example below is for TIC 94986319 (TOI TOI 421). 
+
+![Example LATTE](https://github.com/noraeisner/LATTE/blob/master/example_output/LATTE_example_s.gif)
+
 ### LATTE workflow - what is being downloaded, when and why?
 
 Below is an outline of how the code works and when it downloads the various different data files. 
@@ -235,7 +241,6 @@ Below is an outline of how the code works and when it downloads the various diff
 10) The next figure shows the lightcurves of the five closest short-cadence TESS stars to the target. The data for each star is downloaded using the curl scipts. Your terminal window will indicate once each lighcurve has been downloaded sucessfully. 
 
 11) The final step is to compile and save the LATTE data validation report. 
-
 
 
 ### Overview of the main LATTE scipts
