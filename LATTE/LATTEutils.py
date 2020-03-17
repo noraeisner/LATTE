@@ -38,8 +38,41 @@ from matplotlib.widgets import Slider, Button, RadioButtons, TextBox, CheckButto
 from LATTE import filters
 from LATTE import LATTEbrew as brew
 
+'''
+Overview of LATTE scipts:
+
+__main__.py      : Intitialises the parameters, what TIC ID, sector, checks for downloads of the data, FFI or not? 
+
+LATTEutils.py    : All the functions needed to download data and text files, runs the interactive gui, all of the plotting and data handling. 
+
+LATTE_DV.py      : Scipt to combine all of the results from LATTEbrew in order to generate a pdf data validation report.
+
+LATTEbrew.py     : Calls the LATTEutils functions in turn in order to store the results and keeps track of what has been generated. Calls the LATTE_DV.py function to collate all the results.
+
+
+The functions in this scipt are organised as follows: 
+
+1) 3 functions that call the interative GUI plotting for the short cadence and FFI data. There are two functions for the FFI, one that asks the user to 
+identify the aperture sizes manually and one that does it automatically. These functions are called from __main__.py and call the 'brew' scipt at the end. 
+The brew scipt then continues with collating the data by calling the remaining functions in this script. 
+
+2) 4 functions that download the text files needed for the LATTE to run. These are only exectuted the first time that LATTE is run, and when new TESS data is made available. 
+These functions are called from within __main__.py
+
+3) 3 functions that determine the sectors in which the target was observed and TICs of nearest neighbours. 
+
+4) 8 functions needed to download and process the data, both from the FFIs and short cadence data. 
+These functions are called from within LATTEbrew.py and from withint the interact functions in this script.
+
+5) 13 functions for plotting the results, both from the FFIs and short cadence data. 
+These functions are called from within LATTEbrew.py.
+
+4) 4 short functions that are needed in various other functions within this scipt, such as one to bin the data. 
+
+'''
+
 # check whether pyaneti has been sucessfully installed - if it has not been installed, don't give the option to model the data
-# NOTE: in this version the Pyaneti modeling will not work (except on my computer) - this is being handled in the next release.
+# NOTE: in this version the Pyaneti modeling will not work (except on Nora's computer) - this is being handled in the next release.
 
 try:
     from LATTE import pyaneti_LATTE
@@ -52,6 +85,7 @@ except:
 # --------------------------------------------
 
 # the main interactive tool used to identify the times of the transit-like events
+# This function is called from __main__.py
 def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     
     '''
@@ -82,7 +116,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     # ---------------   
 
     # call function to download the data from MAST
-    print ("Start data download.....", end =" ")
+    print ("Start lightcurve data download.....", end =" ")
     alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = download_data(indir, sectors, tic)
     print ("done.\n")
     
@@ -272,11 +306,11 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     # only give the model option if pyaneti has been sucessfully installed
     if pyaneti_installed == True:
         var_ax = fig.add_axes([0.025, 0.34, 0.119, 0.21]) # x, y, width, height
-        save_var = CheckButtons(var_ax, ('Simple','Hide plots', 'North', 'BLS', 'model', 'Save', 'Report'), (False, args.noshow, args.north, False, False, True, True))
+        save_var = CheckButtons(var_ax, ('Simple','Show plots', 'North', 'BLS', 'model', 'Save', 'Report'), (False, args.noshow, args.north, False, False, True, True))
     else:
         var_ax = fig.add_axes([0.025, 0.35, 0.119, 0.2]) # x, y, width, height
-        save_var = CheckButtons(var_ax, ('Simple','Hide plots', 'North', 'BLS', 'Save', 'Report'), (False, args.noshow, args.north, False, True, True))
-    
+        save_var = CheckButtons(var_ax, ('Simple','Show plots', 'North', 'BLS', 'Save', 'Report'), (False, args.noshow, args.north, False, True, True))
+
     # Initial values for each option
     simple = False 
     hide = args.noshow
@@ -290,7 +324,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     def variables(label):
         status = save_var.get_status()
         simple = status[0]
-        hide = status[1]
+        hide = not status[1]
         north = status[2]
         BLS = status[3]
 
@@ -308,7 +342,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     # Add a set of radio buttons for changing the binning of the data
     binning_ax = fig.add_axes([0.035, 0.6, 0.1, 0.15]) # x, y, width, height
     binning_radios = RadioButtons(binning_ax, ('2', '5', '7', '10'), active=0)
-    
+
     # this function accesses the binning functino.
     def binning_button(label):
         line_full_binned.set_xdata(binning(int(label))[0])
@@ -436,7 +470,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
 
     if pyaneti_installed == True:
         simple = end_status[0]
-        hide = end_status[1]
+        hide = not end_status[1]
         north = end_status[2]
         BLS = end_status[3]
         model = end_status[4]
@@ -445,7 +479,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
 
     else:
         simple = end_status[0]
-        hide = end_status[1]
+        hide = not end_status[1]
         north = end_status[2]
         BLS = end_status[3]
         model = False
@@ -484,6 +518,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 
 # interactive tool to identify the aperture masks when run in the FFI mode
+# This function is called from __main__.py
 def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args):
 
     '''
@@ -546,9 +581,11 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
     tpf_list   : list 
         list of the target pixel files (for each sector)
     '''
-
+    # call function to download the data from MAST
+    print ("Start TPF data download.....", end =" ")
     alltime_list, all_md, start_sec, end_sec, in_sec, X1_list, X1flux_list,  X4_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = download_data_FFI_interact(indir, sectors, sectors_all, tic, save = False)
-    
+    print ("done.\n")
+
     # define the button that closes the event
     # pop up warning if no aperture is selected
     def close(event):
@@ -935,7 +972,7 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
     
     # if the auto mode is selected in the command line, the aperture sizes are chosen automatically based on an intensity threshhold.
     else:
-        print ("Start data download.....", end =" ")
+        print ("Start TPF data download.....", end =" ")
         alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = download_data_FFI(indir, sectors, syspath, sectors_all, tic, args)
         print ("done.\n")
     
@@ -1099,10 +1136,10 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
     # only give the model option if pyaneti has been sucessfully installed
     if pyaneti_installed == True:
         var_ax = fig.add_axes([0.025, 0.44, 0.119, 0.21]) # x, y, width, height
-        save_var = CheckButtons(var_ax, ('Simple','Hide plots', 'North', 'BLS', 'model', 'Save', 'Report'), (False, args.noshow, args.north, False, False, True, True))
+        save_var = CheckButtons(var_ax, ('Simple','Show plots', 'North', 'BLS', 'model', 'Save', 'Report'), (False, args.noshow, args.north, False, False, True, True))
     else:
         var_ax = fig.add_axes([0.025, 0.45, 0.119, 0.2]) # x, y, width, height
-        save_var = CheckButtons(var_ax, ('Simple','Hide plots', 'North', 'BLS', 'Save', 'Report'), (False, args.noshow, args.north, False, True, True))
+        save_var = CheckButtons(var_ax, ('Simple','Show plots', 'North', 'BLS', 'Save', 'Report'), (False, args.noshow, args.north, False, True, True))
     
     # Initial values for each option
     simple = False 
@@ -1117,7 +1154,7 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
     def variables(label):
         status = save_var.get_status()
         simple = status[0]
-        hide = status[1]
+        hide = not status[1]
         north = status[2]
         BLS = status[3]
 
@@ -1247,7 +1284,7 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
 
     if pyaneti_installed == True:
         simple = end_status[0]
-        hide = end_status[1]
+        hide = not end_status[1]
         north = end_status[2]
         BLS = end_status[3]
         model = end_status[4]
@@ -1256,7 +1293,7 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
 
     else:
         simple = end_status[0]
-        hide = end_status[1]
+        hide = not end_status[1]
         north = end_status[2]
         BLS = end_status[3]
         model = False
@@ -1302,26 +1339,29 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
 
 
 # --------------------------------------------
-#         Download the data acess files      #
+#         Download the data access files      #
 # --------------------------------------------
 
 # The Functions needed to get the files that know how to acess the data
+# These text files contain the curl scripts needed to download the TESS data (both FFIs and SC data)
+# The files (~ 325M) are stored on your computer in order to make the download of the data faster when LATET is run (1 bulk download vs downloading these curl scipts every time)
 
 def data_files(indir):
     '''
-    Function to download all of the data that we want to the local computer.
+    Function to download all of the text files that we need to the local computer.
     
     Parameters
     ----------
     indir   :   str
         path to where the data will be saved (defaul = "./LATTE_output")
     '''
+    print ("LATTE requires some text files stored on your computer (~")
 
     if not os.path.exists("{}/data/tesscurl_sector_all_lc.sh".format(indir)):
         with open("{}/data/tesscurl_sector_all_lc.sh".format(indir),'w') as f:
             f.write("#all LC file links")
         first_sec = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re-run to download new data)
-        print ("Will download all of the available sectors starting with sector 1")
+        print ("Download all required text files for available sectors starting with sector 1")
         
     else: # if the file already exists check whether there is something in the file
         os.system('tail -n 1 {0}/data/tesscurl_sector_all_lc.sh > {0}/data/temp.txt'.format(indir))
@@ -1330,7 +1370,7 @@ def data_files(indir):
         
         if string == "#all LC file links": # if this is the last (and only) line
             first_sec = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re-run to download new data)
-            print ("Will download all of the available sectors starting with sector 1")
+            print ("Download all required text files for available sectors starting with sector 1")
         else:
             first_sec = int(string.split('-')[5][2:]) # this is the last imported sector 0 start from here
             
@@ -1340,7 +1380,7 @@ def data_files(indir):
         with open("{}/data/tesscurl_sector_all_tp.sh".format(indir),'w') as f:
             f.write("#all LC file links") # give some information at the top of the saved file for later reference (the # means this line will be inored when read back later)
         first_sec_tp = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re-run to download new data)
-        print ("Will download all of the available sectors starting with sector 1")
+        print ("Download all required text files for available sectors starting with sector 1")
         
     else:
         os.system('tail -n 1 {0}/data/tesscurl_sector_all_tp.sh > {0}/data/temp_tp.txt'.format(indir))
@@ -1350,7 +1390,7 @@ def data_files(indir):
         
         if string == "#all LC file links": # if this is the last (and only) line
             first_sec_tp = 0
-            print ("Will download all of the available sectors starting with sector 1")
+            print ("Download all required text files for available sectors starting with sector 1")
         else:
             first_sec_tp = int(string.split('-')[5][2:]) # this is the last imported sector 0 start from here
             
@@ -1370,7 +1410,7 @@ def data_files(indir):
                 Saving recieved content as a png file in binary format
                 '''
                 f.write(r_LC.content)
-                print("finished adding files for sector {}".format(sec))
+                print("Finished adding text files for sector {}".format(sec))
                 # write the contents of the response (r.content)
                 # to a new file in binary mode.    
     
@@ -1423,7 +1463,7 @@ def tp_files(indir):
         with open("{}/data/all_targets_list.txt".format(indir),'w') as f:
             f.write("#all targets file links")
         first_sec = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re run)
-        print ("Will download all of the available sectors starting with sector 1")
+        print ("Download all required TP text files for available sectors starting with sector 1")
     
     else:
         files = np.sort(glob('{}/data/all_targets_S*'.format(indir)))
@@ -1468,7 +1508,7 @@ def tp_files(indir):
             else:
                 start = str(r_target_list.content).find('t  Dec')
                 f.write(r_target_list.content[start-3:])
-                print("finished adding TP sector {}".format(sec))
+                print("Finished adding TP text file for sector {}".format(sec))
 
 def TOI_TCE_files(indir):
     '''
@@ -1497,7 +1537,7 @@ def TOI_TCE_files(indir):
         with open("{}/data/tesscurl_sector_all_dv.sh".format(indir),'w') as f:
             f.write("#all LC file links")
         first_sec = 0 # start with sector 1 but this has to be 0 because the next step of the code adds one (needs to be like this otherwise it will dowload the last sector multiple times when re run)
-        print ("Will download all of the DV report links for all available sectors starting with sector 1... ")
+        print ("Download text file with DV report links for all available sectors starting with sector 1... ")
         
     else:
         os.system('tail -n 1 {0}/data/tesscurl_sector_all_dv.sh > {0}/data/temp.txt'.format(indir))
@@ -1522,7 +1562,7 @@ def TOI_TCE_files(indir):
                 Saving recieved content as a png file in binary format
                 '''
                 f.write(r_TCE.content)
-                print("finished adding DV links for sector {}".format(sec))
+                print("Finished adding DV links for sector {}".format(sec))
 
 def momentum_dumps_info(indir):
     '''
@@ -1533,7 +1573,7 @@ def momentum_dumps_info(indir):
     indir   :   str
         path to where the data will be saved (defaul = "./LATTE_output")
     '''
-    print ("store the times of the momentum dumps for each sector - only needed when looking at the FFIs")
+    print ("Store the times of the momentum dumps for each sector - only needed when looking at the FFIs")
 
     if not os.path.exists("{}/data/tess_mom_dumps.txt".format(indir)):
         with open("{}/data/tess_mom_dumps.txt".format(indir),'w') as f:
@@ -1642,7 +1682,7 @@ def transit_sec(in_sec,start_sec, end_sec, transit_list):
 
 def nn_ticids(indir, transit_sec, tic):
     '''
-    function to find the TIC IDs of the 6 nearest neighbour stars.
+    function to find the TIC IDs of the 6 nearest neighbour stars that were observed by TESS (short cadence).
     
     Parameters
     ----------
@@ -2541,7 +2581,6 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
 
     return alltime_list, allflux, allflux_small, allflux_flat, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
 
-
 def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
     ''''
     Dowloand the data for the 6 nearest neightbour target pixel LC - in the future want to 
@@ -2743,7 +2782,6 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic, test = 'no'):
                     dwload_link.append(i[6])
             
         else:
-    
             future_sectors = []
             # locate the file string
             for s in sector:

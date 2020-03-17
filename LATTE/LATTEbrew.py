@@ -22,12 +22,28 @@ from os.path import exists
 from LATTE import LATTEutils as utils
 warnings.filterwarnings('ignore')
 
+'''
+Overview of LATTE scipts:
+
+__main__.py      : Intitialises the parameters, what TIC ID, sector, checks for downloads of the data, FFI or not? 
+
+LATTEutils.py    : All the functions needed to download data and text files, runs the interactive gui, all of the plotting and data handling. 
+
+LATTE_DV.py      : Scipt to combine all of the results from LATTEbrew in order to generate a pdf data validation report.
+
+LATTEbrew.py     : Calls the LATTEutils functions in turn in order to store the results and keeps track of what has been generated. Calls the LATTE_DV.py function to collate all the results.
+
+
+This scipt has two functions, one for the short cadence data and one for the FFI data. 
+These functions are either called from within __main__.py (if run with input target list), or from within the interact functions in LATTEutils.py (normal mode).
+
+Brew keeps track if any part of the code crashes (e.g. the downloading of the TPF - so that these are omitted in the generation of the DV report).
+'''
 
 def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args):
 	'''
 	This function combines all the results from LATTE and calls all the different functions - 
 	it makes the plots, saves them, runs the BLS model and the pyaneti model before making a PHT DV report (if this option is selected.) 
-	
 	
 	Parameters
 	----------
@@ -150,13 +166,15 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 
 
 	# -----------------------------------
-	#			START PLOTTING		  
+	#			START PLOTTING		  	 - calls functions from LATTEutils.py
 	# -----------------------------------
 	
 	# create a plot of the fulllighcurves with the momentum dumps (MDs) marked and a zoom-in of the marked transits
+	# this plit is saved but not shown (as already shown in the interact part fo the code)
 	utils.plot_full_md(tic, indir, alltime,allflux,all_md,alltimebinned,allfluxbinned, transit_list, args)
 
 	# Get a list of the sectors that have transit marked in them
+	# this is so that we no longer have to loop through all of the sectors, and can focus on the ones which are important.
 	transit_sec = utils.transit_sec(in_sec, start_sec, end_sec, transit_list)
 	
 	# -----------
@@ -169,7 +187,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	print ("Centroid and background plots... done.")
 	# -----------
 
-	# if the 'simple' option is chosen in the GUI, them the code will end here - this is designed a simple quick analysis
+	# if the 'simple' option is chosen in the GUI, then the code will end here - this is designed to provide a quick analysis requiring no TPFs.
 	if simple == True:
 		print ("Simple option was selected, therefore end analysis here.")
 		sys.exit('')
@@ -178,10 +196,10 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 
 	# call function to extract the Target Pixel File information 
 	# this is needed in order to extract the LCs in different aperture sizes.
-	# the data is extracted using the open source LightKurve package as they a built in function to extract LCs using different aperture sizes
+	# the data is extracted using the open source Lightkurve package as they a built in function to extract LCs using different aperture sizes
 	TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic)
 	
-	# if the TPF wasn't corrupt then make the TPF files (only very ocassionally corrupt)
+	# if the TPF wasn't corrupt then make the TPF files (only very ocassionally corrupt but don't want code to crash if it is corrrupt)
 	if (TESS_unbinned_t_l != -111):
 
 		tpf_corrupt = False
@@ -222,24 +240,24 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		
 		'''
 		plot the in and out of transit flux comparison.
-		By default the images are NOT orented north - this is because the reprojectio takes longer to run and for a simple
-		analysis to chekc whether the brightest pixel moves during the transit this is not required.
+		By default the images are NOT oriented north - this is because the reprojection takes longer to run and for a simple
+		analysis to check whether the brightest pixel moves during the transit this is not required.
 		The orientation towards north can be defined in the command line with '--north'.
 		'''
 		if args.north == True:
 			utils.plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, tpf_list, args)
 			print ("In and out of aperture flux comparison with reprojection... done. ")
-	
+		
 		else:
 			utils.plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, tpf_filt_list, args)
 			print ("In and out of aperture flux comparison... done.")
 		# ------------
-	
+		
 		# For each pixel in the TPF, extract and plot a lightcurve around the time of the marked transit event.
 		utils.plot_pixel_level_LC(tic, indir,X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, args)
 		print ("Pixel level LCs plot... done.")
 		# ------------
-	
+		
 	else:
 		tpf_corrupt = True
 		mstar = 1 # need to define mstar otherwise pyaneti will complain - just make it one as an approximation.
@@ -305,6 +323,8 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		print ("done.")
 	# ------------
 
+	# SKIP FROM HERE....
+
 	'''
 	NOTE: CURRENTLY ONLY WORKS ON NORA'S COMPUTER - WILL BE AVAILABLE IN NEXT RELEASE SO PLEASE SCIP THIS PART OF THE CODE
 	If the modelling option is selected (in the GUI), model the transit event using Pyaneti (Barragan et al 2018)
@@ -329,8 +349,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		print ("Pyaneti has not been installed so you can't model anything yet. Contact Nora or Oscar for the LATTE version of the Pyaneti code.")
 		model = False
 
-	# SKIP UNTIL HERE
-
+	# ... UNTIL HERE
 	# ------------
 
 

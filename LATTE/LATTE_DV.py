@@ -226,7 +226,8 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	fig_count += 1
 
 	full_image_text = "Fig {}. Full lightcurve for target TIC {}. The solid red lines at the bottom of the figure indicated the \
-	times of the momentum dumps and the dashed black line(s) show the time(s) of the marked transit event(s).".format(fig_count,tic)
+	times of the reaction wheel momentum dumps and the dashed black line(s) show the time(s) of the marked transit event(s). Momentum dumps \
+	occur around every 2 to 2.5 days and typically last around half an hour.".format(fig_count,tic)
 	
 	ptext = '<font size=8>%s</font>' % full_image_text
 	Story.append(Paragraph(ptext, styles["Normal"]))
@@ -383,7 +384,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		
 		fig_count += 1
 		Story.append(Spacer(1, 10))
-		flux_aperture_text = "Fig {}. The lighcurve around the time of each transit-like event extracted with the SPOC pipeline \
+		flux_aperture_text = "Fig {}. The lightcurve around the time of each transit-like event extracted with the SPOC pipeline \
 			defined aperture (binned:blue, unbinned:grey) and the with an aperture that is 40 per cent smaller (red). The flux is extracted \
 			from the target pixel files (TPFs) and has not been detrended or \
 			corrected for systematics. The vertical orange line indicates the time of the transit-like event.".format(fig_count)
@@ -430,7 +431,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	
 		fig_count += 1
 		Story.append(Spacer(1, 10))
-		flux_aperture_text = "Fig {}. Diffrence images for target TIC {} for each transit like event. \
+		flux_aperture_text = "Fig {}. Difference images for target TIC {} for each transit like event. \
 		Left: mean in-transit flux(left). Middle: mean out-of-transit flux. Right: difference between the mean out-of-transit and mean in-transit flux. \
 		Ensure that the change in brightness occurs on target.".format(fig_count, tic)
 		

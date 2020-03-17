@@ -27,6 +27,18 @@ The above link shows how to change the matplolib cbook __init__ file in order to
 
 # REQUIRES MATPLOLIB 3.2 (there is a bug in 3.1 the current stable version - as of January 2020)). 
  --- pip install matplotlib==3.2.0rc1 (still in testing?)
+
+
+Overview of LATTE scipts:
+
+__main__.py      : Intitialises the parameters, what TIC ID, sector, checks for downloads of the data, FFI or not? 
+
+LATTEutils.py    : All the functions needed to download data and text files, runs the interactive gui, all of the plotting and data handling. 
+
+LATTE_DV.py      : Scipt to combine all of the results from LATTEbrew in order to generate a pdf data validation report.
+
+LATTEbrew.py     : Calls the LATTEutils functions in turn in order to store the results and keeps track of what has been generated. Calls the LATTE_DV.py function to collate all the results.
+
 '''
 
 
@@ -34,6 +46,7 @@ The above link shows how to change the matplolib cbook __init__ file in order to
 # ------------------------------------------------
 
 if __name__ == '__main__':
+	# these are all the input parameters that the user can (but doesn't have to) chose to identify in the command line.
 	ap = ArgumentParser(description='Lightcurve Analysis Tool for Transiting Exoplanets')
 	ap.add_argument('--new-data', action='store_true')
 	ap.add_argument('--tic', type=str, help='the target TIC id, if blank will be prompted to enter', default = 'no')
@@ -51,12 +64,13 @@ if __name__ == '__main__':
 
 	args = ap.parse_args()
 
+
 	# ------------------------------------------------
 	# Check what the current path is - when the program is first downloaded the path is set to 'no/path/set/yet' and the user is automatically prompted to change'no/path/set/yet'
-	
-	# get the path to where the package is installed. This is where the configuration file and the images (for the DV report are stored)
+	# Get the path to where the package is installed. This is where the configuration file and the images (for the DV report are stored)
 
 	syspath = str(os.path.abspath(utils.__file__))[0:-14]
+	# ----------
 
 	def yes_or_no():
 		'''
@@ -72,7 +86,17 @@ if __name__ == '__main__':
 		else: # if anything else is entered assume that this is a 'no' and continue with the old path
 			return False	 
 	
-	# check whether the output path exists
+	# ------------------------------
+	# ---- INITIALISE THE CODE -----
+	# ------------------------------
+
+	'''
+	This first part of the code 1) ensures that an input and output path has been defined (and allows the user to change it if necessary)
+	The path links to where the curl scipt files are stored and to where the output files will be stores. 2) Creates the output file if it doens't
+	already exist, and 3) downloads the text files if run for the first time or if stated to download. 
+	'''
+
+	# check whether a path already exists
 	if not os.path.exists("{}/_config.txt".format(syspath)):
 
 		# if it doesn't exist ask the user to put it in the command line
@@ -85,8 +109,9 @@ if __name__ == '__main__':
 		print("\n New path: " + indir)
 	
 		# this is also the first time that the program is being run, so download all the data that is required.
-		print ("\n Download the data files required ... " )
-		print ("\n This will take a while but luckily it only has to run once..." )
+		print ("\n Download the text files required ... " )
+		print ("\n Only the manifest text files (~325 M) will be downloaded and no TESS data." )
+		print ("\n This step take a while but luckily it only has to run once..." )
 
 		# ------------------------------------------------
 		#check whether the chosen (output) directory already exists, and if it doesn't create the directory.
@@ -131,7 +156,7 @@ if __name__ == '__main__':
 	
 
 	# ------------------------------------------------
-	#check whether the chosen (output) directory already exists, and if it doesn't create the directory.
+	# check whether the chosen (output) directory already exists, and if it doesn't create the directory.
 	if not os.path.exists("{}".format(indir)):
 		os.makedirs(indir)
 
@@ -156,23 +181,30 @@ if __name__ == '__main__':
 		utils.momentum_dumps_info(indir)
 		# -----
 	
+
+
 	# -----------  INTERACTIVE VERSION  ------------
 	# ---------------------------------------------
 	
 	'''
-	
-	NOTE: this requires you to have Tkinter installed. Tkinter currently does not work with certain new Mac operating systems.
+	This section starts the interactive versio of the code:
+
+	1) asks to enter the TIC ID
+	2) identifies in which sectors the target was observed and asks the user to identify which sectors should be analysed
+
+	NOTE: this part of the code requires you to have Tkinter installed. Tkinter currently does not work with certain new Mac operating systems.
 	In order to run LATTE with an input list and not interatcively, state the path to the csv file when running the program.
 	csv file must have format: "TICID, sectors, transits, BLS, model" - see example.
 	The TIC ID and Sectors to look at can also be stated in the command line as an argument to save time
 	The interactive tool is for ease of use and to avoid having to understand how to use the command line.
 	'''
 	
-	# Check whether the a target list has been defined.
+	# Check whether the a target list has been defined in the command line. If so, the code will not ask for a TIC ID or a sector 
+	# as these would be listed in the input file and the code will run automatically. 
 	if args.targetlist == 'no': 
 
 		# Check whether the tic ID and the sector have already been entered
-		# If both the sectors and the tic ID are already entered then TKinter does not need to be loaded
+		# If both the sectors and the TIC ID are already entered then TKinter does not need to be loaded
 		if args.tic != 'no' and args.sector != 'no':
 			tic = str(args.tic)
 			sectors = str(args.sector)
@@ -188,22 +220,22 @@ if __name__ == '__main__':
 					os.makedirs(newpath)
 
 			# --------
-			# Run a function called TESS-point. This returns wthe sectors in which the target has 
+			# Run a function called TESS-point. This returns the sectors in which the target has 
 			# been observed as well as the RA and DEC of the target. 
 			sectors_all, ra, dec = utils.tess_point(indir, tic) 
 			# --------
 
-		# if either the tic or the sectors or both have not already been identified, run Tkinter (interactive tools)
+		# --------------------------------
+		# If either the TIC or the sectors or both have not already been identified, run Tkinter (interactive tools)
 		
-
 		else:
 
 			# make a GUI interface with TKinter
 			ROOT = tk.Tk()
 			ROOT.withdraw()
+
 			# if this hasn't already been identified as an FFI through the command line, give the option to chose this when entering the TIC ID
 			if args.FFI == False:
-
 				# -----------
 				class TICprompt(simpledialog.Dialog):
 				
@@ -239,7 +271,7 @@ if __name__ == '__main__':
 					args.FFI = True
 
 			else: # if this is a FFI, don't give the FFI option again
-				# has the tic already been defined?
+				# has the TIC already been defined? If not, ask for the TIC ID with a text box. 
 				if args.tic == 'no':
 	
 					# load first prompt window which asks for TIC ID	
@@ -263,8 +295,8 @@ if __name__ == '__main__':
 
 				sectors_all, ra, dec = utils.tess_point(indir, tic) 
 		
-				# The user is shown a list of the sectors im which the target is observed 
-				# and asked to state whichones they want to assess
+				# The user is shown a list of the sectors in which the target is observed 
+				# and asked to state which ones they want to assess
 
 				sectors = simpledialog.askstring(title="Sectors",
 												  prompt="TIC {} was observed in sector(s):\n {}. \n Enter the ones you wish to look at (e.g. 1,4) or 'all' for all of them.".format(tic, sectors_all))
@@ -282,7 +314,7 @@ if __name__ == '__main__':
 			sectors = 'all'
 
 		
-		# if not all of them are chose, convert the input list (given as a string) into a python readable list
+		# if not all of them are chosen, convert the input list (given as a string) into a python readable list
 		if sectors != 'all':
 			sectors = sectors.split(",")
 			sectors = [int(i) for i in sectors]
@@ -296,23 +328,32 @@ if __name__ == '__main__':
 		else:
 			print ("Will look at sector(s):  {} \n".format(str(sectors)[1:-1]))
 	
-		# start up LATTE interactive where the transit times can be chosen manually 
-		# this works differently for FFI data and target files as the data has a different format
+
+		# -------------------------------------
+		# ---- OPEN INTERACTIVE MATPLOTLIB ----
+		# -------------------------------------
+
+		''' Start up LATTE interactive where the transit times can be chosen manually 
+		 	this works differently for FFI data and target files as the data has a different format. 
+		 	At this point the code continues in the LATTE_utils scipt. 
+		 	This scipt (__main__.py) is only to set up the parameters for the target and to intitialise the code. 
+		'''
 
 		if args.FFI == False:
 			utils.interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args)  # the argument of whether to shos the images or not 
 		else:
 			utils.interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
 		
-		# Done
+		# Done.
 
 	# ---------------------------------------
 	# ---------------------------------------
 	#			RUN WITH INPUT FILE
 	# ---------------------------------------
-	
-	else: #if run with input targetlist - either with phase fold information or with transit time information
+	#The below code is executed if the 'input target list' option has been chose - this is defined in the command line. 
+	#The code is run with input targetlist - either with phase fold information or with transit time information.
 
+	else:
 		try:
 			targetlist = pd.read_csv("{}".format(args.targetlist)) # If a path is defined, open the input file
 		except:
@@ -331,10 +372,10 @@ if __name__ == '__main__':
 
 			tic = str(int(row['TICID']))
 
-			existing_files = glob("{}/*{}*".format(indir, tic))
-			
 			# check whether this file already exist
 			# if it already exists it will only be overwritten if --o function has been enabled to avoid file loss.
+			existing_files = glob("{}/*{}*".format(indir, tic))
+			
 			if (len(existing_files) > 0)  and (args.o != True): 
 				print ("This file already exists therefore SKIP. To overwrite files run this code with --o in the command line.")
 				failed_tics = [] #keep track of the TIC IDs that failed to complete
@@ -343,9 +384,12 @@ if __name__ == '__main__':
 
 			# --- WHAT SECTORS WAS IT OBSERVED IN? ---
 
+			# load tess-point to identify the sectors tht it was observed in.
+			# need to know whether the target actually was observed in the stated sector. 
 			sectors_all, ra, dec = utils.tess_point(indir, tic) 
 			sectors_in = str(row['sectors'])
 			
+			# convert the input list of sectors (string) to a list of numbers.
 			try:
 				sectors_in = ast.literal_eval(sectors_in)
 				if (type(sectors_in) == int) or (type(sectors_in) == float):
@@ -366,6 +410,7 @@ if __name__ == '__main__':
 
 			failed_tics = [] #keep track of the TIC IDs that failed to complete
 
+
 			# ---- IF NO TRANSIT MARKED RUN WITH INTERFACE ----
 			if (pp == False) and (type(row['transits']) == float):
 				utils.interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
@@ -374,6 +419,7 @@ if __name__ == '__main__':
 
 				if pp == False: # if the transits were identified and no period information
 					
+					# extract the information of the tiems of the transit like events. 
 					transit_list_in = (row['transits'])
 					transit_list = ast.literal_eval(transit_list_in)
 					
@@ -383,8 +429,11 @@ if __name__ == '__main__':
 						transit_list = [transit_list]
 					else:
 						transit_list = list(transit_list)
+				
+				# if the user entered a T0 adn a period, the code will calcualte the times if the transit like events and use that. 
+
 				else:
-					# get up to 3 markings - more than that will just be cluttered and will take too long
+					# get up to 3 markings - more than that will just be cluttered and will take too long - this can be changed later if more or less are desired. 
 					transit_list = []
 					period = row['period']
 					t0 = row['t0']
@@ -393,7 +442,7 @@ if __name__ == '__main__':
 						if transit < (t0 + 20):
 							transit_list.append(float(transit))
 
-				
+				# extract the other parameters from the input file.
 				BLS_in = row['BLS']
 				model_in = row['model']
 				FFI_in = row['FFI']
@@ -424,7 +473,6 @@ if __name__ == '__main__':
 
 				if args.FFI == False:
 					try:
-
 						# ----------------------------------------
 						# 			 DOWNLOAD DATA 
 						# ----------------------------------------
@@ -436,6 +484,7 @@ if __name__ == '__main__':
 						
 						brew.brew_LATTE(tic, indir, syspath,transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 					except:
+
 						failed_tics.append(tic)
 						print ("TIC {} failed to complete. Continue anyway. You can find a list of the failed IDs stored in the output folder.".format(tic))
 						continue
@@ -455,6 +504,7 @@ if __name__ == '__main__':
 						failed_tics.append(tic)
 						print ("TIC {} failed to complete. Continue anyway. You can find a list of the failed IDs stored in the output folder.".format(tic))
 						continue	
+
 
 		# ----- ALL FILES IN INFILE PROCESSED -----
 		# save a list of the failed TIC IDs
@@ -482,6 +532,10 @@ if __name__ == '__main__':
 						writer.writerow([val])
 
 
+	# ---------------------------------------------------------------
+	# ------------------------- LAST STEP ---------------------------
+	# ---------------------------------------------------------------
+
 	# end by changing the name of the folder to include the nicknane if defined
 	# this allows users to keep track of their targets more easily e.g. Planet Hunters TESS candidates are named after pastries.
 		
@@ -489,5 +543,6 @@ if __name__ == '__main__':
 		os.system("mv {}/{} {}/{}_{}".format(indir, tic, indir, tic, args.nickname))
 
 	print ("\n  Complete! \n ")
+
 # End.
 

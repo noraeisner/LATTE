@@ -13,6 +13,11 @@ email: *nora.eisner@new.ox.ac.uk*
 
 *The aim of this code is to provide a series of diagnostic tests which are used in order to determine the nature of events found in *TESS* lightcurves.*
 
+``LATTE`` is an open source Python package that performs standard diagnostic tests to help identify, vet and characterise signals in the *TESS* lightcurves in order to weed out instrumental and astrophysical false positives. The program is designed to allow for a fast, in depth analysis of targets that have already been identified as promising candidates by the main *TESS* pipelines or via alternative methods such as citizen science. The code automatically downloads the data products for any chosen TIC ID (short or long cadence TESS data) and produces a number of diagnostic plots (outlined below) that are compiled in a concise report. 
+
+The implemented diagnostic tests are similar to the ‘Data Validation’ steps performed by the Science Processing Operations Center (SPOC)pipeline for the short-cadence data, and by the quick-look pipeline (QLP) for the long-cadence data. However, while the SPOC pipeline tests are performed on a selection of two-minute cadence *TESS* targets only, LATTE allows for the analysis of any *TESS* target with a valid TIC ID, including both the two-minute and thirty-minute cadence targets.
+
+The code is designed to be fully interactive and does not require any prior knowledge of python coding. 
 
 --------
 --------
@@ -23,9 +28,9 @@ LATTE requires python3 to be installed on your computer, which can be download f
 
 	pip3 install tessLATTE      
 
-In order for LATTE to work you will need to have the right versions of certain modules installed, so downloading it in a virtual environemt. **Note: ensure that the matplotlib version that you are using is v3.2.0rc1 (pip install matplotlib==3.2.0rc1). You will also need a module called TKinter installed. If this is not already installed please use: sudo apt-get install python3-tk .**
+In order for LATTE to work you will need to have the right versions of certain modules installed, so downloading it in a virtual environemt. **Note: ensure that the matplotlib version that you are using is v3.2.0rc1 (pip install matplotlib==3.2.0rc1). You will also need a module called TKinter installed. If this is not already installed please use: sudo apt-get install python3-tk.**
 
-The first time that the program is run you will be prompted to enter a path to a file on your computer where all the output data will be stored (this path can be changed later using --new-path). The first time that the code is run it will also have to download the text data files from MAST, which are around 325M. This download will only have to run in full once but may take a couple of minutes to complete.
+The first time that the program is run you will be prompted to enter a path to a file on your computer where all the output data will be stored (this path can be changed later using --new-path). The first time that the code is run it will also have to download the text data files from MAST, which are around 325M. This download will only have to run in full once but may take a couple of minutes to complete. Please note that this step does not download any of the actual TESS data, but only text files that contain curl scipts that are needed to download individual light curves when LATTE is run. This one time bulk download incerases the speed of LATTE by ensuring that these curl scipts do not have be be downloaded everytime that the code is executed.
 
 If the code doesn't run when you first install it, this could be due to an SSL issue. To check, please try executing the following command from your command line: **python -m tess_stars2px -t 261136679**.
 
@@ -72,7 +77,7 @@ Binning Factor:
 Settings:
 
 - Simple: only run the most basica diagnostic tests (not suing TPF). This is for a very quick analysis. 
-- Hide Plots: Don't display the plots after they are made (will still store them). This speeds up the code.
+- Show Plots: Display the plots after they are made. This slows down the code but allows you to see and analyse them as they are being made.
 - North: Align all the images due North (this slows down the code).
 - BLS: Run a Box-Least-Squares algorithm that searches for periodic signals in the lightcurve. 
 - Save: Save all the images (default this is already checked)
@@ -95,19 +100,32 @@ The code will then generate download and process all of the data. Note that all 
 
 ![Full LC](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_fullLC_md.png)
 
+The solid red lines at the bottom of the figure indicated the times of the reaction wheel momentum dumps and the dashed black line(s) show the times of the marked transit events. Momentum dumps occur around every 2 to 2.5 days and typically last around half an hour. This can affect the satellite pointing, resulting in spurious transit-like signals. 
+	
+
 - Background flux around the times of the marked transit event(s).
 
 ![Background Flux](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_background.png)
+
+Enhanced scattered light in the telescope optics can cause the background flux to rise sharply each time TESS approaches the perigee of its eccentric orbit around the Earth. Additionally, solar system objects, such as asteroids passing through the field of view will show up as a spike in the background flux. Both of these can result in a transit-like signal in the light curve. 
+
 
 - Centroid positions around the time of the marked transit event(s).
 
 ![Centroid](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_centroids.png)
 
+The black points shows the CCD column and row position of the target’s flux-weighted centroid. The red shows the CCD column and row local motion differential velocity aberration (DVA), pointing drift, and thermal effects. Significant spikes in either of these at the time of the transit-like event suggest that the signal is not due to a transiting planet. 
+
+
 - The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
 
 ![Aperture Size](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_aperture_size.png)
 
+For a transiting planet, the transit shape and depth are expected to remain constant when extracted with different aperture sizes. Conversely, they are expected to change if the signal is due to a blended eclipsing binary. This is because for blended binaries, the signal is not centred on the target and instead originates from elsewhere in the field of view, thus changing the shape and depth of the signal with different apertures. I caution that if the selected aperture is not centred on the target, this test can lead to the mis-interpretation of a moving signal. I, therefire, recomend to always check the figure showing the used apertures before interpreting these results. These data are extracted from the Target Pixel Files (TPFs) and are neither detrended nor corrected for systematics.
+
+
 - The apertures used for the extraction. Please note that for very bright and very faint stars the aperture selection for the smaller aperture may not work correctly so these should be checked in order to correctly interperet the results.
+
 
 ![Apertures](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_apertures_0.png)
 
@@ -115,19 +133,27 @@ The code will then generate download and process all of the data. Note that all 
 
 ![In and out of transit flux comaprison](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_flux_comparison.png)
 
+A plot showing the average in-transit and average out of-transit flux as well as the difference between the two. A change in spatial distribution of the flux suggests that the transit-like event is caused by a blend with a background eclipsing binary. The data are extracted from the TPFs and corrected for systematic effects using Principal Component Analysis. 
+
 - The average flux of the target pixel file with the locations of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
 
 ![Nearby stars](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_star_field.png)
 
-- The lightcurves of the 6 closest stars that were also observed by *TESS* (TP files).
+A plot showing the location of nearby stars brighter than *TESS* magnitude 17 as queried from the Gaia Data Release 2 catalog and the DSS2 red field of view around the target star. The sizes of the markers indicate the positions of the Gaia stars relate to the magnitude of each companion. The *Astropy reproject* module is used to align the plots such that north points towards the top of the page.
+
+- The lightcurves of the 5 closest stars that were also observed by *TESS* (TP files).
 
 ![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_nearest_neighbours.png)
+
+Lightcurves of the five two-minute cadence stars closest to the selected target. The occurrence of similar transit-like events in nearby lightcurves may suggest that the signal is caused by a background event or a blended eclipsing binary.
 
 - A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
 
 ![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_individual_pixel_LCs_0.png)
 
-- (optional) Two simple BLS plots. The second with the highest detected signal-to-noise transits from the initial run removed.
+A plot showing lightcurves extracted for each individual pixel around the target. The data are extracted from the TPFs and detrended using a third order spline fit. If the transit-like signal is more prominent in pixels that are not centred on the target star, this suggests that the signal is caused by a blended background eclipsing binary. 
+
+- (optional) Two simple BLS plots that look for periodic signals in the data. The second with the highest detected signal-to-noise transits from the initial run removed.
 - (in progress, will be available in next release of LATTE) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017). 
 
 **FFI Mode**
@@ -143,14 +169,13 @@ The code will then generate download and process all of the data. Note that all 
 - (optional) Summary of the BLS results. 
 - (optional) Fitting parameters with uncertainties from the modelling. 
 
-
 ### Arguments
 
 NOTE: all of these arguments (except new-path, auto and targetlist, new-data) can be changed as option in the GUI. They are arguments in case the same options wish to be run multiple times and the user therefore wishes to identify them in the command line when the program is executed.
 
 **--new-data**  The code requires multiple text files to be stored on your computer in order to run - these are downloaded automatically from the MAST server. The first time the proghram is run, and any time that there is new data available, add **--new-data** to the command line when running the program. The code checks what data has already been downloaded and doesn't re-download anything that already exists.
 
-**--auto** When looking at the FFIs, the default option is that you choose both the large and small apertures interactivelty. In order for the system to choose them run the command with '--auto'. 
+**--auto** When looking at the FFIs, the default option is that you choose both the large and small apertures interactivelty. In order for the system to choose them run the command with '--auto'.
 
 **--targetlist***=path/to/the/csv/input/file* instead of entering the information manually everytime, you can provide LATTE with an input file which lists all the TIC IDs and the times of the transit events. Look at the example file to see the required format of the information.
 
@@ -171,6 +196,54 @@ NOTE: all of these arguments (except new-path, auto and targetlist, new-data) ca
 **--tic** You can skip the box to enter the tic ID by entering it in the command line with e.g. --tic=55525572. 
 
 **--sector** You can skip entering the sectors by entering them in the command line with e.g. --sector=2,5. You will need to know in what sectors this target was observed (option in the GUI)
+
+
+### LATTE workflow - what is being downloaded, when and why?
+
+Below is an outline of how the code works and when it downloads the various different data files. 
+
+1) When the code is first exectuted, a number of text files are downloaded which are requiredfor the code run run more quickly for all subsequent runs. These include: 
+
+	a) Two text files for each TESS observational sector, one for the short cadence light curves, and one for the target pixel files, which contain curl commands that link to the download of each individual TESS light curve. These are simply text files and no actual TESS data and will only have to be downlaoded once for each sector. This is in order to increase the speed of the code later on. These files are around 3.9 MB each.
+
+	b) One text file for each sector containing the RA, Dec and TESS magnitude for each target (760 KB per file). This information is used to identify tge TIC IDs of the 5 closests TESS short-cadence targets.
+
+	c) One file that lists the times of the momentum dumps across all of the sectors (23 KB). In order to generate this file one lightcurve is downloaded from each sector and the data extracted. These lightcurves are openend but never saved. This is only needed when looking at teh FFIs.
+
+	d) A list of all of the confirmed TOIs (274 KB) and all of the targets that were flagged as TCEs by the SPOC pipeline (20.2 MB). 
+
+2) When you run LATTE, you will first be prompted to enter the TIC ID. Once the TIC ID has been entered, LATTE calls a program known as 'tess-point', which tells us in which TESS osbervational sectors this target was osberved in. This information is stored in a temporary text file so that it can be accessed by the code later on. 
+
+3) You are then prompted to enter the observational sectors that you want to look at in more detail. At this point LATTE opens the short cadence text files for each observational sector that you entered, and uses the curl scipts for the relevant TIC ID to download a short-cadence light curve (2MB per light curve). The more sectors that you stated to look at, the longer this step will take. If you chose the 'simple' option within the TESS GUI, this will be the only data that is downloaded. 
+
+4) Once you have identified the times of the transit like events, the code will generate a plot showing the background flux, and one showing the mean centroid positions. These plots use the alreadt downloaded lightcurve file. 
+
+5) Next, the code will download the target pixel file using the lightkurve package (unless you run the 'simple' mode). This file is downlaoded once the centroid plot has been closed and used to extract lighcurves with two different aperture sizes. Due to the size of the file and the time taken to determine the optimal aperture size, this step may take a couple of seconds to complete. 
+
+6) The next figure shows the brightests stars surrounding the target, both on the average TPF data and on an SDSS image. The target pixel files are downloaded directly from the MAST server at this stage (48 MB per light curve), using the previously downlaoded curl scripts. This file is larger than the light curve  data and will therfore take longer to download. This file will be used for multiple plots. If the 'north' option has been selected, the image will be reprojected such that both images are orentied such that North is directed upwards. This option takes longer.
+
+7) The next figure compares the flux in-transit to out-of-transit for each marked transit-like event. This uses the already downlaoded TPF and should therefore not take long to load. 
+
+8) The next figure shows a lightcurve extracted for each pixel surrounding the target around the time of the marked transit-like event using the already downlaoded TPF. . This is done individually for each amrked transit and will therefore take longer if more transit have been identified. Your terminal window will indicate how much longer this step takes to run. 
+
+9) If more than one transit-like event has been identified, the lightcurve will be phase folded. This uses the previously downlaoded lightcurve file and should be completed very quickly. 
+
+10) The next figure shows the lightcurves of the five closest short-cadence TESS stars to the target. The data for each star is downloaded using the curl scipts. Your terminal window will indicate once each lighcurve has been downloaded sucessfully. 
+
+11) The final step is to compile and save the LATTE data validation report. 
+
+
+
+### Overview of the main LATTE scipts
+
+__main__.py      : Intitialises the parameters: TIC ID, Sector, FFI or not, run with input file or not, check that the data has been downloaded etc. In brief, this code is designed check that all of the input parameters are consistent with one another and informs the rest of the code how to run. 
+
+LATTEutils.py    : All the functions needed to download data and text files, function to run the interactive GUI and all of the plotting and data handling. Functions in this scipt are called both from 'main' and from 'brew'.
+
+LATTE_DV.py      : Scipt to combine all of the results from LATTEbrew in order to generate a pdf data validation report.
+
+LATTEbrew.py     : Scipt that calls the LATTEutils functions in turn in order to store the results. Calls the LATTE_DV.py function to collate all the results at the end.
+
 
 ### Perform automated tests
 
