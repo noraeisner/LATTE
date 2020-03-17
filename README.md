@@ -61,7 +61,7 @@ In *FFI mode* the data is downloaded using TESScut and the data detrended using 
 
 In order to efficiently generate diagnostic plots for multiple targets without having to interactively enter the target TIC IDs, ``LATTE`` can be executed with an input file that lists the TIC IDs, the times of the transit-like events, and the observational sectors to consider (if known). See example. In the cases where the times of the transit events or the sectors have not been entered, the user is prompted to enter these manually via the GUI, as descibed above. For longer target lists the code can also be parallelized (see example). If you want to run it with this mode, enter: 
 
-	python3 -m LATTE --targetlist*=path/to/the/csv/input/file*
+	python3 -m LATTE --targetlist=path/to/the/csv/input/file
 
 The program will skip targets that have already been analysed by you, so if you want to overwrite data add '--o' to the command.
 
