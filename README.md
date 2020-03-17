@@ -204,9 +204,18 @@ NOTE: all of these arguments (except new-path, auto and targetlist, new-data) ca
 
 ### Example
 
-The example below is for TIC 94986319 (TOI TOI 421). 
+Below is a short video that shows how to run LATTE for example target TIC 94986319 (TOI 421). The the output files that this example produces can be found in the folder called 'example_output'. 
 
 ![Example LATTE](https://github.com/noraeisner/LATTE/blob/master/example_output/LATTE_example_s.gif)
+
+If you want to chnange the input/output path, change the terminal command to: 
+
+	python -m LATTE --new-path
+
+and if you want to download new data (or check for new data) use the command: 
+
+	python -m LATTE --new-data
+
 
 ### LATTE workflow - what is being downloaded, when and why?
 
