@@ -51,11 +51,11 @@ Once a TIC ID has been entered, the program will tell you in what sectors that t
 
 The '*normal mode*' looks at the short-cadence *TESS* data which has already been detrended and extracted by the SPOC pipeline. Optimal aperture lightcurve extraction aperture sizes have therefore already been identified and do not need to be selected manually.
 
-
 **FFI Mode**
 
-In *FFI mode* the data is downloaded using TESScut and the data detrended using PCA, a moving average filter and k-sigma clipping. Unlike the *TESS* 2-minute cadence targets, the FFIs do not come with a pre-chosen optimal aperture. By default, the user is given the option to manually select the pixels within each aperture for a 'large' and a 'small' aperture. This GUI opens automatically and the two apertures are selected by clicking on the desired pixels in the interface. The two (large and small aperture) lightcurves are simultaneously displayed. When the FFI mode is run with the command '--auto', the aperture size is chosen manually using a threshold flux value centred at the midpoint of the postage stamp.
+In *FFI mode* the data is downloaded using TESScut and the data detrended using PCA, a moving average filter and k-sigma clipping. Unlike the *TESS* 2-minute cadence targets, the FFIs do not come with a pre-chosen optimal aperture. By default, the user is given the option to manually select the pixels within each aperture for a 'large' and a 'small' aperture. This GUI opens automatically and the two apertures are selected by clicking on the desired pixels in the interface (see image below). The two (large and small aperture) lightcurves are simultaneously displayed. When the FFI mode is run with the command '--auto', the aperture size is chosen manually using a threshold flux value centred at the midpoint of the postage stamp.
 
+![FFI Example](https://github.com/noraeisner/LATTE/blob/master/paper/Fig2.png)
 
 ## Input target list
 
@@ -67,15 +67,20 @@ The program will skip targets that have already been analysed by you, so if you 
 
 ### Transit time selection
 
-Once you have identified the TIC ID, the observational sectors and the aperture sizes (*FFI mode* only), you will see a screen that has the full lighcurve as well as a zoom in of the lightcurve. The solid red line across the full lightcurve lets you know where on the lighcurve you are zooming in on. Click on the top (full) or bottom (zoomed in) plots to change the location of the zoom in until the red vertical line is centred on the mid-point of a transit-event. When you are happy with the location press the 'Add Time' button below the plots in order to record this time (in TBJD) . You can delete wrongly entered times with the 'Delete time'. The saved times will be shown on the screen. The position of the red line can also be changed by dragging the teal coloured 'Transit' slider with your mouse. The y-scale of the plots can be changed with the grey coloured slider.
+Once you have identified the TIC ID, the observational sectors and the aperture sizes (*FFI mode* only), you will see a screen that has the full lighcurve as well as a zoom in of the lightcurve (see figure below). The solid red line across the full lightcurve lets you know where on the lighcurve you are zooming in on. Click on the top (full) or bottom (zoomed in) plots to change the location of the zoom in until the red vertical line is centred on the mid-point of a transit-event. When you are happy with the location press the 'Add Time' button below the plots in order to record this time (in TBJD). You can delete wrongly entered times with the 'Delete time'. The saved times will be shown on the screen. The position of the red line can also be changed by dragging the teal coloured 'Transit' slider with your mouse. The y-scale of the plots can be changed with the grey coloured slider.
+
+![Interface Example](https://github.com/noraeisner/LATTE/blob/master/paper/interface_explained.png)
+
 
 Additional options are displayed to the left of the plots.
+
+Sector Selection: 
+- The sectors that you have chosen to look at are listed in the 'Sector' bar below the plot. You can change the sector to look at by clicking on the corresponding number in the bar, or on 'all' too look at all of them. Alternatively you can use the arrows to the right of the bar to scroll through them. Only the top panel will change. 
 
 Binning Factor: 
 - change the binning of the top plot (only available in the normal and not FFI mode)
 
 Settings:
-
 - Simple: only run the most basica diagnostic tests (not suing TPF). This is for a very quick analysis. 
 - Show Plots: Display the plots after they are made. This slows down the code but allows you to see and analyse them as they are being made.
 - North: Align all the images due North (this slows down the code).
@@ -84,7 +89,6 @@ Settings:
 - Report: Generate a pdf file at the end of the code to summaise the findings (default this is already checked).
 
 Finally, there is an optional box to enter a 'Memorable name' for the candidate. This name is used to store the data at the end in order to make identifying certain targets easier.
-
 
 Once all the options have been chosen and the transit times stored (you have to enter at least one transit time), press the orange 'Done' button to continue.
 

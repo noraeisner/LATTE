@@ -27,6 +27,10 @@ from astropy.stats import BoxLeastSquares
 from matplotlib.patches import Rectangle
 from lightkurve import TessTargetPixelFile
 
+import matplotlib.widgets
+import matplotlib.patches
+import mpl_toolkits.axes_grid1
+
 from tess_stars2px import tess_stars2px_function_entry
 from reproject import reproject_interp, reproject_exact
 from reproject.mosaicking import find_optimal_celestial_wcs
@@ -37,6 +41,8 @@ from matplotlib.widgets import Slider, Button, RadioButtons, TextBox, CheckButto
 # custom modules
 from LATTE import filters
 from LATTE import LATTEbrew as brew
+
+
 
 '''
 Overview of LATTE scipts:
@@ -80,6 +86,7 @@ try:
 except:
     pyaneti_installed = False
 
+pyaneti_installed = False
 # --------------------------------------------
 # -----------------interact ------------------
 # --------------------------------------------
@@ -114,6 +121,8 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
             new_shape[1], arr.shape[1] // new_shape[1])
         return arr.reshape(shape).mean(-1).mean(1)
     # ---------------   
+    # this needs to be global for the sector slider
+    global in_sec
 
     # call function to download the data from MAST
     print ("Start lightcurve data download.....", end =" ")
@@ -128,7 +137,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     # Plot the interactive plot - uses matplolib
     # -------------------------
     
-    fig, ax = plt.subplots(2, 1, figsize=(10,7))
+    fig, ax = plt.subplots(2, 1, figsize=(11,7.5))
     plt.tight_layout()
 
     # Adjust the plots region to leave some space for the sliders and buttons
@@ -163,6 +172,87 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
         return [time_binned, flux_binned]
     # ---------------
 
+    # define the slider that let's you chose the sector to look at 
+    class PageSlider(matplotlib.widgets.Slider):
+    
+        def __init__(self, ax, label, numpages = 10, valinit=0, valfmt='%1d', 
+                     closedmin=True, closedmax=True,  
+                     dragging=True, **kwargs):
+        
+            self.facecolor=kwargs.get('facecolor',"w")
+            self.activecolor = kwargs.pop('activecolor',"b")
+            self.fontsize = kwargs.pop('fontsize', 10)
+            self.numpages = numpages
+    
+            super(PageSlider, self).__init__(ax, label, 0, numpages, 
+                                valinit=valinit, valfmt=valfmt, **kwargs)
+        
+            # make it so that numpages is the index of the array of the 
+            global in_sec
+
+            self.poly.set_visible(False)
+            self.vline.set_visible(False)
+            self.pageRects = []
+            for i in range(numpages):
+
+                facecolor = self.activecolor if i==valinit else self.facecolor
+                r  = matplotlib.patches.Rectangle((float(i)/numpages, 0), 1./numpages, 1, 
+                                    transform=ax.transAxes, facecolor=facecolor)
+                ax.add_artist(r)
+                self.pageRects.append(r)
+
+                seclist_names = ['All'] + in_sec
+
+                sec_i = seclist_names[i]
+                
+                ax.text(float(i)/numpages+0.5/numpages, 0.5, str(sec_i),  
+                        ha="center", va="center", transform=ax.transAxes,
+                        fontsize=self.fontsize)
+            self.valtext.set_visible(False)
+    
+            divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
+            bax = divider.append_axes("right", size="5%", pad=0.05)
+            fax = divider.append_axes("right", size="5%", pad=0.05)
+            self.button_back = matplotlib.widgets.Button(bax, label=r'$\blacktriangleleft$', 
+                            color=self.facecolor, hovercolor=self.activecolor)
+            self.button_forward = matplotlib.widgets.Button(fax, label=r'$\blacktriangleright$', 
+                            color=self.facecolor, hovercolor=self.activecolor)
+            self.button_back.label.set_fontsize(self.fontsize)
+            self.button_forward.label.set_fontsize(self.fontsize)
+            self.button_back.on_clicked(self.backward)
+            self.button_forward.on_clicked(self.forward)
+    
+        def _update(self, event):
+            super(PageSlider, self)._update(event)
+            i = int(self.val)
+            if i >=self.valmax:
+                return
+            self._colorize(i)
+    
+        def _colorize(self, i):
+            for j in range(self.numpages):
+                self.pageRects[j].set_facecolor(self.facecolor)
+            self.pageRects[i].set_facecolor(self.activecolor)
+    
+        def forward(self, event):
+            current_i = int(self.val)
+            i = current_i+1
+            if (i < self.valmin) or (i >= self.valmax):
+                return
+            self.set_val(i)
+            self._colorize(i)
+    
+        def backward(self, event):
+            current_i = int(self.val)
+            i = current_i-1
+            if (i < self.valmin) or (i >= self.valmax):
+                return
+            self.set_val(i)
+            self._colorize(i)
+    
+    # ---------------
+
+
     # define the initial conditions - this is what appears on the plot initially but can change later. 
     transit = np.nanmean(alltimebinned)  # start the cut-out in the centre of the plot.
     binfac = 7
@@ -183,16 +273,33 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     global transit_slider_ax
     global transit_slider
 
-    # Define the slider to change the transit-event time (and cut out region)
-    transit_slider_ax  = fig.add_axes([0.25, 0.14, 0.65, 0.03])  # location of the slider
-    transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=transit, color='teal')
+    if len(in_sec) == 1:
+        # Define the slider to change the y axis scale
+        scale_slider_ax  = fig.add_axes([0.24, 0.19, 0.66, 0.03])
+        scale_slider = Slider(scale_slider_ax, 'Y-Axis Scale', 0.99, 1.01, valinit=1, color='silver')
     
-    # Define the slider to change the y axis scale
-    scale_slider_ax  = fig.add_axes([0.25, 0.19, 0.65, 0.03])
-    scale_slider = Slider(scale_slider_ax, 'Y-Axis Scale', 0.99, 1.01, valinit=1, color='silver')
+        # Define the slider to change the transit-event time (and cut out region)
+        transit_slider_ax  = fig.add_axes([0.24, 0.15, 0.66, 0.03])  # location of the slider
+        transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=transit, color='teal')
+    
+    # if there it's in more than one sector there is an extra slide bar to chose to look at individual sectors.
+    else:
+        # Define the slider to change the y axis scale
+        scale_slider_ax  = fig.add_axes([0.24, 0.2, 0.66, 0.02])
+        scale_slider = Slider(scale_slider_ax, 'Y-Axis Scale', 0.99, 1.01, valinit=1, color='silver')
+    
+        # Define the slider to change the transit-event time (and cut out region)
+        transit_slider_ax  = fig.add_axes([0.24, 0.17, 0.66, 0.02])  # location of the slider
+        transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=transit, color='teal')
+    
+        # define the slider to change the plotting region
+        sector_slider_ax  = fig.add_axes([0.24, 0.11, 0.66, 0.03])
+        sector_slider = PageSlider(sector_slider_ax, 'Sector', len(in_sec) + 1, activecolor="orange")    
+    
     # ---------------
     
     # deifne the intial x and y axis limits - y limit can be changed with slider, x limit cannot.
+    ax[0].set_title("TIC {}    Sectors {}".format(tic,str(in_sec)[1:-1]))
     ax[0].set_xlim([np.nanmin(alltime), np.nanmax(alltime)])
     ax[0].set_ylim([fluxmin, fluxmax])
     
@@ -209,7 +316,6 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
         line_binned.set_ydata(cutout(transit_slider.val)[5])
     
         fig.canvas.draw_idle()  # update figure
-
 
     # draw a line at the time of the chosen transit-event (from slider) on the top and bottom plot 
     lver0 = ax[0].axvline(transit, color = 'r', linewidth = 2)
@@ -232,6 +338,18 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
         lver0.set_xdata(transit_slider.val)
         lver1.set_xdata(transit_slider.val)
     
+    def update_plotting_region(val):
+        global in_sec
+        seclist_names = ['All'] + in_sec
+
+        index = int(val)
+
+        if index == 0:
+            ax[0].set_title("TIC {}     Sectors {}".format(tic,str(in_sec)[1:-1]))
+            ax[0].set_xlim([np.nanmin(alltime), np.nanmax(alltime)])
+        else:
+            ax[0].set_title("TIC {}   Sector {}".format(tic,seclist_names[index]))
+            ax[0].set_xlim([start_sec[index-1][0],end_sec[index-1][0]])
 
     def update_yaxis(val):  
     
@@ -284,9 +402,15 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
             global transit_slider
 
             transit_slider_ax.remove() # remove the old bar and plot a new one which has the colour bar in the right place
-            transit_slider_ax  = fig.add_axes([0.25, 0.14, 0.65, 0.03])  # location of the slider
-            transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=val, color='teal')
-        
+            
+            if len(in_sec) == 1:
+                transit_slider_ax  = fig.add_axes([0.24, 0.15, 0.66, 0.03])  # location of the slider
+                transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=val, color='teal')
+            else:
+                transit_slider_ax  = fig.add_axes([0.24, 0.17, 0.66, 0.02])  # location of the slider
+                transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=val, color='teal')
+    
+
         # if clicked outside of the region activate the slider bar
         else:
             # Link the functions (actions) to the corresponding sliders
@@ -302,7 +426,6 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     # Define buttons which allow the user to interactively choose options:
     # run simple code, BLS, model the data usign Pyaneti, save the data and figures, creata DV report
 
-
     # only give the model option if pyaneti has been sucessfully installed
     if pyaneti_installed == True:
         var_ax = fig.add_axes([0.025, 0.34, 0.119, 0.21]) # x, y, width, height
@@ -310,6 +433,9 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     else:
         var_ax = fig.add_axes([0.025, 0.35, 0.119, 0.2]) # x, y, width, height
         save_var = CheckButtons(var_ax, ('Simple','Show plots', 'North', 'BLS', 'Save', 'Report'), (False, args.noshow, args.north, False, True, True))
+
+    if len(in_sec) > 1:
+        sector_slider.on_changed(update_plotting_region)
 
     # Initial values for each option
     simple = False 
@@ -377,6 +503,593 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     # Create a label for the 'settings' box to clarify what it does
     plt.text(0.28, -0.25, "Settings", fontsize=10, verticalalignment='center')
     # ---------------
+
+    # define a box to enter the nickname of the target - this is useful if you analyse a lot of different candidates and you need a way of identifying them easily
+
+    # ---------------
+    # define a 'text box' that lets you enter the transit times 
+
+    initial_text = ""  # no initial text (the text box is empty)
+    nick_name = []  # list of the entered transit times
+
+    # function to store the entererd transit times. 
+    def submit(text):
+        nick_name.append(text)
+    
+    axbox = plt.axes([0.24, 0.01, 0.22, 0.04]) # x, y, width, height
+    text_box = TextBox(axbox, 'Memorable name (optional): ', initial=initial_text)
+    text_box.on_submit(submit)
+    # ---------------
+
+
+    # Create a button to close the figure and more onto the next stage of the code.
+    ebx = plt.axes([0.77, 0.01, 0.13, 0.04])
+    exit = Button(ebx, 'Done', color='orange')
+
+    # make button to exit the plot and continue with the code.
+    # pop up warning if no transit time is entered
+
+    def close(event):
+        if len(transit_times) > 0:
+            plt.close('all')
+        else:
+            print ("Must enter at least one transit time!")
+            ax[1].text(0.4,-0.95, "Please enter at least one transit time!", color = 'red', size=9, ha="center", transform=ax[1].transAxes)
+            fig.canvas.draw()
+
+
+    exit.on_clicked(close)
+    # ---------------
+
+    global ttxt
+    # text that will be updated to list the 'wanted' transit event times
+    if len(in_sec) > 1:
+        ttxt = plt.text(-4.88,1.5, "Transit times: ", weight='bold')
+    else:
+        ttxt = plt.text(-4.88,2, "Transit times: ", weight='bold')
+
+    # Create a button to store the 'current' value of the slider
+    stx = plt.axes([0.53, 0.01, 0.11, 0.04])
+    store_val = Button(stx, 'Add time', color='gold')
+
+    transit_times = []
+
+    # function to store a transit event time using a button
+    def storeval(time):
+
+        storetime = (transit_slider.val)
+        transit_times.append(round(storetime,2))
+        global ttxt
+
+        ttxt.set_text("Transit times: {} ".format(str(transit_times)[1:-1]))
+        
+        plt.draw()
+
+
+    store_val.on_clicked(storeval)
+    # ---------------
+
+    # Create a button to delete the last entered value
+    delx = plt.axes([0.65, 0.01, 0.11, 0.04])
+    del_val = Button(delx, 'Remove time', color='grey')
+
+    transit_times = []
+
+    # function to delete the last entry if using a button
+    def deleval(time):
+        global ttxt
+        if len (transit_times)>0:
+            del transit_times[-1]
+        
+            ttxt.set_text("Transit times: {} ".format(str(transit_times)[1:-1]))
+            plt.draw()
+
+
+    del_val.on_clicked(deleval)
+
+    # ---------------
+
+    plt.show()
+    plt.close('all')
+
+    # ------ END OF INTERACTIVE PART OF CODE ------
+
+    # save the status of all the buttons
+    end_status = save_var.get_status()
+
+    if pyaneti_installed == True:
+        simple = end_status[0]
+        hide = not end_status[1]
+        north = end_status[2]
+        BLS = end_status[3]
+        model = end_status[4]
+        save = end_status[5]
+        DV = end_status[6]
+
+    else:
+        simple = end_status[0]
+        hide = not end_status[1]
+        north = end_status[2]
+        BLS = end_status[3]
+        model = False
+        save = end_status[4]
+        DV = end_status[5]
+
+
+    # ---------------
+
+    # update the arguments if they are different from the ones entered in the command line: 
+    if args.noshow != hide:
+        args.noshow = hide
+
+    if args.north != north:
+        args.north = north
+    
+    # if the save button was not selected, then change the iput argument to false
+    if save == False:
+        args.save = save
+
+    # check whether the user identified a nickname, or memorable name, for the candidate
+    if len(nick_name) != 0: # if the box was left untouched do nothing and continue without setting a new nickname - will be ignored
+        if len(nick_name[-1]) > 0: # [-1] in case the user pressed enter and then deleted the nickname again
+            args.nickname = str(nick_name[-1])
+
+    # ---------------
+
+    # get the entered transit times and make sure that all the values are floats
+    transit_list = transit_times
+
+    print ("Transit times : {}".format(str(transit_list)[1:-1]))
+
+    print ("Check that these are the transits that you want")
+    
+    #  -----  BREW  ------
+    brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
+
+def interact_LATTE_test(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
+    
+    '''
+    Function to run the Interactive LATTE code using the matplotlib interactive tool.
+    Calls the plot where the transit-event times can be identifies and the plotting/modeling options specified.
+    
+    Parameters
+    ----------
+    tic  :   str
+        target TIC ID
+    indir  :  str
+        path to directory where all the plots and data will be saved. 
+    sectors_all  :   list
+        all the sectors in which the target has been/ will be observed
+    sectors  :  list
+        the sectors which will be analysed
+
+    Returns
+    -------
+        runs the brew_LATTE code...
+    '''
+
+    # function needed in the rebinning - changes the shape of the array
+    def rebin(arr,new_shape):
+        shape = (new_shape[0], arr.shape[0] // new_shape[0],
+            new_shape[1], arr.shape[1] // new_shape[1])
+        return arr.reshape(shape).mean(-1).mean(1)
+    # ---------------   
+    global in_sec
+
+    # call function to download the data from MAST
+    print ("Start data download.....", end =" ")
+    alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = download_data(indir, sectors, tic)
+    print ("done.\n")
+    
+    plt.close('all') # make sure that all figures are close. 
+    
+    # -------------------------
+    # Plot the interactive plot - uses matplolib
+    # -------------------------
+    
+    fig, ax = plt.subplots(2, 1, figsize=(10,7))
+    plt.tight_layout()
+
+    # Adjust the plots region to leave some space for the sliders and buttons
+    fig.subplots_adjust(left=0.24, bottom=0.3)
+    
+    fluxmin = np.nanmin(allflux)
+    fluxmax = np.nanmax(allflux)
+    
+    # function to define the plotting area around the transit event. 
+    # this needs to be in a function as the area changes with the interactive slider.
+    def cutout(transit):
+        mask_binned = (np.array(alltimebinned) > transit-1) & (np.array(alltimebinned) < transit+1)
+        mask = (np.array(alltime) > transit-1) & (np.array(alltime) < transit+1)
+        
+        return [np.array(alltime)[mask], np.array(allflux)[mask], np.array(alltime), np.array(allflux), np.array(alltimebinned)[mask_binned], np.array(allfluxbinned)[mask_binned], np.array(alltimebinned), np.array(allfluxbinned)]
+    
+    # ---------------
+
+    # function to define the bin factor
+    # this needs to be in a function as binning can be changed with the interactive buttons. 
+    def binning(binfac):
+        N      = len(alltime)
+        n      = int(np.floor(N/binfac)*binfac)
+        X      = np.zeros((2,n))
+        X[0,:]  = alltime[:n]
+        X[1,:]  = allflux[:n]
+        Xb    = rebin(X, (2,int(n/binfac)))
+        
+        time_binned = Xb[0]
+        flux_binned = Xb[1]
+    
+        return [time_binned, flux_binned]
+    # ---------------
+    
+
+    class PageSlider(matplotlib.widgets.Slider):
+    
+        def __init__(self, ax, label, numpages = 10, valinit=0, valfmt='%1d', 
+                     closedmin=True, closedmax=True,  
+                     dragging=True, **kwargs):
+        
+            self.facecolor=kwargs.get('facecolor',"w")
+            self.activecolor = kwargs.pop('activecolor',"b")
+            self.fontsize = kwargs.pop('fontsize', 10)
+            self.numpages = numpages
+    
+            super(PageSlider, self).__init__(ax, label, 0, numpages, 
+                                valinit=valinit, valfmt=valfmt, **kwargs)
+        
+            # make it so that numpages is the index of the array of the 
+            global in_sec
+
+            self.poly.set_visible(False)
+            self.vline.set_visible(False)
+            self.pageRects = []
+            for i in range(numpages):
+
+                facecolor = self.activecolor if i==valinit else self.facecolor
+                r  = matplotlib.patches.Rectangle((float(i)/numpages, 0), 1./numpages, 1, 
+                                    transform=ax.transAxes, facecolor=facecolor)
+                ax.add_artist(r)
+                self.pageRects.append(r)
+
+                seclist_names = ['All'] + in_sec
+
+                sec_i = seclist_names[i]
+
+                ax.text(float(i)/numpages+0.5/numpages, 0.5, str(sec_i),  
+                        ha="center", va="center", transform=ax.transAxes,
+                        fontsize=self.fontsize)
+            self.valtext.set_visible(False)
+    
+            divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
+            bax = divider.append_axes("right", size="5%", pad=0.05)
+            fax = divider.append_axes("right", size="5%", pad=0.05)
+            self.button_back = matplotlib.widgets.Button(bax, label=r'$\blacktriangleleft$', 
+                            color=self.facecolor, hovercolor=self.activecolor)
+            self.button_forward = matplotlib.widgets.Button(fax, label=r'$\blacktriangleright$', 
+                            color=self.facecolor, hovercolor=self.activecolor)
+            self.button_back.label.set_fontsize(self.fontsize)
+            self.button_forward.label.set_fontsize(self.fontsize)
+            self.button_back.on_clicked(self.backward)
+            self.button_forward.on_clicked(self.forward)
+    
+        def _update(self, event):
+            super(PageSlider, self)._update(event)
+            i = int(self.val)
+            if i >=self.valmax:
+                return
+            self._colorize(i)
+    
+        def _colorize(self, i):
+            for j in range(self.numpages):
+                self.pageRects[j].set_facecolor(self.facecolor)
+            self.pageRects[i].set_facecolor(self.activecolor)
+    
+        def forward(self, event):
+            current_i = int(self.val)
+            i = current_i+1
+            if (i < self.valmin) or (i >= self.valmax):
+                return
+            self.set_val(i)
+            self._colorize(i)
+    
+        def backward(self, event):
+            current_i = int(self.val)
+            i = current_i-1
+            if (i < self.valmin) or (i >= self.valmax):
+                return
+            self.set_val(i)
+            self._colorize(i)
+    
+
+
+    # define the initial conditions - this is what appears on the plot initially but can change later. 
+    transit = np.nanmean(alltimebinned)  # start the cut-out in the centre of the plot.
+    binfac = 7
+    
+    # FIRST PLOT - FULL LC
+    # plot the unbinned flux
+    [line_full] = ax[0].plot(alltime, allflux , marker='o',lw = 0, markersize = 4, color = 'orange', alpha = 0.8,  markerfacecolor='white')
+    # plot the binned flux - it is called through the above function so that the binning can be changed.
+    [line_full_binned] = ax[0].plot(binning(binfac)[0], binning(binfac)[1],marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3,  markerfacecolor='k')
+    # ---------------
+
+    # SECOND PLOT - CUT OUT LC
+    # plot the cut out around the time of the transit - called with function as it can be changed with the slider.
+    [line] =  ax[1].plot(cutout(transit)[0], cutout(transit)[1], marker='o',lw = 0, markersize = 4, color = 'orange', alpha = 0.8, markerfacecolor='white')
+    [line_binned] =  ax[1].plot(cutout(transit)[4], cutout(transit)[5],marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3, markerfacecolor='k')
+    # ---------------
+
+    global transit_slider_ax
+    global transit_slider
+
+    # Define the slider to change the transit-event time (and cut out region)
+    transit_slider_ax  = fig.add_axes([0.25, 0.14, 0.65, 0.03])  # location of the slider
+    transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=transit, color='teal')
+    
+    # Define the slider to change the y axis scale
+    scale_slider_ax  = fig.add_axes([0.25, 0.19, 0.65, 0.03])
+    scale_slider = Slider(scale_slider_ax, 'Y-Axis Scale', 0.99, 1.01, valinit=1, color='silver')
+    
+    # define the slider to change the plotting region
+    sector_slider_ax  = fig.add_axes([0.25, 0.10, 0.65, 0.03])
+    sector_slider = PageSlider(sector_slider_ax, 'Sector', len(in_sec), activecolor="orange")    
+    
+    # ---------------
+    
+    # deifne the intial x and y axis limits - y limit can be changed with slider, x limit cannot.
+    ax[0].set_title("TIC {}    Sectors {}".format(tic,str(in_sec)[1:-1]))
+    ax[0].set_xlim([np.nanmin(alltime), np.nanmax(alltime)])
+    ax[0].set_ylim([fluxmin, fluxmax])
+    
+    ax[1].set_xlim([np.nanmean(alltime)-1, np.nanmean(alltime)+1])
+    ax[1].set_ylim([fluxmin, fluxmax])
+    
+    # ---------------
+    # Define an action for acessing the required cut-out data and drawing the line when the slider's value changes
+    def sliders_on_changed(val):
+        line.set_xdata(cutout(transit_slider.val)[0])
+        line.set_ydata(cutout(transit_slider.val)[1])
+    
+        line_binned.set_xdata(cutout(transit_slider.val)[4])
+        line_binned.set_ydata(cutout(transit_slider.val)[5])
+    
+        fig.canvas.draw_idle()  # update figure
+
+
+    # draw a line at the time of the chosen transit-event (from slider) on the top and bottom plot 
+    lver0 = ax[0].axvline(transit, color = 'r', linewidth = 2)
+    lver1 = ax[1].axvline(transit, color = 'r', linewidth = 2)
+
+    # ---------------
+    # Define an action for modifying the plot region on the second plot
+    def update_axis(val):
+        # ---------------
+        # only ever plot one line so get rid of the old ones before plotting the new ones...
+        if (len (ax[0].lines) > 1) or (len(ax[1].lines) > 1):
+            ax[0].lines[-1].remove()
+            ax[1].lines[-1].remove()
+
+        # draw a line at the time of the chosen transit-event (from slider) on the top and bottom plot 
+        lver0 = ax[0].axvline(transit_slider.val, color = 'r', linewidth = 2)
+        lver1 = ax[1].axvline(transit_slider.val, color = 'r', linewidth = 2)
+
+        ax[1].set_xlim([transit_slider.val - 1,transit_slider.val + 1])
+        lver0.set_xdata(transit_slider.val)
+        lver1.set_xdata(transit_slider.val)
+    
+
+    def update_plotting_region_old(val):
+        global seclist_names
+
+        index = (seclist_names.index(val))
+
+        if index == 0:
+            ax[0].set_title("TIC {}    Sectors {}".format(tic,str(in_sec)[1:-1]))
+            ax[0].set_xlim([np.nanmin(alltime), np.nanmax(alltime)])
+        else:
+            ax[0].set_title("TIC {}  {}".format(tic,val))
+            ax[0].set_xlim([start_sec[index-1][0],end_sec[index-1][0]])
+
+
+    def update_plotting_region(val):
+        global seclist_names
+
+        val = int(val)
+        index = val
+
+        if index == 0:
+            ax[0].set_title("TIC {}    Sectors {}".format(tic,str(in_sec)[1:-1]))
+            ax[0].set_xlim([np.nanmin(alltime), np.nanmax(alltime)])
+        else:
+            ax[0].set_title("TIC {}  {}".format(tic,val))
+            ax[0].set_xlim([start_sec[index-1][0],end_sec[index-1][0]])
+
+
+    def update_yaxis(val):  
+    
+        med = 1
+        diff = abs(med - (fluxmin * scale_slider.val))
+    
+        ax[0].set_ylim([med - diff ,med + diff])
+        ax[1].set_ylim([med - diff ,med + diff])
+    
+
+    # ------ ON CLICK -------
+    # define the action that lets you click on the image in order to chose the location instead of using the slider - probably more useful
+    def onclick(event):
+
+        # just need to know the x (time) position of the click. The y (flux) position doesn't matter.
+        val = event.xdata
+
+        # check that the click was within the plotting region. If not ignore the click
+        if (event.inaxes == ax[0]) or (event.inaxes == ax[1]):
+            
+            # SECOND PLOT - CUT OUT LC
+            # plot the cut out around the time of the transit - changed by clicked on the image (either one of them)
+            line.set_xdata(cutout(val)[0])
+            line.set_ydata(cutout(val)[1])
+        
+            line_binned.set_xdata(cutout(val)[4])
+            line_binned.set_ydata(cutout(val)[5])
+            
+            # ---------------
+            # only ever plot one line so get rid of the old ones before plotting the new ones...
+            if (len (ax[0].lines) > 1) or (len(ax[1].lines) > 1):
+                ax[0].lines[-1].remove()
+                ax[1].lines[-1].remove()
+    
+            # draw a line at the time of the chosen transit-event (from slider) on the top and bottom plot 
+            lver0 = ax[0].axvline(val, color = 'r', linewidth = 2)
+            lver1 = ax[1].axvline(val, color = 'r', linewidth = 2)
+    
+            # if clicked on the image to select the time to zoom in on then update the plot in this function.
+            ax[1].set_xlim([val - 1,val + 1])
+            lver0.set_xdata(val)
+            lver1.set_xdata(val)
+    
+            # also update the location of the slider (aesthetic reasons only)
+            # Define the slider to change the transit-event time (and cut out region) - this might slow the code down as it re-plots the slider everytime but I can't find an efficient way to do this differently for now.
+            fig.canvas.draw_idle()  # update figure
+            
+            # these values need to be global as are needed but the clicking and the slider events
+            global transit_slider_ax
+            global transit_slider
+
+            transit_slider_ax.remove() # remove the old bar and plot a new one which has the colour bar in the right place
+            transit_slider_ax  = fig.add_axes([0.25, 0.14, 0.65, 0.03])  # location of the slider
+            transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltimebinned), np.nanmax(alltimebinned), valinit=val, color='teal')
+        
+        # if clicked outside of the region activate the slider bar
+        else:
+            # Link the functions (actions) to the corresponding sliders
+            transit_slider.on_changed(update_axis)
+            scale_slider.on_changed(update_yaxis)
+            transit_slider.on_changed(sliders_on_changed)
+            #sector_slider.on_changed(update_plotting_region)
+    
+    # alternatively one can click on the image in order to change the zoom in region of the plot.
+    fig.canvas.mpl_connect('button_press_event', onclick)
+
+    # ---------------------
+
+    # Define buttons which allow the user to interactively choose options:
+    # run simple code, BLS, model the data usign Pyaneti, save the data and figures, creata DV report
+
+
+    # only give the model option if pyaneti has been sucessfully installed
+    if pyaneti_installed == True:
+        var_ax = fig.add_axes([0.02, 0.52, 0.119, 0.21]) # x, y, width, height
+        save_var = CheckButtons(var_ax, ('Simple','Hide plots', 'North', 'BLS', 'model', 'Save', 'Report'), (False, args.noshow, args.north, False, False, True, True))
+    else:
+        var_ax = fig.add_axes([0.02, 0.52, 0.119, 0.2]) # x, y, width, height
+        save_var = CheckButtons(var_ax, ('Simple','Hide plots', 'North', 'BLS', 'Save', 'Report'), (False, args.noshow, args.north, False, True, True))
+    
+    
+    # -------------------
+    # make a check button to select the sectors to display in the top pannel 
+    # start_sec, end_sec, in_sec,
+    global seclist_names
+    seclist_names = tuple(['Sec {}'.format(i) for i in in_sec])
+    init_secbuttons = tuple([False] * len(seclist_names))
+
+    seclist_names = ('All',)+ seclist_names
+    init_secbuttons  = (True,) + init_secbuttons
+
+    box_add = (len(init_secbuttons) - 4) * 0.025
+
+    # if we're looking at more than one sector give the option to change sector
+    if len(init_secbuttons) > 2:
+
+        if len(init_secbuttons) < 5:
+            secax = plt.axes([0.02, 0.32, 0.1, 0.15])
+        else:
+            secax = plt.axes([0.02, 0.32 - (box_add), 0.1, 0.15 + box_add])
+    
+        save_secax= RadioButtons(secax, seclist_names, init_secbuttons)
+        
+        # make sure that the 'dots' check boxes are 
+        rpos = secax.get_position().get_points()
+        fh = fig.get_figheight()
+        fw = fig.get_figwidth()
+        rscale = (rpos[:,1].ptp() / rpos[:,0].ptp()) * (fh / fw)
+        for circ in save_secax.circles:
+            circ.height /= rscale
+
+        save_secax.on_clicked(update_plotting_region)
+        sector_slider.on_changed(update_plotting_region)
+
+    # Initial values for each option
+    simple = False 
+    hide = args.noshow
+    north = args.north
+    BLS = False
+    model = False
+    save = True
+    DV = True
+
+    # function to get the status of each button and to save it
+    def variables(label):
+        status = save_var.get_status()
+        simple = status[0]
+        hide = status[1]
+        north = status[2]
+        BLS = status[3]
+
+        if pyaneti_installed == True:
+            model = status[4]
+            save = status[5]
+            DV = status[6]
+        else:
+            model = False
+            save = status[4]
+            DV = status[5]
+
+    # ---------------
+
+    # Add a set of radio buttons for changing the binning of the data
+    binning_ax = fig.add_axes([0.02, 0.77, 0.1, 0.15]) # x, y, width, height
+    binning_radios = RadioButtons(binning_ax, ('2', '5', '7', '10'), active=0)
+    
+    # this function accesses the binning functino.
+    def binning_button(label):
+        line_full_binned.set_xdata(binning(int(label))[0])
+        line_full_binned.set_ydata(binning(int(label))[1])
+        fig.canvas.draw_idle()
+
+    binning_radios.on_clicked(binning_button)
+    # ---------------
+
+    # define the paramaters of the plot
+    minf = np.nanmin(np.array(allflux))
+    maxf = np.nanmax(np.array(allflux))
+    height = maxf - minf
+    
+    ax[0].tick_params(axis="y",direction="inout", labelsize = 12) #, pad= -20)
+    ax[0].tick_params(axis="x",direction="inout", labelsize = 12) #, pad= -17)   
+    ax[0].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
+    ax[0].set_ylabel("Normalised Flux", fontsize = 12)
+    ax[0].vlines(all_md, minf-1,minf + height*0.3 , colors = 'r', label = "Momentum Dump")
+    
+    ax[1].tick_params(axis="y",direction="inout", labelsize = 12) #, pad= -20)
+    ax[1].tick_params(axis="x",direction="inout", labelsize = 12) #, pad= -17)   
+    ax[1].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
+    ax[1].set_xlabel("BJD-2457000", fontsize = 12)
+    ax[1].set_ylabel("Normalised Flux", fontsize = 12)
+    ax[1].vlines(all_md, minf-1,minf + height*0.3, lw =1,  colors = 'r', label = "Momentum Dump")
+    
+
+    # ---------------
+    # Create a label for the 'Sector Selection' box to clarify what it does
+    plt.text(0.02, 1.1, "Sector Selection", fontsize=10, verticalalignment='center')
+    # ---------------
+    # Create a label for the 'settings' box to clarify what it does
+    plt.text(0.02, -0.24, "Settings", fontsize=10, verticalalignment='center')
+    # ---------------
+    
+    if len(init_secbuttons) > 3:
+        # Create a label for the 'binning' box to clarify what it does
+        plt.text(0.02, -1.9, "Binning Factors", fontsize=10, verticalalignment='center')
+        # ---------------
 
     # define a box to enter the nickname of the target - this is useful if you analyse a lot of different candidates and you need a way of identifying them easily
 
@@ -470,7 +1183,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
 
     if pyaneti_installed == True:
         simple = end_status[0]
-        hide = not end_status[1]
+        hide = end_status[1]
         north = end_status[2]
         BLS = end_status[3]
         model = end_status[4]
@@ -479,7 +1192,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
 
     else:
         simple = end_status[0]
-        hide = not end_status[1]
+        hide = end_status[1]
         north = end_status[2]
         BLS = end_status[3]
         model = False
