@@ -111,7 +111,7 @@ if __name__ == '__main__':
 		# this is also the first time that the program is being run, so download all the data that is required.
 		print ("\n Download the text files required ... " )
 		print ("\n Only the manifest text files (~325 M) will be downloaded and no TESS data." )
-		print ("\n This step take a while but luckily it only has to run once..." )
+		print ("\n This step may take a while but luckily it only has to run once... \n" )
 
 		# ------------------------------------------------
 		#check whether the chosen (output) directory already exists, and if it doesn't create the directory.

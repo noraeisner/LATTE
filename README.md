@@ -221,7 +221,7 @@ and if you want to download new data (or check for new data) use the command:
 
 Below is an outline of how the code works and when it downloads the various different data files. 
 
-1) When the code is first exectuted, a number of text files are downloaded which are requiredfor the code run run more quickly for all subsequent runs. These include: 
+1) When the code is first exectuted, a number of text files are downloaded which are required for the code run run more quickly for all subsequent runs. These include: 
 
 	a) Two text files for each TESS observational sector, one for the short cadence light curves, and one for the target pixel files, which contain curl commands that link to the download of each individual TESS light curve. These are simply text files and no actual TESS data and will only have to be downlaoded once for each sector. This is in order to increase the speed of the code later on. These files are around 3.9 MB each.
 

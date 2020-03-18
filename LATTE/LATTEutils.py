@@ -109,7 +109,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
         all the sectors in which the target has been/ will be observed
     sectors  :  list
         the sectors which will be analysed
-
+    
     Returns
     -------
         runs the brew_LATTE code...
@@ -2068,7 +2068,6 @@ def data_files(indir):
     indir   :   str
         path to where the data will be saved (defaul = "./LATTE_output")
     '''
-    print ("LATTE requires some text files stored on your computer (~")
 
     if not os.path.exists("{}/data/tesscurl_sector_all_lc.sh".format(indir)):
         with open("{}/data/tesscurl_sector_all_lc.sh".format(indir),'w') as f:
