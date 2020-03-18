@@ -206,7 +206,7 @@ NOTE: all of these arguments (except new-path, auto and targetlist, new-data) ca
 
 Below is a short video that shows how to run LATTE for example target TIC 94986319 (TOI 421). The the output files that this example produces can be found in the folder called 'example_output'. The summary DV report, which can be found in this folder, can be used to verify that this these atrget stars pass all of the initial vetting stages and inform decisions as to whether to follow it up using ground based telescopes. 
 
-![Example LATTE](https://github.com/noraeisner/LATTE/blob/master/example_output/LATTE_example_s.gif)
+![Example LATTE](https://github.com/noraeisner/LATTE/blob/master/example/LATTE_example_s.gif)
 
 If you want to set or change the input/output path, alter the terminal command to: 
 
