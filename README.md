@@ -59,7 +59,7 @@ In *FFI mode* the data is downloaded using TESScut and the data detrended using 
 
 ## Input target list
 
-In order to efficiently generate diagnostic plots for multiple targets without having to interactively enter the target TIC IDs, ``LATTE`` can be executed with an input file that lists the TIC IDs, the times of the transit-like events, and the observational sectors to consider (if known). See example. In the cases where the times of the transit events or the sectors have not been entered, the user is prompted to enter these manually via the GUI, as descibed above. For longer target lists the code can also be parallelized (see example). If you want to run it with this mode, enter: 
+In order to efficiently generate diagnostic plots for multiple targets without having to interactively enter the target TIC IDs, LATTE can be executed with an input file that lists the TIC IDs, the times of the transit-like events, and the observational sectors to consider (if known). See example. In the cases where the times of the transit events or the sectors have not been entered, the user is prompted to enter these manually via the GUI, as descibed above. For longer target lists the code can also be parallelized (see example). If you want to run it with this mode, enter: 
 
 	python3 -m LATTE --targetlist=path/to/the/csv/input/file
 
@@ -70,7 +70,6 @@ The program will skip targets that have already been analysed by you, so if you 
 Once you have identified the TIC ID, the observational sectors and the aperture sizes (*FFI mode* only), you will see a screen that has the full lighcurve as well as a zoom in of the lightcurve (see figure below). The solid red line across the full lightcurve lets you know where on the lighcurve you are zooming in on. Click on the top (full) or bottom (zoomed in) plots to change the location of the zoom in until the red vertical line is centred on the mid-point of a transit-event. When you are happy with the location press the 'Add Time' button below the plots in order to record this time (in TBJD). You can delete wrongly entered times with the 'Delete time'. The saved times will be shown on the screen. The position of the red line can also be changed by dragging the teal coloured 'Transit' slider with your mouse. The y-scale of the plots can be changed with the grey coloured slider.
 
 ![Interface Example](https://github.com/noraeisner/LATTE/blob/master/paper/interface_explained.png)
-
 
 Additional options are displayed to the left of the plots.
 
@@ -97,33 +96,34 @@ The code will then generate download and process all of the data. Note that all 
 
 ### Output
 
+For more information on how to interpret the results shown in the reports look at the 'How to make a LATTE' document in the 'example' folder. 
 
 **Figures:**
 
 - Full lightcurve with the times of the momentum dumps marked. 
 
-![Full LC](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_fullLC_md.png)
+![Full LC](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_fullLC_md.png)
 
 The solid red lines at the bottom of the figure indicated the times of the reaction wheel momentum dumps and the dashed black line(s) show the times of the marked transit events. Momentum dumps occur around every 2 to 2.5 days and typically last around half an hour. This can affect the satellite pointing, resulting in spurious transit-like signals. 
 	
 
 - Background flux around the times of the marked transit event(s).
 
-![Background Flux](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_background.png)
+![Background Flux](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_background.png)
 
 Enhanced scattered light in the telescope optics can cause the background flux to rise sharply each time TESS approaches the perigee of its eccentric orbit around the Earth. Additionally, solar system objects, such as asteroids passing through the field of view will show up as a spike in the background flux. Both of these can result in a transit-like signal in the light curve. 
 
 
 - Centroid positions around the time of the marked transit event(s).
 
-![Centroid](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_centroids.png)
+![Centroid](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_centroids.png)
 
 The black points shows the CCD column and row position of the target’s flux-weighted centroid. The red shows the CCD column and row local motion differential velocity aberration (DVA), pointing drift, and thermal effects. Significant spikes in either of these at the time of the transit-like event suggest that the signal is not due to a transiting planet. 
 
 
 - The lightcurve around the time of the marked event(s) extracted in two different aperture sizes. 
 
-![Aperture Size](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_aperture_size.png)
+![Aperture Size](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_aperture_size.png)
 
 For a transiting planet, the transit shape and depth are expected to remain constant when extracted with different aperture sizes. Conversely, they are expected to change if the signal is due to a blended eclipsing binary. This is because for blended binaries, the signal is not centred on the target and instead originates from elsewhere in the field of view, thus changing the shape and depth of the signal with different apertures. I caution that if the selected aperture is not centred on the target, this test can lead to the mis-interpretation of a moving signal. I, therefire, recomend to always check the figure showing the used apertures before interpreting these results. These data are extracted from the Target Pixel Files (TPFs) and are neither detrended nor corrected for systematics.
 
@@ -131,7 +131,7 @@ For a transiting planet, the transit shape and depth are expected to remain cons
 - The apertures used for the extraction. Please note that for very bright and very faint stars the aperture selection for the smaller aperture may not work correctly so these should be checked in order to correctly interperet the results.
 
 
-![Apertures](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_apertures_0.png)
+![Apertures](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_apertures_0.png)
 
 - The average flux in and out of the marked event(s) and the differences between the two.
 
@@ -141,19 +141,19 @@ A plot showing the average in-transit and average out of-transit flux as well as
 
 - The average flux of the target pixel file with the locations of nearby stars (magnitude < 15) indicated (GAIA DR2 queried).
 
-![Nearby stars](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_star_field.png)
+![Nearby stars](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_star_field.png)
 
 A plot showing the location of nearby stars brighter than *TESS* magnitude 17 as queried from the Gaia Data Release 2 catalog and the DSS2 red field of view around the target star. The sizes of the markers indicate the positions of the Gaia stars relate to the magnitude of each companion. The *Astropy reproject* module is used to align the plots such that north points towards the top of the page.
 
 - The lightcurves of the 5 closest stars that were also observed by *TESS* (TP files).
 
-![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_nearest_neighbours.png)
+![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_nearest_neighbours.png)
 
 Lightcurves of the five two-minute cadence stars closest to the selected target. The occurrence of similar transit-like events in nearby lightcurves may suggest that the signal is caused by a background event or a blended eclipsing binary.
 
 - A lightcurve around the time of the marked event(s) extracted for every pixel in the target pixel file.
 
-![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_individual_pixel_LCs_0.png)
+![Nearest Neighbours](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_individual_pixel_LCs_0.png)
 
 A plot showing lightcurves extracted for each individual pixel around the target. The data are extracted from the TPFs and detrended using a third order spline fit. If the transit-like signal is more prominent in pixels that are not centred on the target star, this suggests that the signal is caused by a blended background eclipsing binary. 
 
@@ -204,11 +204,11 @@ NOTE: all of these arguments (except new-path, auto and targetlist, new-data) ca
 
 ### Example
 
-Below is a short video that shows how to run LATTE for example target TIC 94986319 (TOI 421). The the output files that this example produces can be found in the folder called 'example_output'. 
+Below is a short video that shows how to run LATTE for example target TIC 94986319 (TOI 421). The the output files that this example produces can be found in the folder called 'example_output'. The summary DV report, which can be found in this folder, can be used to verify that this these atrget stars pass all of the initial vetting stages and inform decisions as to whether to follow it up using ground based telescopes. 
 
 ![Example LATTE](https://github.com/noraeisner/LATTE/blob/master/example_output/LATTE_example_s.gif)
 
-If you want to chnange the input/output path, change the terminal command to: 
+If you want to set or change the input/output path, alter the terminal command to: 
 
 	python -m LATTE --new-path
 
