@@ -86,7 +86,6 @@ try:
 except:
     pyaneti_installed = False
 
-pyaneti_installed = False
 # --------------------------------------------
 # -----------------interact ------------------
 # --------------------------------------------
@@ -534,14 +533,24 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
             plt.close('all')
         else:
             print ("Must enter at least one transit time!")
-            ax[1].text(0.4,-0.95, "Please enter at least one transit time!", color = 'red', size=9, ha="center", transform=ax[1].transAxes)
-            fig.canvas.draw()
+            global deltxt
+
+            if len(in_sec) > 1:
+                deltxt = plt.text(-1.6,1.5,"Please enter at least one transit time!", color = 'red', size=9)
+            else:
+                deltxt = plt.text(-1.6,2,"Please enter at least one transit time!", color = 'red', size=9)
+
+            plt.draw()
 
 
     exit.on_clicked(close)
     # ---------------
 
     global ttxt
+    global deltxt
+
+    deltxt = plt.text(-2.28,2,"")
+
     # text that will be updated to list the 'wanted' transit event times
     if len(in_sec) > 1:
         ttxt = plt.text(-4.88,1.5, "Transit times: ", weight='bold')
@@ -556,13 +565,16 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
 
     # function to store a transit event time using a button
     def storeval(time):
+        
 
         storetime = (transit_slider.val)
         transit_times.append(round(storetime,2))
         global ttxt
+        global deltxt
 
         ttxt.set_text("Transit times: {} ".format(str(transit_times)[1:-1]))
-        
+        deltxt.set_text(" ")
+
         plt.draw()
 
 
@@ -2358,6 +2370,7 @@ def tess_point(indir,tic):
 
     df = pd.read_csv('{}/tesspoint/{}_tesspoint.txt'.format(indir,tic), comment = '#', delimiter = '|', names = ['TIC','RA','Dec','EclipticLong','EclipticLat','Sector','Camera','Ccd','ColPix', 'RowPix'])
 
+
     return list(df['Sector']), float(df['RA'][0]), float(df['Dec'][0])
 
 def transit_sec(in_sec,start_sec, end_sec, transit_list):
@@ -3771,7 +3784,7 @@ def download_tpf_mast(indir, transit_sec, transit_list, tic, test = 'no'):
                 intr = abs(T0-t) < 0.1
         
                 X1_list.append(X1) # not corrected
-                X4_list.append(X4) #  PDC corrected
+                X4_list.append(X4) #  PCA corrected
                 oot_list.append(oot)  # out of transit filter
                 intr_list.append(intr)  # in transit filter
                 t_list.append(t)

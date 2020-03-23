@@ -700,7 +700,7 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 		model = False
 	
 	# SKIP until HERE
-
+	
 	# ------------
 	# Finally, create a DV report which summarises all of the plots and tables.
 	if DV == True: 

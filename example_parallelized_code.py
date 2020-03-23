@@ -28,7 +28,6 @@ import sys
 # get the system path
 syspath = str(os.path.abspath(LATTEutils.__file__))[0:-14]
 
-
 # set up for supercomputer
 try:
 	from mpi4py import MPI
@@ -54,7 +53,21 @@ ttran = 0.1
 
 # -------------------
 
-def process(indir, sectors, tic, transit_list, args):
+def process(indir, tic, sectors_in, transit_list, args):
+
+	sectors_all, ra, dec = LATTEutils.tess_point(indir, tic) 
+
+	try:
+		# Sucessfully entered sectors
+		# check that the target was actually observed in the stated sector
+		sectors = list(set(sectors_in) & set(sectors_all))
+
+		if len(sectors) == 0:
+			print ("The target was not observed in the sector(s) you stated ({}). \
+					Therefore take all sectors that it was observed in: {}".format(sectors, sectors_all))
+			sectors = sectors_all
+	except:
+		sectors = sectors_all
 
 	# download the data 
 	alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = LATTEutils.download_data(indir, sectors, tic)
@@ -69,7 +82,7 @@ def process(indir, sectors, tic, transit_list, args):
 	save = True
 	DV = True
 
-	sectors_all, ra, dec = LATTEutils.tess_point(indir, tic)
+	
 
 	# generate the plots
 	try:
@@ -173,12 +186,12 @@ def process(indir, sectors, tic, transit_list, args):
 
 if __name__ == '__main__':
 	ap = ArgumentParser(description='Script to pLot TESS LCs for Zooniverse project')
-	ap.add_argument('--sector', type=int, help='The sector to analyse', default=None)
+	#ap.add_argument('--sector', type=int, help='The sector to analyse', default=None)
 	ap.add_argument('--number', type=int, help='The number of randomly selected subjects (default all in indir folder)', default=None)
+	ap.add_argument('--targetlist', type=str, help='the link to the target file list', default='no')
 
 	# these just have to be here
 	#ap.add_argument('--sector', type=str, help='the sector(s) to look at', default = 'no')
-	ap.add_argument('--targetlist', type=str, help='the link to the target file list', default='no')
 	ap.add_argument('--noshow', action='store_true', help='if you want to NOT show the plots write --noshow in the command line')
 	ap.add_argument('--o', action='store_true', help='if you call this old files will be overwriten in the non-interactive version')
 	ap.add_argument('--auto', action='store_true', help='automatic aperture selection')
@@ -191,22 +204,82 @@ if __name__ == '__main__':
 
 	args = ap.parse_args()
 
-	sector = args.sector
-	sectors = [args.sector]
+	#sector = args.sector
+	#sectors = [args.sector]
 
 	# make sure that they don't show...
 	args.noshow = True
 	args.mpi = True
 
-	indir = 'path/to/input/file'
+	# check whether a path already exists
+	if not os.path.exists("{}/_config.txt".format(syspath)):
+	
+		# if it doesn't exist ask the user to put it in the command line
+		indir = input("\n \n No output path has been set yet. \n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
+	
+		# SAVE the new output path
+		with open("{}/_config.txt".format(syspath),'w') as f:
+			f.write(str(indir))
+		
+		print("\n New path: " + indir)
+	
+		# this is also the first time that the program is being run, so download all the data that is required.
+		print ("\n Download the text files required ... " )
+		print ("\n Only the manifest text files (~325 M) will be downloaded and no TESS data." )
+		print ("\n This step may take a while but luckily it only has to run once... \n" )
+	
+		# ------------------------------------------------
+		#check whether the chosen (output) directory already exists, and if it doesn't create the directory.
+		if not os.path.exists("{}".format(indir)):
+			os.makedirs(indir)
+	
+		if not os.path.exists("{}/data".format(indir)):
+			os.makedirs("{}/data".format(indir))
+	
+		# ------------------------------------------------
+	
+		# ----- REFERENCE FILES DOWNLOAD -----
+		utils.data_files(indir)
+		utils.tp_files(indir)
+		utils.TOI_TCE_files(indir)
+		utils.momentum_dumps_info(indir)
+		# -----
+	
+	# if the user chooses to redefine the path
+	elif args.new_path == True: 
+	
+		reply = yes_or_no() # double check that they really want to do that.
+	
+		if reply == True:
+			indir = input("\n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
+	
+			# SAVE the new output path
+			with open("{}/_config.txt".format(syspath),'w') as f:
+				f.write(str(indir))	
+			
+			print("\n New path: " + indir)
+	
+		else:
+			with open("{}/_config.txt".format(syspath), 'r') as f:
+				indir = str(f.readlines()[-1])
+				
+			print ("LATTE will continue to run with the old path: {}".format(indir))
+	
+	else:
+		with open("{}/_config.txt".format(syspath), 'r') as f:
+			indir = str(f.readlines()[-1])
+	
+	if args.targetlist == 'no':
+		print ("You need to provide an input target list to run this code. End.")
+		sys.exit('')
 
-
-	df = pd.read_csv('link to input file goes here')
+	df = pd.read_csv(args.targetlist)
 
 	# get rid of duplicates (why would there be suplicate...?)
-	TIC_wanted0 = list(set(df['TIC_ID']))  # get rid of duplicates
-	TIC_wanted = TIC_wanted[0:args.number] # take the top XX as defined in input
-
+	TIC_wanted = list(set(df['TICID']))  # get rid of duplicates
+	
+	if args.number != None: 
+		TIC_wanted = TIC_wanted[0:args.number] # take the top XX as defined in input
 
 	## -----------
 	if mpi_rank == mpi_root:
@@ -217,17 +290,16 @@ if __name__ == '__main__':
 		nlc = len(TIC_wanted)
 
 		print ("nlc length: {}".format(nlc))
-		print ('{}/manifest_CTC_sec{}.csv'.format(str(indir), str(sector)))
+		print ('{}/manifest.csv'.format(str(indir)))
 
-		if exists('{}/manifest_CTC_sec{}.csv'.format(str(indir), str(sector))):
+		if exists('{}/manifest.csv'.format(str(indir))):
 			print("Existing manifest file found, will skip previously processed LCs and append to end of manifest file")
 		
 		else:
 			print("Creating new manifest file")
 			metadata_header = ['TICID', 'Marked Transits', 'Sectors', 'RA', 'DEC', 'Solar Rad', 'TMag', 'Teff', 'thissector', 'TOI', 'TCE', 'TCE link', 'EB', 'Systematics', 'Background Flux', 'Centroids Positions','Momentum Dumps','Aperture Size','In/out Flux','Keep','Comment', 'starttime']
 
-
-			with open('{}/manifest_sec{}.csv'.format(str(indir), str(sector)), 'w') as f: # save in the photometry folder
+			with open('{}/manifest.csv'.format(str(indir)), 'w') as f: # save in the photometry folder
 				writer = csv.writer(f, delimiter=',')
 				writer.writerow(metadata_header)
 
@@ -238,7 +310,7 @@ if __name__ == '__main__':
 			print ("not with MPI")
 			for f in TIC_wanted:
 				# check the existing manifest to see if I've processed this file!
-				manifest_table = pd.read_csv('{}/manifest_CTC_sec{}.csv'.format(str(indir), str(sector)))
+				manifest_table = pd.read_csv('{}/manifest.csv'.format(str(indir)))
 
 				# get a list of the current URLs that exist in the manifest
 				urls_exist = manifest_table['TICID']
@@ -246,15 +318,28 @@ if __name__ == '__main__':
 				if not np.isin(f,urls_exist):
 
 					# get the transit time list 
-					transit_list = ast.literal_eval(((df.loc[df['TIC_ID'] == f]['db_peak']).values)[0])
-					
-					res = process(indir, sectors, f, transit_list, args)
+					transit_list = ast.literal_eval(((df.loc[df['TICID'] == f]['transits']).values)[0])
+
+					# get the sectors from the input file
+					# convert the input list of sectors (string) to a list of numbers.
+					try:
+	
+						sectors_in = ast.literal_eval(str(((df.loc[df['TICID'] == f]['sectors']).values)[0]))
+	
+						if (type(sectors_in) == int) or (type(sectors_in) == float):
+							sectors = [sectors_in]
+						else:
+							sectors = list(sectors_in)
+					except:
+						sectors = [0]
+				
+					res = process(indir, f, sectors, transit_list, args)
 
 					if res['TICID'] == -99:
 						print ('something went wrong')
 						continue
 					# make sure the file is opened as append only
-					with open('{}/manifest_CTC_sec{}.csv'.format(str(indir), str(sector)), 'a') as f: # save in the photometry folder
+					with open('{}/manifest.csv'.format(str(indir)), 'a') as f: # save in the photometry folder
 
 						writer = csv.writer(f, delimiter=',')
 
@@ -300,7 +385,7 @@ if __name__ == '__main__':
 						f = TIC_wanted.pop()
 
 						# check the existing manifest to see if I've processed this file!
-						manifest_table = pd.read_csv('{}/manifest_CTC_sec{}.csv'.format(str(indir), str(sector)))
+						manifest_table = pd.read_csv('{}/manifest.csv'.format(str(indir)))
 						 # get a list of the current URLs that exist in the manifest
 						urls_exist = manifest_table['TICID']
 						if not (np.isin(f, urls_exist)):
@@ -320,7 +405,7 @@ if __name__ == '__main__':
 								print ('something went wrong')
 							else:
 								print('Worker {} finished processing TIC {}'.format(w, res['TICID']))
-								with open('{}/manifest_CTC_sec{}.csv'.format(str(indir), str(sector)), 'a') as f: # save in the photometry folder
+								with open('{}/manifest.csv'.format(str(indir)), 'a') as f: # save in the photometry folder
 									writer = csv.writer(f, delimiter=',')
 
 									metadata_data = [res['TICID']]
@@ -360,6 +445,7 @@ if __name__ == '__main__':
 
 	## Worker node
 	## -----------
+
 	else:
 		while True:
 			filename = comm.recv(source=mpi_root, tag=0)
@@ -367,9 +453,19 @@ if __name__ == '__main__':
 				break
 
 			
-			transit_list = ast.literal_eval(((df.loc[df['TIC_ID'] == filename]['db_peak']).values)[0])
+			transit_list = ast.literal_eval(((df.loc[df['TICID'] == filename]['transits']).values)[0])
 
-			res = process(indir, sectors, filename, transit_list, args)
+			try:
+				sectors_in = ast.literal_eval(((df.loc[df['TICID'] == f]['sectors']).values)[0])
+
+				if (type(sectors_in) == int) or (type(sectors_in) == float):
+					sectors = [sectors_in]
+				else:
+					sectors = list(sectors_in)
+			except:
+				sectors = [0]
+
+			res = process(indir, filename, sectors, transit_list, args)
 			comm.send(res, dest=mpi_root, tag=2)
 
 

@@ -31,13 +31,13 @@ The above link shows how to change the matplolib cbook __init__ file in order to
 
 Overview of LATTE scipts:
 
-__main__.py      : Intitialises the parameters, what TIC ID, sector, checks for downloads of the data, FFI or not? 
+__main__.py	  : Intitialises the parameters, what TIC ID, sector, checks for downloads of the data, FFI or not? 
 
-LATTEutils.py    : All the functions needed to download data and text files, runs the interactive gui, all of the plotting and data handling. 
+LATTEutils.py	: All the functions needed to download data and text files, runs the interactive gui, all of the plotting and data handling. 
 
-LATTE_DV.py      : Scipt to combine all of the results from LATTEbrew in order to generate a pdf data validation report.
+LATTE_DV.py	  : Scipt to combine all of the results from LATTEbrew in order to generate a pdf data validation report.
 
-LATTEbrew.py     : Calls the LATTEutils functions in turn in order to store the results and keeps track of what has been generated. Calls the LATTE_DV.py function to collate all the results.
+LATTEbrew.py	 : Calls the LATTEutils functions in turn in order to store the results and keeps track of what has been generated. Calls the LATTE_DV.py function to collate all the results.
 
 '''
 
@@ -369,8 +369,10 @@ if __name__ == '__main__':
 		for index, row in targetlist.iterrows():
 			
 			# ---- INPUT PARAMETERS ------
-
-			tic = str(int(row['TICID']))
+			try:
+				tic = str(int(row['TICID']))
+			except:
+				continue
 
 			# check whether this file already exist
 			# if it already exists it will only be overwritten if --o function has been enabled to avoid file loss.
@@ -386,13 +388,14 @@ if __name__ == '__main__':
 
 			# load tess-point to identify the sectors tht it was observed in.
 			# need to know whether the target actually was observed in the stated sector. 
-			sectors_all, ra, dec = utils.tess_point(indir, tic) 
-			sectors_in = str(row['sectors'])
+			sectors_all, ra, dec = utils.tess_point(indir, tic)
 			
 			# convert the input list of sectors (string) to a list of numbers.
 			try:
+				sectors_in = str(int(row['sectors']))
 				sectors_in = ast.literal_eval(sectors_in)
 				if (type(sectors_in) == int) or (type(sectors_in) == float):
+					
 					sectors_in = [sectors_in]
 				else:
 					sectors_in = list(sectors_in)
@@ -437,7 +440,7 @@ if __name__ == '__main__':
 					transit_list = []
 					period = row['period']
 					t0 = row['t0']
-					for i in range(1,4):
+					for i in range(0,4):
 						transit = t0 + (i*period)
 						if transit < (t0 + 20):
 							transit_list.append(float(transit))

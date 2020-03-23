@@ -217,6 +217,21 @@ and if you want to download new data (or check for new data) use the command:
 	python -m LATTE --new-data
 
 
+#### MPI example
+
+If you have a computer with multiple cores you can generate multiple reports in one go by paralizing the code. There is an example scipt for how this can be done, although I caution that the code may have to be adapted to work with your operating system. 
+
+The MPI code requires an input file (see 'example_input_file.csv'). In order to keep track of the targets that have been processed, the code generates a manifest file listing some of the information of the processed targets such as the transit-event times, the RA, Dec, sectors, TMag, Teff, whether it's a TOI and the link to the TCE report if it's available. 
+
+An additional input parameter for this code is --number. This sets the number of targets that you want to analyse from the list. For example, if you have a list of 1000 targets but you only want to look at the first 10, you can set --number=10. 
+
+On a mac, the example parallelized code can be executed using: 
+
+	mpiexec -np 2 python example_parallelized_code.py --targetlist=/path/to/input/code/example/example_input_file.csv --number=10  --mpi
+
+It's import that you add the --mpi, otherwise the code cannot be parallelized due to memory conflicts. 
+
+
 ### LATTE workflow - what is being downloaded, when and why?
 
 Below is an outline of how the code works and when it downloads the various different data files. 
