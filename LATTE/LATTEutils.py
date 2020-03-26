@@ -119,6 +119,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
         shape = (new_shape[0], arr.shape[0] // new_shape[0],
             new_shape[1], arr.shape[1] // new_shape[1])
         return arr.reshape(shape).mean(-1).mean(1)
+    
     # ---------------   
     # this needs to be global for the sector slider
     global in_sec
@@ -3109,7 +3110,7 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
         if not os.path.exists("{}/{}/".format(indir, tic)): # if this folder doesn't already exist, make it
             os.makedirs("{}/{}/".format(indir, tic))
         # ---------
-
+        
         # ----------
         # plot the mean image and plot the extraction apertures on top of it so that one can verify that the used apertures make sense
         im = np.mean(tpf.flux, axis = 0)

@@ -197,7 +197,7 @@ and if you want to download new data (or check for new data) use the command:
 
 #### MPI example
 
-If you have a computer with multiple cores you can generate multiple reports in one go by paralizing the code. There is an example scipt for how this can be done, although I caution that the code may have to be adapted to work with your operating system. 
+If you have a computer with multiple cores you can generate multiple reports in one go by paralizing the code. There is an example scipt for how this can be done on the github page, although I caution that the code may have to be adapted to work with your operating system. 
 
 The MPI code requires an input file (see 'example_input_file.csv'). In order to keep track of the targets that have been processed, the code generates a manifest file listing some of the information of the processed targets such as the transit-event times, the RA, Dec, sectors, TMag, Teff, whether it's a TOI and the link to the TCE report if it's available. 
 

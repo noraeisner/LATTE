@@ -239,10 +239,10 @@ if __name__ == '__main__':
 		# ------------------------------------------------
 	
 		# ----- REFERENCE FILES DOWNLOAD -----
-		utils.data_files(indir)
-		utils.tp_files(indir)
-		utils.TOI_TCE_files(indir)
-		utils.momentum_dumps_info(indir)
+		LATTEutils.data_files(indir)
+		LATTEutils.tp_files(indir)
+		LATTEutils.TOI_TCE_files(indir)
+		LATTEutils.momentum_dumps_info(indir)
 		# -----
 	
 	# if the user chooses to redefine the path
@@ -258,11 +258,11 @@ if __name__ == '__main__':
 				f.write(str(indir))	
 			
 			print("\n New path: " + indir)
-	
+		
 		else:
 			with open("{}/_config.txt".format(syspath), 'r') as f:
 				indir = str(f.readlines()[-1])
-				
+		
 			print ("LATTE will continue to run with the old path: {}".format(indir))
 	
 	else:
@@ -283,7 +283,7 @@ if __name__ == '__main__':
 
 	## -----------
 	if mpi_rank == mpi_root:
-		
+	
 		print ("with MPI?:  {}".format(with_mpi))
 		print ("MPI size = {}".format(mpi_size))
 
