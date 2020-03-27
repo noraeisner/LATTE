@@ -119,7 +119,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
         shape = (new_shape[0], arr.shape[0] // new_shape[0],
             new_shape[1], arr.shape[1] // new_shape[1])
         return arr.reshape(shape).mean(-1).mean(1)
-    
+
     # ---------------   
     # this needs to be global for the sector slider
     global in_sec
@@ -2846,26 +2846,26 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
             print ("ERROR: Could not download the tpf file at this time. Please try again.")
             sys.exit('')
         # ---------
-
+        
         # get rid of the 'bad' quality data - use the data flags and only take data where the quality = 0. 
         try:
             quality = tpf.quality
             tpf = tpf[quality == 0]
         except:
             print ('This file has no quality flag.')
-
+            
         # save the raw tpf (target pixel file) data which will be used later - need to store it in this format as it will be used for the reprojection into the right coordinates.
         tpf_list.append(tpf)
-
+        
         print ("done.\n")
-
+        
         # extract the information and perform PCA
         print ("Start PCA analysis...", end =" ")
         
         # acess the flux information
         X1 = tpf.flux
         X1flux_list.append(X1)  # store tghe flux array in the list
-
+        
         arrshape_list.append(X1.shape)  # store the shape in the list - not always the same shape but mostly 11 x 11 pixels.
         
         # calculate the average pixel value across all frames. 

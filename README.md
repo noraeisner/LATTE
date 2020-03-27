@@ -1,5 +1,7 @@
 # LATTE
 
+## Lightcurve Analysis Tool for Transiting Exoplanet
+
 Written by Nora L. Eisner
 
 email: *nora.eisner@new.ox.ac.uk*
