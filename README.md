@@ -1,6 +1,6 @@
 # LATTE
 
-##          Lightcurve Analysis Tool for Transiting Exoplanet
+## Lightcurve Analysis Tool for Transiting Exoplanet
 
 Written by Nora L. Eisner
 
