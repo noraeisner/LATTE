@@ -19,6 +19,13 @@ LATTE/LATTE_imgs/LATTE_logo_small.png
 LATTE/LATTE_imgs/PHT_logo.jpg
 LATTE/LATTE_imgs/TESS_logo.png
 LATTE/pyaneti_LATTE/__init__.py
+LATTE/tests/__init__.py
+LATTE/tests/test_BLS.py
+LATTE/tests/test_DVreport.py
+LATTE/tests/test_data_download.py
+LATTE/tests/test_data_products.py
+LATTE/tests/test_plotting.py
+LATTE/tests/test_server_response.py
 tessLATTE.egg-info/PKG-INFO
 tessLATTE.egg-info/SOURCES.txt
 tessLATTE.egg-info/dependency_links.txt

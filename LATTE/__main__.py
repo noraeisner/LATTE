@@ -101,7 +101,24 @@ if __name__ == '__main__':
 
 		# if it doesn't exist ask the user to put it in the command line
 		indir = input("\n \n No output path has been set yet. \n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
+
+		#try three times to find the output path
+		intry = 0
+		worked = True
+
+		while (intry < 3 ) and worked:
+			if not os.path.exists("{}".format(indir)):
+				indir = input("\n \n This path does not exist on your computer, please enter a valid  path: " )
 	
+				intry += 1
+
+			else:
+				worked = False
+	
+		if intry == 3:
+			print ("You have entered an invalid path 3 times. \n Make sure that the path exists on your computer and that you have access to it before trying again.")
+			sys.exit('')
+
 		# SAVE the new output path
 		with open("{}/_config.txt".format(syspath),'w') as f:
 			f.write(str(indir))
@@ -115,9 +132,7 @@ if __name__ == '__main__':
 
 		# ------------------------------------------------
 		#check whether the chosen (output) directory already exists, and if it doesn't create the directory.
-		if not os.path.exists("{}".format(indir)):
-			os.makedirs(indir)
-	
+		
 		if not os.path.exists("{}/data".format(indir)):
 			os.makedirs("{}/data".format(indir))
 	
@@ -128,6 +143,7 @@ if __name__ == '__main__':
 		utils.tp_files(indir)
 		utils.TOI_TCE_files(indir)
 		utils.momentum_dumps_info(indir)
+		
 		# -----
 
 	# if the user chooses to redefine the path
@@ -137,6 +153,23 @@ if __name__ == '__main__':
 	
 		if reply == True:
 			indir = input("\n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
+
+			#try three times to find the output path
+			intry = 0
+			worked = True
+	
+			while (intry < 3 ) and worked:
+				if not os.path.exists("{}".format(indir)):
+					indir = input("\n \n This path does not exist on your computer, please enter a valid  path: " )
+		
+					intry += 1
+	
+				else:
+					worked = False
+		
+			if intry == 3:
+				print ("You have entered an invalid path 3 times. \n Make sure that the path exists on your computer and that you have access to it before trying again.")
+				sys.exit('')
 	
 			# SAVE the new output path
 			with open("{}/_config.txt".format(syspath),'w') as f:
@@ -144,26 +177,74 @@ if __name__ == '__main__':
 			
 			print("\n New path: " + indir)
 	
+			if not os.path.exists("{}/data".format(indir)):
+				os.makedirs("{}/data".format(indir))
+
+
 		else:
 			with open("{}/_config.txt".format(syspath), 'r') as f:
 				indir = str(f.readlines()[-1])
 				
 			print ("LATTE will continue to run with the old path: {}".format(indir))
 
+			#try three times to find the output path
+			intry = 0
+			worked = True
+	
+			while (intry < 3 ) and worked:
+				if not os.path.exists("{}".format(indir)):
+					indir = input("\n \n This old path does not exist on your computer, please enter a valid  path: " )
+		
+					intry += 1
+	
+				else:
+					worked = False
+		
+			if intry == 3:
+				print ("You have entered an invalid path 3 times. \n Make sure that the path exists on your computer and that you have access to it before trying again.")
+				sys.exit('')
+	
+			if intry > 0:
+				# SAVE the new output path
+				with open("{}/_config.txt".format(syspath),'w') as f:
+					f.write(str(indir))	
+
+			if not os.path.exists("{}/data".format(indir)):
+				os.makedirs("{}/data".format(indir))
+				
+
 	else:
 		with open("{}/_config.txt".format(syspath), 'r') as f:
 			indir = str(f.readlines()[-1])
 	
 
-	# ------------------------------------------------
-	# check whether the chosen (output) directory already exists, and if it doesn't create the directory.
-	if not os.path.exists("{}".format(indir)):
-		os.makedirs(indir)
+		#try three times to find the output path
+		intry = 0
+		worked = True
+	
+		while (intry < 3 ) and worked:
+			if not os.path.exists("{}".format(indir)):
+				indir = input("\n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
+		
+				intry += 1
+	
+			else:
+				worked = False
+		
+		if intry == 3:
+			print ("You have entered an invalid path 3 times. \n Make sure that the path exists on your computer and that you have access to it before trying again.")
+			sys.exit('')
+	
+		if intry > 0:
+			# SAVE the new output path
+			with open("{}/_config.txt".format(syspath),'w') as f:
+				f.write(str(indir))	
 
-	if not os.path.exists("{}/data".format(indir)):
-		os.makedirs("{}/data".format(indir))
 
-	# ------------------------------------------------
+		if not os.path.exists("{}/data".format(indir)):
+			os.makedirs("{}/data".format(indir))
+	
+		# ------------------------------------------------
 
 	'''
 	Check whether to download the data reference files
