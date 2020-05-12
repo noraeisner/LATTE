@@ -10,7 +10,7 @@ README = (HERE / "READMEpip.md").read_text()
 # This call to setup() does all the work
 setup(
     name="tessLATTE",
-    version="0.1.17",
+    version="0.1.18",
     description="Lightcurve Analysis Tool for Transiting Exoplanets",
     long_description=README,
     long_description_content_type="text/markdown",

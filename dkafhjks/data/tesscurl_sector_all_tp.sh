@@ -1,1 +1,0 @@
-#all LC file links
