@@ -137,7 +137,7 @@ For a transiting planet, the transit shape and depth are expected to remain cons
 
 - The average flux in and out of the marked event(s) and the differences between the two.
 
-![In and out of transit flux comaprison](https://github.com/noraeisner/LATTE/blob/master/example_output/94986319_flux_comparison.png)
+![In and out of transit flux comaprison](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_flux_comparison.png)
 
 A plot showing the average in-transit and average out of-transit flux as well as the difference between the two. A change in spatial distribution of the flux suggests that the transit-like event is caused by a blend with a background eclipsing binary. The data are extracted from the TPFs and corrected for systematic effects using Principal Component Analysis. 
 
