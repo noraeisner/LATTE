@@ -37,6 +37,8 @@ from reproject.mosaicking import find_optimal_celestial_wcs
 from matplotlib.ticker import AutoMinorLocator, FormatStrFormatter
 from matplotlib.widgets import Slider, Button, RadioButtons, TextBox, CheckButtons
 
+from astropy.utils.data import clear_download_cache
+clear_download_cache()
 
 # custom modules
 from LATTE import filters
@@ -4521,7 +4523,7 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
     ra = catalogData[0]['ra']
     dec = catalogData[0]['dec']
 
-    # Create a list of nearby bright stars (tess magnitude less than 14) from the rest of the data for later.
+    # Create a list of nearby bright stars (tess magnitude less than 17) from the rest of the data for later.
     bright = catalogData['Tmag'] < 17
 
     start = [np.float64(transit_list[0]) - 0.2]
