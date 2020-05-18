@@ -45,7 +45,6 @@ from LATTE import filters
 from LATTE import LATTEbrew as brew
 
 
-
 '''
 Overview of LATTE scipts:
 
@@ -1531,7 +1530,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
         
         # ----------
         # plot the mean image and plot the extraction apertures on top of it so that one can verify that the used apertures make sense
-        im = np.mean(tpf.flux, axis = 0)
+        im = np.nanmean(tpf.flux, axis = 0)
         # set up the plot - these are stored and one of the images saved in the report      
         fig, ax = plt.subplots(1,2, figsize=(10,5), subplot_kw={'xticks': [], 'yticks': []})
         kwargs = {'interpolation': 'none', 'vmin': im.min(), 'vmax': im.max()}
@@ -2600,7 +2599,7 @@ def download_data(indir,sector, tic, binfac = 5, test = 'no'):
         if len(dwload_link) == 0:
             print ("TIC {} was not observed in Sector(s):   {}. Try again with different sectors.".format(tic, sector))
     
-            print ("\n (Also check that the data file have been downloaded - run code with '--new-data' in the command line)")
+            print ("\n (Also check that the data files have been downloaded - run code with '--new-data' in the command line)")
             raise SystemExit
     
     # define all the empty lists to append to in order to return the data that will be requrides later on in the script
@@ -3115,7 +3114,7 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
         
         # ----------
         # plot the mean image and plot the extraction apertures on top of it so that one can verify that the used apertures make sense
-        im = np.mean(tpf.flux, axis = 0)
+        im = np.nanmean(tpf.flux, axis = 0)
         # set up the plot - these are stored and one of the images saved in the report      
         fig, ax = plt.subplots(1,2, figsize=(10,5), subplot_kw={'xticks': [], 'yticks': []})
         kwargs = {'interpolation': 'none', 'vmin': im.min(), 'vmax': im.max()}
@@ -3528,7 +3527,7 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic, test = 'no'):
                 print ("In the future, this TIC {} will be observed in sector(s) {}".format(tic, future_sectors))
     
         if len(dwload_link) == 0:
-            print ("\n (Also check that the data file have been downloaded - run code with '--new-data' in the command line)")
+            print ("\n (Also check that the data files have been downloaded - run code with '--new-data' in the command line)")
     
         dwload_link_tp = dwload_link
 
@@ -3600,7 +3599,7 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic, test = 'no'):
     
             # ----------
             # plot the mean image and plot the extraction apertures on top of it so that one can verify that the used apertures make sense
-            im = np.mean(tpf.flux, axis = 0)
+            im = np.nanmean(tpf.flux, axis = 0)
             # set up the plot - these are stored and one of the images saved in the report      
             fig, ax = plt.subplots(1,2, figsize=(10,5), subplot_kw={'xticks': [], 'yticks': []})
             kwargs = {'interpolation': 'none', 'vmin': im.min(), 'vmax': im.max()}
@@ -4526,9 +4525,6 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
     # Create a list of nearby bright stars (tess magnitude less than 17) from the rest of the data for later.
     bright = catalogData['Tmag'] < 17
 
-    start = [np.float64(transit_list[0]) - 0.2]
-    end = [np.float64(transit_list[0]) + 0.2]
-
     # ---------------------------------------------
     # Get the data for the SDSS sky viewer --------
     
@@ -4537,11 +4533,11 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
     plt.axis("off")
     
     target_coord = SkyCoord(ra=ra*u.deg, dec=dec*u.deg)
-    
+
     try:
         target = FixedTarget(coord=target_coord, name="Survey = {}".format(survey))
         ax, hdu = plot_finder_image(target, survey = survey, reticle='True', fov_radius=5*u.arcmin)
-    
+        
     except: # if DSS2 Red is not available, download the DSS field of view image instead
         survey = 'DSS'
         target = FixedTarget(coord=target_coord, name="Survey = {}".format(survey))
@@ -4550,78 +4546,75 @@ def plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args):
     plt.close('all')
 
     # --------------------------------------------
+    # only run this for the first tpf (just needs to be one and might aswell take the first one)
+    
+    tpf =  tpf_list[0]
 
-    for i, tpf in enumerate(tpf_list):
+    fig= plt.figure(figsize=(7,5.5))
 
-        # plt.subplot(row column number)
-        if (start > np.nanmin(tpf.time) and start < np.nanmax(tpf.time)):
-            
-            
-            fig= plt.figure(figsize=(7,5.5))
+    sector =  tpf.header['SECTOR']
+    plt.title('Sector {}'.format(sector))
+    
+    # create a tupple of the array of the data and the wcs projection of the TESS cutout
+    tup = (np.nanmean(tpf.flux, axis=0),tpf.wcs)
+    
+    # map the SDSS and TESS image onto each other - the output will be orented NORTH!
+    wcs_out, shape_out = find_optimal_celestial_wcs(input_data =[tup, hdu])
+    
+    # plot the reprojected TESS image 
+    ax1 = plt.subplot(1,2,1, projection=wcs_out)
+    array, footprint = reproject_interp(tup, wcs_out,shape_out = shape_out,order = 'nearest-neighbor')
+    
+    ax1.imshow(array, origin='lower', cmap = plt.cm.YlGnBu_r)
 
-            sector =  tpf.header['SECTOR']
-            plt.title('Sector {}'.format(sector))
-            
-            # create a tupple of the array of the data and the wcs projection of the TESS cutout
-            tup = (tpf.flux.mean(axis=0),tpf.wcs)
-            
-            # map the SDSS and TESS image onto each other - the output will be orented NORTH!
-            wcs_out, shape_out = find_optimal_celestial_wcs(input_data =[tup, hdu])
-            
-            # plot the reprojected TESS image 
-            ax1 = plt.subplot(1,2,1, projection=wcs_out)
-            array, footprint = reproject_interp(tup, wcs_out,shape_out = shape_out,order = 'nearest-neighbor')
-            
-            ax1.imshow(array, origin='lower', cmap = plt.cm.YlGnBu_r)
+    ax1.coords['ra'].set_axislabel('Right Ascension', fontsize = 13)
+    ax1.coords['dec'].set_axislabel('Declination', fontsize = 13)
+    ax1.grid(color = 'grey', alpha = 0.7)
+    
+    # plot the nearby GAIA stars on this image too...
+    ra_stars, dec_stars = catalogData[bright]['ra'], catalogData[bright]['dec']
+    s = np.maximum((19 - catalogData[bright]['Tmag'])*5, 0)  # the size corresponds to their brightness
+    ax1.scatter(ra_stars, dec_stars, s=s, transform=ax1.get_transform('icrs'), color='orange', zorder=100)
 
-            ax1.coords['ra'].set_axislabel('Right Ascension', fontsize = 13)
-            ax1.coords['dec'].set_axislabel('Declination', fontsize = 13)
-            ax1.grid(color = 'grey', alpha = 0.7)
-            
-            # plot the nearby GAIA stars on this image too...
-            ra_stars, dec_stars = catalogData[bright]['ra'], catalogData[bright]['dec']
-            s = np.maximum((19 - catalogData[bright]['Tmag'])*5, 0)  # the size corresponds to their brightness
-            ax1.scatter(ra_stars, dec_stars, s=s, transform=ax1.get_transform('icrs'), color='orange', zorder=100)
+    # plot the target star that we're looking at
+    ax1.scatter(ra, dec, s= 200, transform=ax1.get_transform('icrs'), marker = '*', color='red', zorder=100)
+    ax1.tick_params(labelsize=12)
+    
+    # plot the reprojected SDSS image
+    ax2 = plt.subplot(1,2,2, projection=wcs_out, sharex=ax1, sharey=ax1)
+    array, footprint = reproject_interp(tup, wcs_out,shape_out = shape_out)
+    ax2.imshow(hdu.data, origin='lower', cmap = 'Greys')
+    ax2.coords['ra'].set_axislabel('Right Ascension', fontsize = 13)
+    #ax2.coords['dec'].set_axislabel('Declination')
+    
+    # Draw reticle ontop of the target star
+    pixel_width = hdu.data.shape[0]
+    inner, outer = 0.03, 0.08
+    
+    reticle_style_kwargs = {}
+    reticle_style_kwargs.setdefault('linewidth', 1.5)
+    reticle_style_kwargs.setdefault('color', 'red')
+    
+    ax2.axvline(x=0.5*pixel_width, ymin=0.5+inner, ymax=0.5+outer,
+               **reticle_style_kwargs)
+    ax2.axvline(x=0.5*pixel_width, ymin=0.5-inner, ymax=0.5-outer,
+               **reticle_style_kwargs)
+    ax2.axhline(y=0.5*pixel_width, xmin=0.5+inner, xmax=0.5+outer,
+               **reticle_style_kwargs)
+    ax2.axhline(y=0.5*pixel_width, xmin=0.5-inner, xmax=0.5-outer,
+                   **reticle_style_kwargs)
+    ax2.grid()
+    ax2.tick_params(labelsize=12)
+    plt.tight_layout(w_pad= 7)
+    
+    if args.save == True:
+        plt.savefig('{}/{}/{}_star_field.png'.format(indir, tic, tic), format='png', bbox_inches='tight')
 
-            # plot the target star that we're looking at
-            ax1.scatter(ra, dec, s= 200, transform=ax1.get_transform('icrs'), marker = '*', color='red', zorder=100)
-            ax1.tick_params(labelsize=12)
-            
-            # plot the reprojected SDSS image
-            ax2 = plt.subplot(1,2,2, projection=wcs_out, sharex=ax1, sharey=ax1)
-            array, footprint = reproject_interp(tup, wcs_out,shape_out = shape_out)
-            ax2.imshow(hdu.data, origin='lower', cmap = 'Greys')
-            ax2.coords['ra'].set_axislabel('Right Ascension', fontsize = 13)
-            #ax2.coords['dec'].set_axislabel('Declination')
-            
-            # Draw reticle ontop of the target star
-            pixel_width = hdu.data.shape[0]
-            inner, outer = 0.03, 0.08
-            
-            reticle_style_kwargs = {}
-            reticle_style_kwargs.setdefault('linewidth', 1.5)
-            reticle_style_kwargs.setdefault('color', 'red')
-            
-            ax2.axvline(x=0.5*pixel_width, ymin=0.5+inner, ymax=0.5+outer,
-                       **reticle_style_kwargs)
-            ax2.axvline(x=0.5*pixel_width, ymin=0.5-inner, ymax=0.5-outer,
-                       **reticle_style_kwargs)
-            ax2.axhline(y=0.5*pixel_width, xmin=0.5+inner, xmax=0.5+outer,
-                       **reticle_style_kwargs)
-            ax2.axhline(y=0.5*pixel_width, xmin=0.5-inner, xmax=0.5-outer,
-                           **reticle_style_kwargs)
-            ax2.grid()
-            ax2.tick_params(labelsize=12)
-            plt.tight_layout(w_pad= 7)
-            
-            if args.save == True:
-                plt.savefig('{}/{}/{}_star_field.png'.format(indir, tic, tic), format='png', bbox_inches='tight')
+    if args.noshow == False:
+        plt.show()
+    else:
+        plt.close()
 
-            if args.noshow == False:
-                plt.show()
-            else:
-                plt.close()
-                
     return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], catalogData['mass'][0]
 
 # same as plot_TESS_stars but not re-projected
@@ -5400,7 +5393,7 @@ def plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_li
         tpf = tpf_list[idx]
         
         # create a tupple of the array of the data and the wcs projection of the TESS cutout
-        tup = (tpf.flux.mean(axis=0),tpf.wcs)
+        tup = (np.nanmean(tpf.flux,axis=0),tpf.wcs)
         
         # map the output so that the image will be oriented NORTH
         # the find_optimal_celestial_wcs function returns new world coordinate system (wcs) orented north that can be used to map the images
