@@ -449,8 +449,10 @@ if __name__ == '__main__':
 				
 				available_SC_sectors = list(np.array(list(set(sectors_all) & set(two_min_cadence_sec)))[np.array(list(set(sectors_all) & set(two_min_cadence_sec))) <= last_sec])
 				
+				print (two_min_cadence_sec)
+				print (available_SC_sectors)
 
-				if list(set(two_min_cadence_sec)) == list(set(available_SC_sectors)):
+				if list(set(sectors_all)) == list(set(available_SC_sectors)):
 					sectors = simpledialog.askstring(title="Sectors",
 													  prompt="TIC {} was observed in sector(s):\n {} \n \n (Enter the sectors you wish to look at (e.g. 1,4) or 'all' for all of them.) " .format(tic, str(list(sectors_all))[1:-1]))
 				else:
@@ -520,8 +522,8 @@ if __name__ == '__main__':
 		
 		# print out the information that has been chosen to the command line.
 		if sectors == 'all':
-			print ("Will look at sector(s): {}    (the files are opened but not stored locally) \n ".format(str(sectors_all)[1:-1]))
-			sectors = sectors_all
+			print ("Will look at sector(s): {}    (the files are opened but not stored locally) \n ".format(str(available_SC_sectors)[1:-1]))
+			sectors = available_SC_sectors
 		else:
 			print ("Will look at sector(s):  {}     (the files are opened but not stored locally) \n ".format(str(sectors)[1:-1]))
 	
@@ -713,7 +715,6 @@ if __name__ == '__main__':
 						# ----------------------------------------
 						alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir, sectors, tic)
 						
-	
 						# check that the listed transit times are within the data
 	
 						transit_list_in_data = []
