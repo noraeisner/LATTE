@@ -178,7 +178,6 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	transit_sec = utils.transit_sec(in_sec, start_sec, end_sec, transit_list)
 	
 	# -----------
-
 	# plot how the centroids moved during the transit event
 	utils.plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, transit_list, args)
 	# plot the background flux at the time of the transit event.
@@ -197,10 +196,14 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	# call function to extract the Target Pixel File information 
 	# this is needed in order to extract the LCs in different aperture sizes.
 	# the data is extracted using the open source Lightkurve package as they a built in function to extract LCs using different aperture sizes
-	TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic)
+	#TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic)
 	
+	print ("\n Start downloading of the target pixel files - this can take a little while (up to a minute) as the files are large \n")
+
+	X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf(indir, transit_sec, transit_list, tic)
+
 	# if the TPF wasn't corrupt then make the TPF files (only very ocassionally corrupt but don't want code to crash if it is corrrupt)
-	if (TESS_unbinned_t_l != -111):
+	if (TESS_unbinned_t_l[0] != -111):
 
 		tpf_corrupt = False
 		# plot the LCs using two different aperture sizes.
@@ -216,7 +219,12 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		The function returns the mass of the star (also output from astroquery)- this is a useful input for the Pyaneti modelling		
 		'''
 		if args.mpi == False:
-			test_astroquery, _, _, mstar = utils.plot_TESS_stars(tic,indir, transit_list, transit_sec, tpf_list, args)
+			test_astroquery, _, _, mstar = utils.plot_TESS_stars(tic,indir, transit_sec, tpf_list, args)
+			
+			if test_astroquery == -111:
+				tessmag, teff, srad, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+				args.mpi = True
+
 		else:
 			test_astroquery, _, _, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
 
@@ -234,7 +242,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		
 		# Download the Target Pixel File using the raw MAST data - this comes in a different format as the TPFs extracted using Lightkurve
 		# This data is then corrected using Principal Component Analysis is orderto get rid of systematics.
-		X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic)
+		#X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic)
 		
 		# ------------
 		
@@ -314,19 +322,26 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	utils.plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, transit_list, outtics, tessmag_list, distance, args)
 	print ("Nearest neighbour plot... done.")
 	# ------------
-
+	
 	# if the BLS option is chose, a BLS search is run. The LCs are first detrended and smoothed using a moving average. 
 	# The corrected and uncorrected LCs are saves as a single plot for comparison and to verify that the correction worked well - saved but do not feature in the DV report. 
 	if BLS == True:
 		print ("Running BLS algorithm...", end =" ")
 		bls_stats1, bls_stats2 = utils.data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args)
 		print ("done.")
+
+
+	# ------------
+	print ("Periodogram plot...", end =" ")
+	utils.plot_periodigram(tic, indir, alltime, allflux,args)
+	print ("done.")
+	
 	# ------------
 
 	# SKIP FROM HERE....
-
+	
 	'''
-	NOTE: CURRENTLY ONLY WORKS ON NORA'S COMPUTER - WILL BE AVAILABLE IN NEXT RELEASE SO PLEASE SCIP THIS PART OF THE CODE
+	NOTE: CURRENTLY ONLY WORKS ON NORA'S COMPUTER - WILL BE AVAILABLE IN NEXT RELEASE SO PLEASE SKIP THIS PART OF THE CODE
 	If the modelling option is selected (in the GUI), model the transit event using Pyaneti (Barragan et al 2018)
 	which uses an Bayesian approach with an MCMC sampling to best fit and model the transit.
 	The code runs slightly differently depending on whether one or multiple transits have been marked. 
@@ -531,9 +546,14 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 	'''
 
 	if args.mpi == False:
-		tessmag, teff, srad, mstar = utils.plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args)
+		tessmag, teff, srad, mstar = utils.plot_TESS_stars(tic,indir, transit_sec, tpf_list, args)
+
+		if tessmag == -111:
+			tessmag, teff, srad, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+			args.mpi = True
+
 	else:
-		tessmag, teff, srad, mstar = utils.plot_TESS_stars_not_proj(tic,indir,transit_list, transit_sec, tpf_list, args)
+		tessmag, teff, srad, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
 
 	# keep track of whether astroquery is working (sometimes the site is down and we don't want this to stop us from running the code)
 	astroquery_corrupt = False
@@ -637,8 +657,8 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 
 				T0_list.append(T0)
 
-	X1_list	 	= 	X1_list_n
-	X4_list	 	= 	X4_list_n
+	X1_list	 	    = 	X1_list_n
+	X4_list	 	    = 	X4_list_n
 	bkg_list		= 	bkg_list_n
 	apmask_list 	= 	apmask_list_n
 	arrshape_list   =   arrshape_list_n

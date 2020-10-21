@@ -142,6 +142,8 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	
 	apertures_name = '{}/{}/{}_apertures_0.png'.format(indir, tic, tic)
 	
+	periodogram_name = '{}/{}/{}_periodogram.png'.format(indir, tic, tic)
+
 	# ----- LOGOS ------
 	# if this is a unittest run, find the files for the logos stored in the test folder
 	if test != 'no':
@@ -225,7 +227,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	
 	fig_count += 1
 
-	full_image_text = "Fig {}. Full lightcurve for target TIC {}. The solid red lines at the bottom of the figure indicated the \
+	full_image_text = "Fig {}. Full lightcurve for target TIC {}. The solid blue lines at the bottom of the figure indicated the \
 	times of the reaction wheel momentum dumps and the dashed black line(s) show the time(s) of the marked transit event(s). Momentum dumps \
 	occur around every 2 to 2.5 days and typically last around half an hour.".format(fig_count,tic)
 	
@@ -244,7 +246,10 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		teff = float(teff)
 	except:
 		teff = -999
-			
+	
+	nominal_mission_sectors = list(np.array(sectors_all)[np.array(sectors_all) < 27])
+	extended_mission_sectors = list(np.array(sectors_all)[np.array(sectors_all) > 26])
+
 	data_stellar= [['Parameter',  "Value", "Unit"],
 				   ['TIC ID',	 tic, ],
 				   ['RA',		 ra, "degrees"],
@@ -252,16 +257,18 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 				   ['Radius',	 "{:.4f}".format(srad), "Solar Radii"],
 				   ['Tess Mag',   "{:.4f}".format(tessmag), "Mag"],
 				   ['Teff',	   "{:.0f}".format(teff), "Kelvin"],
-				   ['Sectors',	  "{} *".format(str(sectors_all)[1:-1]), ],
+				   ['Sectors (nominal)',	  "{} *".format(str(nominal_mission_sectors)[1:-1]),],
+				   ['Sectors (extended)',	  "{} *".format(str(extended_mission_sectors)[1:-1]),],
 				   ['TCE',	  TCE, ],
 				   ['TOI',	  "{}".format(str(TOI)), ],
 				   ]
 	
+	
 	table_stellar=Table(data_stellar)
 	table_stellar=Table(data_stellar,colWidths=width * 0.2, style=[
 						('LINEABOVE',(0,1),(-1,1),1,colors.black),
-						('LINEABOVE',(0,10),(-1,10),1,colors.black),
-						('FONTSIZE', (0,0),(-1,9), 8),
+						('LINEABOVE',(0,11),(-1,11),1,colors.black),
+						('FONTSIZE', (0,0),(-1,10), 8),
 						])
 
 	data_len = len(data_stellar)
@@ -299,18 +306,16 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 
 	if TCE == 'Yes **':
 		Stellartable_text = "Table {}. Stellar properties of {}. \
-			* List of the sectors in which the target will be has been \
+			* List of the sectors in which the target will be, or has been, \
 			observed. ** Click {} for the TCE report.".format(table_count, exofop_link, TCE_link)
 
 
 	else:
 		Stellartable_text = "Table {}. Stellar properties of the {}. \
-			* List of the sectors in which the target will be has been \
+			* List of the sectors in which the target will be, or has been, \
 			observed.".format(table_count,exofop_link)
 
-		
-
-
+	
 	ptext = '<font size=8>%s</font>' % Stellartable_text
 	Story.append(Paragraph(ptext, styles["Normal"]))
 
@@ -458,13 +463,14 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 			Story.append(im6)
 		
 			fig_count += 1
-			tess_stars_text = "Fig {}. Left: The locations of nearby GAIA DR2 stars with mag < 15 (orange circle) within the Tess \
+			tess_stars_text = "Fig {}. The locations of nearby GAIA DR2 stars with a magnitude difference less than 5 (orange circle) within the Tess \
 			Cut Out around TIC {} (red star). Only shown for one sector. Right: SDSS image of the surrounding field.".format(fig_count, tic)
 			
 			ptext = '<font size=8>%s</font>' % tess_stars_text
 			Story.append(Paragraph(ptext, styles["Normal"]))
 		
-	
+			Story.append(Spacer(1, 10))
+			
 	# --------------------------------------------
 	# nearest neighbours
 	# --------------------------------------------
@@ -505,7 +511,6 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	
 	# ------ Phase Folded LC ------
 
-
 	if len(transit_list) > 1:
 
 		# --------------------------------------------
@@ -526,11 +531,11 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		
 
 	# ------ BLS -------
-	Story.append(PageBreak()) # always start a new page for this analysis
-	# ------
-
+	
 	if bls == True:
 		
+		Story.append(PageBreak()) # always start a new page for this analysis
+
 		Story.append(Spacer(1, 12))
 		blsim1 = Image(bls1)
 		blsim2 = Image(bls2)
@@ -626,6 +631,26 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		Story.append(PageBreak())
 		# -----------
 
+	# analysis of the star i.e. periodogram and the evolutionary tracks
+	
+	#periodogram_name
+
+	# --------------------------------------------
+	# Peiodogram
+	# --------------------------------------------
+	imp = Image(periodogram_name)
+
+	imp._restrictSize(width*0.5, width*0.5)
+
+	Story.append(imp)
+	
+	fig_count += 1
+	Story.append(Spacer(1, 10))
+	periodogram_text = "Fig {}. Lomb scargle periodogram of the TESS lightcurve (black line) and a boxcar-smoothed periogram (pink line) computerd with a window length of 20 micro Hz.".format(fig_count)
+	
+	ptext = '<font size=8>%s</font>' % periodogram_text
+	Story.append(Paragraph(ptext, styles["Normal"]))
+	
 
 	if model == True:
 
