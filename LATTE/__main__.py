@@ -445,9 +445,9 @@ if __name__ == '__main__':
 				
 				last_sec = list(infile['sec'])[-1]
 				
-				two_min_cadence_sec = list(all_targets_sector[all_targets_sector['TICID'] == int(tic)]['sec'])
+				two_min_cadence_sec = sorted(list(all_targets_sector[all_targets_sector['TICID'] == int(tic)]['sec']))
 				
-				available_SC_sectors = list(np.array(list(set(sectors_all) & set(two_min_cadence_sec)))[np.array(list(set(sectors_all) & set(two_min_cadence_sec))) <= last_sec])
+				available_SC_sectors = sorted(list(np.array(list(set(sectors_all) & set(two_min_cadence_sec)))[np.array(list(set(sectors_all) & set(two_min_cadence_sec))) <= last_sec]))
 
 
 				if list(set(sectors_all)) == list(set(available_SC_sectors)):
@@ -456,7 +456,6 @@ if __name__ == '__main__':
 				else:
 					sectors = simpledialog.askstring(title="Sectors",
 												  	prompt="TIC {} was observed in sector(s):\n {} \n \n Available short-cadence sectors:\n {} \n  \n (Enter the sectors you wish to look at (e.g. 1,4) or 'all' for all of them.) " .format(tic, str(list(sectors_all))[1:-1], str(available_SC_sectors)[1:-1]))
-
 
 				del all_targets_sector
 				del infile
@@ -498,7 +497,6 @@ if __name__ == '__main__':
 				_,_,_,sectors_all,_,_,_,_,_ = tess_stars2px_function_entry(tic, ra, dec)
 
 				# --------				
-
 
 				sectors = str(args.sector)
 
@@ -660,6 +658,7 @@ if __name__ == '__main__':
 					else:
 						transit_list = list(transit_list)
 				
+
 				# if the user entered a T0 and a period, the code will calcualte the times if the transit like events and use that. 
 
 				else:

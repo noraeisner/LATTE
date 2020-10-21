@@ -1784,17 +1784,16 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
     global transit_slider  
 
     # Define the slider to change the transit-event time (and cut out region)
-    transit_slider_ax  = fig.add_axes([0.25, 0.14, 0.65, 0.03])
-    transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltime), np.nanmax(alltime), valinit=transit, color='teal')
-
+    transit_slider_ax  = fig.add_axes([0.25, 0.14, 0.65, 0.03], facecolor = 'teal')
+    transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltime), np.nanmax(alltime), valinit=transit, color='white')
 
     # Define the slider to change the y axis scale
-    scale_slider_upper_ax  = fig.add_axes([0.25, 0.19, 0.3, 0.03]) # x, y, width, height
-    scale_slider_upper = Slider(scale_slider_upper_ax, 'upper & lower flux limits', 1, fluxmax + (flux_diff*0.1), valinit=fluxmax, color='silver')
+    scale_slider_upper_ax  = fig.add_axes([0.25, 0.19, 0.325, 0.03], facecolor = 'white') # x, y, width, height
+    scale_slider_upper = Slider(scale_slider_upper_ax, 'upper & lower flux limits', 1, fluxmax + (flux_diff*0.1), valinit=fluxmax, color='teal')
     scale_slider_upper.valtext.set_visible(False)
 
     # Define the slider to change the y axis scale
-    scale_slider_lower_ax  = fig.add_axes([0.60, 0.19, 0.3, 0.03]) # x, y, width, height
+    scale_slider_lower_ax  = fig.add_axes([0.575, 0.19, 0.325, 0.03]) # x, y, width, height
     scale_slider_lower = Slider(scale_slider_lower_ax, ' ', fluxmin - (flux_diff*0.1), 1,valinit=fluxmin, color='silver')
     scale_slider_lower.valtext.set_visible(False)
 
@@ -5451,9 +5450,8 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         for j in range(0,len(hor_seg[1])):
             ax[hor_seg[0][j], hor_seg[1][j]].spines['bottom'].set_color('red')
             ax[hor_seg[0][j], hor_seg[1][j]].spines['bottom'].set_linewidth(6)
-            ax[ver_seg[0][j], ver_seg[1][j]].spines['bottom'].set_bounds(peak-1.5,peak+1.3)
+            ax[hor_seg[0][j], hor_seg[1][j]].spines['bottom'].set_bounds(peak-1.5,peak+1.3)
 
-            
         print ("done.\n")
         # ------------------
         
