@@ -448,9 +448,7 @@ if __name__ == '__main__':
 				two_min_cadence_sec = list(all_targets_sector[all_targets_sector['TICID'] == int(tic)]['sec'])
 				
 				available_SC_sectors = list(np.array(list(set(sectors_all) & set(two_min_cadence_sec)))[np.array(list(set(sectors_all) & set(two_min_cadence_sec))) <= last_sec])
-				
-				print (two_min_cadence_sec)
-				print (available_SC_sectors)
+
 
 				if list(set(sectors_all)) == list(set(available_SC_sectors)):
 					sectors = simpledialog.askstring(title="Sectors",
