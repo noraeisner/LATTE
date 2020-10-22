@@ -1473,8 +1473,8 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
 
             # plot the LC to the right of the apertures plots with the selected (highlighted) apertures.
 
-            ax[0].plot(extract_LC(aperture)[0], extract_LC(aperture)[1],marker='o',color = '#054950', alpha = 0.9, lw = 0, markersize = 3, markerfacecolor='#054950')
-            ax[0].plot(extract_LC2(aperture2)[0], extract_LC2(aperture2)[1],marker='x',color = '#c94f8a', alpha = 0.9, lw = 0, markersize = 3, markerfacecolor='#c94f8a')
+            ax[0].plot(extract_LC(aperture)[0], extract_LC(aperture)[1],marker='o',color = '#255c74', alpha = 0.9, lw = 0, markersize = 3, markerfacecolor='#054950')
+            ax[0].plot(extract_LC2(aperture2)[0], extract_LC2(aperture2)[1],marker='x',color = '#cc0066', alpha = 0.9, lw = 0, markersize = 3, markerfacecolor='#c94f8a')
     
             ax[0].set_xlabel("Time")
             ax[0].set_ylabel("Normalized Flux")
@@ -1774,26 +1774,26 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
     transit = np.nanmean(alltime)
     # FIRST PLOT - FULL LC
     # plot the unbinned flux    
-    [line_full] = ax[0].plot(alltime, allflux , marker='o',lw = 0, markersize = 4, color = '#003941', alpha = 0.8, label = 'unbinned', markerfacecolor='#003941')
+    [line_full] = ax[0].plot(alltime, allflux , marker='o',lw = 0, markersize = 4, color = '#255c74', alpha = 0.8, label = 'unbinned', markerfacecolor='#003941')
 
     # SECOND PLOT - CUT OUT LC
     # plot the cut out around the time of the transit - called with function as it can be changed with the slider.
-    [line] =  ax[1].plot(cutout(transit)[0], cutout(transit)[1], marker='o',lw = 0, markersize = 4, color = '#003941', alpha = 0.8, label = 'unbinned', markerfacecolor='#003941')
+    [line] =  ax[1].plot(cutout(transit)[0], cutout(transit)[1], marker='o',lw = 0, markersize = 4, color = '#255c74', alpha = 0.8, label = 'unbinned', markerfacecolor='#003941')
     # ---------------
     global transit_slider_ax
     global transit_slider  
 
     # Define the slider to change the transit-event time (and cut out region)
-    transit_slider_ax  = fig.add_axes([0.25, 0.14, 0.65, 0.03], facecolor = 'teal')
-    transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltime), np.nanmax(alltime), valinit=transit, color='white')
+    transit_slider_ax  = fig.add_axes([0.25, 0.14, 0.65, 0.03])
+    transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltime), np.nanmax(alltime), valinit=transit, color='#255c74')
 
     # Define the slider to change the y axis scale
-    scale_slider_upper_ax  = fig.add_axes([0.25, 0.19, 0.325, 0.03], facecolor = 'white') # x, y, width, height
-    scale_slider_upper = Slider(scale_slider_upper_ax, 'upper & lower flux limits', 1, fluxmax + (flux_diff*0.1), valinit=fluxmax, color='teal')
+    scale_slider_upper_ax  = fig.add_axes([0.25, 0.19, 0.325, 0.03], facecolor = 'silver') # x, y, width, height
+    scale_slider_upper = Slider(scale_slider_upper_ax, 'upper & lower flux limits', 1, fluxmax + (flux_diff*0.1), valinit=fluxmax, color='white')
     scale_slider_upper.valtext.set_visible(False)
 
     # Define the slider to change the y axis scale
-    scale_slider_lower_ax  = fig.add_axes([0.575, 0.19, 0.325, 0.03]) # x, y, width, height
+    scale_slider_lower_ax  = fig.add_axes([0.575, 0.19, 0.325, 0.03], facecolor = 'white')  # x, y, width, height
     scale_slider_lower = Slider(scale_slider_lower_ax, ' ', fluxmin - (flux_diff*0.1), 1,valinit=fluxmin, color='silver')
     scale_slider_lower.valtext.set_visible(False)
 
@@ -3087,7 +3087,7 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
             M[n] = m
             S[n] = s
         
-        ncomp = 5 # number of PCA components to consider
+        ncomp = 2 # number of PCA components to consider
         pca = PCA(n_components=ncomp) # PCA 
         trends = pca.fit_transform(X2) 
         weights = pca.components_  
@@ -3360,7 +3360,7 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
             M[n] = m
             S[n] = s
         
-        ncomp = 5
+        ncomp = 2
         pca = PCA(n_components=ncomp)
         trends = pca.fit_transform(X2)
         weights = pca.components_
@@ -3890,7 +3890,7 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
                     M[n] = m
                     S[n] = s
                 
-                ncomp = 4
+                ncomp = 2
                 pca = PCA(n_components=ncomp)
                 trends = pca.fit_transform(X2)
                 weights = pca.components_
@@ -4281,7 +4281,7 @@ def download_tpf_mast(indir, transit_sec, transit_list, tic, test = 'no'):
                     M[n] = m
                     S[n] = s
                 
-                ncomp = 4
+                ncomp = 2
                 pca = PCA(n_components=ncomp)
                 trends = pca.fit_transform(X2)
                 weights = pca.components_
@@ -5157,6 +5157,7 @@ def plot_TESS_stars(tic,indir, transit_sec, tpf_list, args):
         plt.close()
 
     return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], catalogData['mass'][0]
+
 
 # same as plot_TESS_stars but not re-projected
 def plot_TESS_stars_not_proj(tic, indir, transit_list, transit_sec, tpf_list, args):

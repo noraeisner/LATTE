@@ -450,7 +450,7 @@ if __name__ == '__main__':
 				available_SC_sectors = sorted(list(np.array(list(set(sectors_all) & set(two_min_cadence_sec)))[np.array(list(set(sectors_all) & set(two_min_cadence_sec))) <= last_sec]))
 
 
-				if list(set(sectors_all)) == list(set(available_SC_sectors)):
+				if (list(set(sectors_all)) == list(set(available_SC_sectors))) or (args.FFI == True):
 					sectors = simpledialog.askstring(title="Sectors",
 													  prompt="TIC {} was observed in sector(s):\n {} \n \n (Enter the sectors you wish to look at (e.g. 1,4) or 'all' for all of them.) " .format(tic, str(list(sectors_all))[1:-1]))
 				else:
