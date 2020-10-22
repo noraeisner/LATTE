@@ -13,6 +13,8 @@ email: *nora.eisner@new.ox.ac.uk*
 
 --------
 
+### NOTE: the LATTE code is currently being improved to make it run faster, have less dependencies on other modules, and include some additional diagnostics. To use this code instead, go to the LATTE-dev branch. I note that this code has not been fully tested. The current (main branch) LATTE code can only be used for the nominal TESS mission (sectors 1 -26), whereas the new version can be used for all TESS sectors. The new code will be merged soon once the code has been fully tested. 
+
 *The aim of this code is to provide a series of diagnostic tests which are used in order to determine the nature of events found in *TESS* lightcurves.*
 
 LATTE is an open source Python package that performs standard diagnostic tests to help identify, vet and characterise signals in the *TESS* lightcurves in order to weed out instrumental and astrophysical false positives. The program is designed to allow for a fast, in depth analysis of targets that have already been identified as promising candidates by the main *TESS* pipelines or via alternative methods such as citizen science. The code automatically downloads the data products for any chosen TIC ID (short or long cadence TESS data) and produces a number of diagnostic plots (outlined below) that are compiled in a concise report. 
