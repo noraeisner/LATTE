@@ -8,6 +8,7 @@ email: *nora.eisner@new.ox.ac.uk*
 
 ![LATTE logo](https://github.com/noraeisner/LATTE/blob/master/LATTE/LATTE_imgs/LATTE_logo_small.png)
 
+### NOTE: the LATTE code is currently being improved to make it run faster, have less dependencies on other modules, and include some additional diagnostics. To use this code instead, go to the LATTE-dev branch. I note that this code has not been fully tested. The current (main branch) LATTE code can only be used for the nominal TESS mission (sectors 1 -26), whereas the new version can be used for all TESS sectors. The new code will be merged soon once the code has been fully tested.
 
 ### THE CODE
 
