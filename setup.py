@@ -10,7 +10,7 @@ README = (HERE / "READMEpip.md").read_text()
 # This call to setup() does all the work
 setup(
     name="tessLATTE",
-    version="0.1.19",
+    version="0.2.0",
     description="Lightcurve Analysis Tool for Transiting Exoplanets",
     long_description=README,
     long_description_content_type="text/markdown",
@@ -30,15 +30,15 @@ setup(
     "seaborn", 
     "requests", 
     "lightkurve > 1.2.0", 
-    "matplotlib==3.2.0rc1", 
+    "matplotlib",  #==3.2.0rc1
     "astroplan",
     "astroquery",
     "sklearn", 
     "scipy", 
     "tess-point", 
-    "reproject==0.4", 
+    "reproject > 0.7", 
     "reportlab", 
-    "astropy==3.1.1",
+    "astropy <= 4.0",
     "mock > 2.0.0"],
     entry_points={
         "console_scripts": [

@@ -17,7 +17,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
 
 
-def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI, bls = False, model = False, mpi = False, test = 'no'):
+def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI, bls = False, model = False, mpi = False, test = 'no'):
 
 	'''
 	funtion that makes compiles all of the information and figures into a comprehensive pdf summary document.
@@ -222,7 +222,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# Full Image with momentum dumps
 	# --------------------------------------------
 	im = Image(full_LC_name)
-	im._restrictSize(width*0.8, width*0.8)
+	im._restrictSize(width*0.78, width*0.78)
 	Story.append(im)
 	
 	fig_count += 1
@@ -250,13 +250,18 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	nominal_mission_sectors = list(np.array(sectors_all)[np.array(sectors_all) < 27])
 	extended_mission_sectors = list(np.array(sectors_all)[np.array(sectors_all) > 26])
 
+	# mstar, vmag, logg, plx, c_id
+
 	data_stellar= [['Parameter',  "Value", "Unit"],
 				   ['TIC ID',	 tic, ],
-				   ['RA',		 ra, "degrees"],
-				   ['Dec',		dec, "degrees"],
+				   ['Other name',	 c_id, ],
+				   ['RA/Dec',		"{}  {}".format(ra, dec), "degrees"],
 				   ['Radius',	 "{:.4f}".format(srad), "Solar Radii"],
-				   ['Tess Mag',   "{:.4f}".format(tessmag), "Mag"],
-				   ['Teff',	   "{:.0f}".format(teff), "Kelvin"],
+				   ['Mass',	     "{:.4f}".format(mstar), "Solar Mass"],
+				   ['Teff',	     "{:.0f}".format(teff), "Kelvin"],
+				   ['Parallax',	     "{:.4f}".format(plx), " "],
+				   ['T mag',     "{:.4f}".format(tessmag), "Mag"],
+				   ['V mag',     "{:.4f}".format(vmag), "Mag"],
 				   ['Sectors (nominal)',	  "{} *".format(str(nominal_mission_sectors)[1:-1]),],
 				   ['Sectors (extended)',	  "{} *".format(str(extended_mission_sectors)[1:-1]),],
 				   ['TCE',	  TCE, ],
@@ -268,7 +273,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	table_stellar=Table(data_stellar,colWidths=width * 0.2, style=[
 						('LINEABOVE',(0,1),(-1,1),1,colors.black),
 						('LINEABOVE',(0,11),(-1,11),1,colors.black),
-						('FONTSIZE', (0,0),(-1,10), 8),
+						('FONTSIZE', (0,0),(-1,13), 8),
 						])
 
 	data_len = len(data_stellar)
@@ -291,9 +296,9 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# ------
 	
 	Story.append(Spacer(1, 20))
-	ptext = '<font size=9>Target Properties</font>'
-	Story.append(Paragraph(ptext, styles["Normal"]))
-	Story.append(Spacer(1, 12))
+	#ptext = '<font size=9>Target Properties</font>'
+	#Story.append(Paragraph(ptext, styles["Normal"]))
+	#Story.append(Spacer(1, 12))
 	
 	Story.append(table_stellar)
 	Story.append(Spacer(1, 15))
@@ -348,7 +353,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# --------------------------------------------
 	
 	if FFI == False:
-		Story.append(Spacer(1, 10))
+		Story.append(Spacer(1, 16))
 		im3 = Image(centroid_positions_name)
 
 		if len(transit_list) == 1:
@@ -369,7 +374,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 
 		Story.append(Paragraph(ptext, styles["Normal"]))
 		
-		Story.append(Spacer(1, 13))
+		Story.append(Spacer(1, 16))
 
 		#Story.append(PageBreak()) # always start a new page for this analysis
 
@@ -388,7 +393,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		Story.append(im4)
 		
 		fig_count += 1
-		Story.append(Spacer(1, 10))
+		Story.append(Spacer(1, 16))
 		flux_aperture_text = "Fig {}. The lightcurve around the time of each transit-like event extracted with the SPOC pipeline \
 			defined aperture (binned:blue, unbinned:grey) and the with an aperture that is 40 per cent smaller (red). The flux is extracted \
 			from the target pixel files (TPFs) and has not been detrended or \
@@ -400,6 +405,9 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# --------------------------------------------
 		# Apertures Sizes
 		# --------------------------------------------
+		
+		Story.append(Spacer(1, 25))
+
 		im45 = Image(apertures_name)
 		
 		im45._restrictSize(width*0.4, width*0.4)
@@ -408,7 +416,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		
 		fig_count += 1
 
-		Story.append(Spacer(1, 10))
+		Story.append(Spacer(1, 16))
 
 		if FFI == False:
 			aperture_text = "Fig {}. The apertures used to extract the lightcurves. The blue aperture on the right shows the \
@@ -426,16 +434,16 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# In and Out of Transit Comparison
 		# --------------------------------------------
 		
-		Story.append(Spacer(1, 12))
+		Story.append(Spacer(1, 25))
+
 		im5 = Image(in_out_name)
-	
 	
 		im5._restrictSize(width*0.9, width*0.9)
 	
 		Story.append(im5)
 	
 		fig_count += 1
-		Story.append(Spacer(1, 10))
+		Story.append(Spacer(1, 16))
 		flux_aperture_text = "Fig {}. Difference images for target TIC {} for each transit like event. \
 		Left: mean in-transit flux(left). Middle: mean out-of-transit flux. Right: difference between the mean out-of-transit and mean in-transit flux. \
 		Ensure that the change in brightness occurs on target.".format(fig_count, tic)
@@ -450,7 +458,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# can only put this in the report if astroquery is working. 
 		if astroquery_corrupt == False:
 
-			Story.append(Spacer(1, 12))
+			Story.append(Spacer(1, 16))
 		
 			im6 = Image(tess_stars_name)
 			
@@ -469,7 +477,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 			ptext = '<font size=8>%s</font>' % tess_stars_text
 			Story.append(Paragraph(ptext, styles["Normal"]))
 		
-			Story.append(Spacer(1, 10))
+			Story.append(Spacer(1, 30))
 			
 	# --------------------------------------------
 	# nearest neighbours
@@ -638,6 +646,8 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# --------------------------------------------
 	# Peiodogram
 	# --------------------------------------------
+	Story.append(Spacer(1, 20))
+
 	imp = Image(periodogram_name)
 
 	imp._restrictSize(width*0.5, width*0.5)

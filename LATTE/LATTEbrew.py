@@ -219,14 +219,14 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		The function returns the mass of the star (also output from astroquery)- this is a useful input for the Pyaneti modelling		
 		'''
 		if args.mpi == False:
-			test_astroquery, _, _, mstar = utils.plot_TESS_stars(tic,indir, transit_sec, tpf_list, args)
+			test_astroquery, _, _, mstar,vmag, logg, plx, c_id = utils.plot_TESS_stars(tic,indir, transit_sec, tpf_list, args)
 			
 			if test_astroquery == -111:
-				tessmag, teff, srad, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+				tessmag, teff, srad, mstar,vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
 				args.mpi = True
 
 		else:
-			test_astroquery, _, _, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+			test_astroquery, _, _, mstar,vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
 
 		# keep track of whether astroquery is working (sometimes the site is down and we don't want this to stop us from running the code)
 		astroquery_corrupt = False
@@ -546,14 +546,14 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 	'''
 
 	if args.mpi == False:
-		tessmag, teff, srad, mstar = utils.plot_TESS_stars(tic,indir, transit_sec, tpf_list, args)
+		tessmag, teff, srad, mstar,vmag, logg, plx, c_id = utils.plot_TESS_stars(tic,indir, transit_sec, tpf_list, args)
 
 		if tessmag == -111:
-			tessmag, teff, srad, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+			tessmag, teff, srad, mstar,vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
 			args.mpi = True
 
 	else:
-		tessmag, teff, srad, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+		tessmag, teff, srad, mstar, vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
 
 	# keep track of whether astroquery is working (sometimes the site is down and we don't want this to stop us from running the code)
 	astroquery_corrupt = False
@@ -727,9 +727,9 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, bls_stats1, bls_stats2, False, astroquery_corrupt, FFI = True, bls = True, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, bls_stats1, bls_stats2, False, astroquery_corrupt, FFI = True, bls = True, model = model, mpi = args.mpi)
 		else:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, [0], [0], False, astroquery_corrupt, FFI = True, bls = False, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, [0], [0], False, astroquery_corrupt, FFI = True, bls = False, model = model, mpi = args.mpi)
 
 	else:
 		print ("\n  Complete! \n ")

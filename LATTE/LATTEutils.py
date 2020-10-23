@@ -5054,11 +5054,39 @@ def plot_TESS_stars(tic,indir, transit_sec, tpf_list, args):
     except:
         print ("Currently cannot connect to Astroquery.")
         # return values that we know aren't real so that we can tell the code that the plotting didn't work
-        return -999, -999, -999, 1
+        return -999, -999, -999, 1, -999,-999,-999,-999
 
     # ra and dec of the target star
     ra = catalogData[0]['ra']
     dec = catalogData[0]['dec']
+
+    # while we have the astroquery loaded, let's collect some other information about the star
+    # these paramaters can help us find out what type of star we have with just a glance
+
+    vmag = catalogData['Vmag'][0] # v magnitude (this migth be more useful than the TESS mag for things such as osbevring)
+    logg = catalogData['logg'][0] # logg of the star
+    mass = catalogData['mass'][0] # mass of the star
+    plx = catalogData['plx'][0]   # parallax  
+
+    # sometimes these values aren't accessible through astroquery - so we shoudl just quickly check. 
+    if not np.isfinite(vmag): vmag = '--' # this is what will appear in the table of the report to indicate that it's unknown
+    if not np.isfinite(logg): logg = '--'
+    if not np.isfinite(mass): mass = '--'
+    if not np.isfinite(plx): plx   = '--'
+    # sometimes it's useufl to know if the star has another name
+    # check whether it was osberved by one of these four large surveys
+
+    catalogs = ['HIP', 'TYC', 'TWOMASS', 'GAIA']
+    
+    for cat in catalogs:
+        c_id = str(catalogData[0][cat])
+        if c_id != '--':
+            cat_id = "{} {}".format(cat,c_id)
+            break
+        else:
+            continue
+
+    # ------------------------------------------
 
     # Create a list of nearby bright stars (tess magnitude less than 17) from the rest of the data for later.
     bright = catalogData['Tmag'] < catalogData['Tmag'][0] + 5
@@ -5082,7 +5110,7 @@ def plot_TESS_stars(tic,indir, transit_sec, tpf_list, args):
             target = FixedTarget(coord=target_coord, name="Survey = {}".format(survey))
             ax, hdu = plot_finder_image(target, survey = survey, reticle='True', fov_radius=5*u.arcmin)
         except:
-            return -111,-111,-111,-111
+            return -111,-111,-111,-111,-111,-111,-111,-111
 
     plt.close('all')
 
@@ -5161,7 +5189,7 @@ def plot_TESS_stars(tic,indir, transit_sec, tpf_list, args):
     else:
         plt.close()
 
-    return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], catalogData['mass'][0]
+    return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], mass, vmag, logg, plx, c_id 
 
 
 # same as plot_TESS_stars but not re-projected
@@ -5201,7 +5229,34 @@ def plot_TESS_stars_not_proj(tic, indir, transit_list, transit_sec, tpf_list, ar
     ra = catalogData[0]['ra']
     dec = catalogData[0]['dec']
 
-    # ----------
+    # while we have the astroquery loaded, let's collect some other information about the star
+    # these paramaters can help us find out what type of star we have with just a glance
+
+    vmag = catalogData['Vmag'][0] # v magnitude (this migth be more useful than the TESS mag for things such as osbevring)
+    logg = catalogData['logg'][0] # logg of the star
+    mass = catalogData['mass'][0] # mass of the star
+    plx = catalogData['plx'][0]   # parallax  
+
+    # sometimes these values aren't accessible through astroquery - so we shoudl just quickly check. 
+    if not np.isfinite(vmag): vmag = '--' # this is what will appear in the table of the report to indicate that it's unknown
+    if not np.isfinite(logg): logg = '--'
+    if not np.isfinite(mass): mass = '--'
+    if not np.isfinite(plx): plx   = '--'
+    # sometimes it's useufl to know if the star has another name
+    # check whether it was osberved by one of these four large surveys
+
+    catalogs = ['HIP', 'TYC', 'TWOMASS', 'GAIA']
+    
+    for cat in catalogs:
+        c_id = str(catalogData[0][cat])
+        if c_id != '--':
+            cat_id = "{} {}".format(cat,c_id)
+            break
+        else:
+            continue
+
+    # ------------------------------------------
+
 
     # Create a list of nearby bright stars (tess magnitude less than 14) from the rest of the data for later.
     bright = catalogData['Tmag'] <  catalogData['Tmag'][0] + 5
@@ -5239,8 +5294,8 @@ def plot_TESS_stars_not_proj(tic, indir, transit_list, transit_sec, tpf_list, ar
                 plt.xlim(-0.5,10.5)
                 plt.ylim(-0.5,10.5)
     
-                plt.xlabel("RA")
-                plt.ylabel("Dec")
+                #plt.xlabel("RA")
+                #plt.ylabel("Dec")
     
                 plt.tight_layout(h_pad= 0.5)
     
@@ -5281,8 +5336,8 @@ def plot_TESS_stars_not_proj(tic, indir, transit_list, transit_sec, tpf_list, ar
                 plt.xlim(-0.5,10.5)
                 plt.ylim(-0.5,10.5)
     
-                plt.xlabel("RA")
-                plt.ylabel("Dec")
+                #plt.xlabel("RA")
+                #plt.ylabel("Dec")
     
                 plt.tight_layout(h_pad= 0.5)
     
@@ -5295,7 +5350,7 @@ def plot_TESS_stars_not_proj(tic, indir, transit_list, transit_sec, tpf_list, ar
                 else:
                     plt.close()
 
-    return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], catalogData['mass'][0]
+    return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], mass, vmag, logg, plx, c_id 
 
 # LC per pixel
 def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, transit_list, args):

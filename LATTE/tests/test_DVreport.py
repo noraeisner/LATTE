@@ -34,6 +34,12 @@ transit_list = [1454.7]
 target_ra = 72.6941
 target_dec = -60.9055
 
+vmag = 10.358
+logg = 3.83849
+plx = 3.77138
+c_id = 'TYC 8876-01059-1'
+mstar = 1.05
+
 tessmag = 9.8200
 teff  = 5824
 srad  = 1.9325
@@ -58,7 +64,7 @@ class TestDVreport(unittest.TestCase):
 	
 	def test_DVreport(self):
 
-		ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = False, mpi = None, test = './LATTE/tests/')
+		ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id,[0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = False, mpi = None, test = './LATTE/tests/')
 
 		# now that it has been run, test to make sure that the report was created. 
 		# check that a NEW report was made, and not just an old one that exists from a previous test run 

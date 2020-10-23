@@ -374,7 +374,11 @@ if __name__ == '__main__':
 
 				TICprompt(ROOT)
 				# make the TIC a string
-				tic = str(tkTIC)
+				
+				try:
+					tic = str(tkTIC)
+				except: # if tkTIC is not defined, that's because the user pressed the 'cancel' button. In which case we will exit the program.
+					sys.exit('Exit.')
 
 				# If the FFI button was checked, change the FFI argument 
 
@@ -507,10 +511,13 @@ if __name__ == '__main__':
 			ROOT.destroy()
 		
 		# if no sector is defined or the word 'all' is written in the box, analyse all of the given sectors.
+		
+		if sectors == None: # if the 'cancel' button is pressed, exit the program. 
+			sys.exit('Exit.')
+
 		if len(sectors) == 0:
 			sectors = 'all'
 
-		
 		# if not all of them are chosen, convert the input list (given as a string) into a python readable list
 		if sectors != 'all':
 			sectors = sectors.split(",")
@@ -651,6 +658,7 @@ if __name__ == '__main__':
 					
 					# extract the information of the tiems of the transit like events. 
 					transit_list_in = (row['transits'])
+
 					transit_list = ast.literal_eval(transit_list_in)
 					
 					# convert the input transit times and sectors into transit_list in the form of a list
