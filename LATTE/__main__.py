@@ -15,11 +15,13 @@ from tkinter import simpledialog
 from argparse import ArgumentParser
 from tess_stars2px import tess_stars2px_function_entry
 
+
 #custom modules to import
 from LATTE import LATTEbrew as brew 
 from LATTE import LATTEutils as utils
 #sys.tracebacklimit = 0
 warnings.filterwarnings('ignore')
+
 
 '''
 NOTE: a warning message currently appears when the code is exited (i.e. at the end of the code). 

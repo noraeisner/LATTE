@@ -2699,7 +2699,8 @@ def download_data(indir,sectors, tic, binfac = 5, test = 'no'):
         shape = (new_shape[0], arr.shape[0] // new_shape[0],
             new_shape[1], arr.shape[1] // new_shape[1])
         return arr.reshape(shape).mean(-1).mean(1)
-    
+
+
     # -!-!-!-!-!-!-!-
     if test != 'no':
         dwload_link = [test]  # in the unittest define a link to a pre downloaded file
@@ -3659,6 +3660,7 @@ def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
     return alltime, allflux, all_md, alltimebinned, allfluxbinned, outtics, tessmag_list, distance
 
 def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
+    
     '''
     Download the TPF LCs for the target star for all the indicated sectors. Not using Lightkurve
     
@@ -3672,7 +3674,8 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
         TIC (Tess Input Catalog) ID of the target
     transit_list  :  int
         list of all the marked transits
-
+    
+    
     Returns
     -------
     X1_list  :  list
@@ -3781,6 +3784,7 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
         except:
             print ("\n !!! This target pixel file is corrupt and cannot be downloaded at this time. Please try again later or a different file. \n")
             return [-111], [-111], [-111], [-111], [-111], [-111], [-111],[-111], [-111], [-111], [-111], [-111], [-111], [-111], [-111], [-111], [-111] # flag an error message
+
 
         for T0 in transit_list:
             
@@ -3952,8 +3956,10 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
             ax[i].contour(Z, [0.5], colors=color[i], linewidths=[4], 
                         extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
         
-        # save the figure
-        plt.savefig('{}/{}/{}_apertures_{}.png'.format(indir, tic, tic, idx), format='png', bbox_inches = 'tight')
+        # save the figure (unless this is in TEST mode)
+        if test == 'no':
+            plt.savefig('{}/{}/{}_apertures_{}.png'.format(indir, tic, tic, idx), format='png', bbox_inches = 'tight')
+        
         plt.clf()
         plt.close()
 
@@ -3967,8 +3973,7 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
     TESS_binned_l =     list(np.hstack(TESS_binned_l))
     small_binned_l =    list(np.hstack(small_binned_l))
 
-                
-
+    
     return X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list
 
 def download_tpf_lightkurve(indir, transit_list, sector, tic, test = 'no'):
