@@ -1580,7 +1580,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
             Z = g(X[:-1],Y[:-1])
             
             ax[idx].set_title('Aperture: {}'.format(label[idx]), fontsize = 18)
-            ax[idx].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'upper')
+            ax[idx].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'lower')
             ax[idx].contour(Z, [0.5], colors=color[idx], linewidths=[4], 
                         extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
         
@@ -3335,7 +3335,7 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
             Z = g(X[:-1],Y[:-1])
             
             ax[i].set_title('Aperture: {}'.format(label[i]), fontsize = 18)
-            ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'upper')
+            ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'lower')
             ax[i].contour(Z, [0.5], colors=color[i], linewidths=[4], 
                         extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
             
@@ -3963,7 +3963,7 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
             Z = g(X[:-1],Y[:-1])
             
             ax[i].set_title('Aperture: {}'.format(label[i]), fontsize = 18)
-            ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'upper')
+            ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'lower')
             ax[i].contour(Z, [0.5], colors=color[i], linewidths=[4], 
                         extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
         
@@ -4153,12 +4153,28 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic, test = 'no'):
                 y = np.linspace(0,mask.shape[0], mask.shape[0]*100)
                 X, Y= np.meshgrid(x[:-1],y[:-1])
                 Z = g(X[:-1],Y[:-1])
-                
+
+                # get the pixels for the columns and rows
+                start_column = tpf[1].header['1CRV5P']
+                start_row = tpf[1].header['2CRV5P']
+            
+                # only show the start and end pixel 
+                y_label_list = ['{}'.format(start_row),'{}'.format(start_row + im.shape[0])] # make a pixel label for the x and y axis
+                ax[i].set_yticks([0, y[:-1].max()-1])
+                ax[i].set_yticklabels(y_label_list)
+            
+                x_label_list = ['{}'.format(start_column),'{}'.format(start_column + im.shape[1])]
+                ax[i].set_xticks([0, x[:-1].max()-1])
+                ax[i].set_xticklabels(x_label_list)
+
                 ax[i].set_title('Aperture: {}'.format(label[i]), fontsize = 18)
-                ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'upper')
+                ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'lower')
                 ax[i].contour(Z, [0.5], colors=color[i], linewidths=[4], 
                             extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
-            
+
+                ax[i].set_xlabel("column (pixels)", labelpad=-9.5)
+                ax[i].set_ylabel("row (pixels)", labelpad=-12)
+     
             # save the figure
             plt.savefig('{}/{}/{}_apertures_{}.png'.format(indir, tic, tic, idx), format='png', bbox_inches = 'tight')
             plt.clf()
@@ -5410,11 +5426,11 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
     # loop through the transits and make plot for each ( only the first is currently displayed in the pdf report)
     for idx, X1 in enumerate(X1_list):
 
-        mapimg = apmask_list[idx]
+        mapimg = np.flip(apmask_list[idx], axis = 0)
         X4 = X4_list[idx]
         oot = oot_list[idx]
         #intr = intr_list[n]
-        bkg = bkg_list[idx]
+        bkg = np.flip(bkg_list[idx], axis = 0)
         apmask = apmask_list[idx]
         arrshape = arrshape_list[idx]
         t = t_list[idx]
@@ -5436,6 +5452,8 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
 
         for i in range(0,arrshape[1]):
             print ("{}   out of    {} ".format(i+1,arrshape[1] ))
+            ii = arrshape[1]-1-i # we want to plot this such that the pixels increase from left to right and bottom to top
+
             for j in range(0,arrshape[2]):
     
                 apmask = np.zeros(arrshape[1:], dtype=np.int)
@@ -5486,13 +5504,13 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
                 intr = abs(peak-time_binned) < 0.1
 
                 if simplebkg == True:
-                    ax[i, j].set_facecolor(color = 'k')
+                    ax[ii, j].set_facecolor(color = 'k')
                     linecolor = 'w'
                     transitcolor = 'gold'                   
                 else:
-                    ax[i, j].set_facecolor(color = color[int(bkg[i,j])-int(np.nanmin(bkg))])
+                    ax[ii, j].set_facecolor(color = color[int(bkg[ii,j])-int(np.nanmin(bkg))])
 
-                    if int(bkg[i,j])-abs(int(np.nanmin(bkg))) > ((np.nanmax(bkg))-abs(int(np.nanmin(bkg))))/2:
+                    if int(bkg[ii,j])-abs(int(np.nanmin(bkg))) > ((np.nanmax(bkg))-abs(int(np.nanmin(bkg))))/2:
                         linecolor = 'k'
                         transitcolor = 'orangered'
                     else:
@@ -5500,14 +5518,14 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
                         transitcolor = 'gold'
                 
 
-                ax[i, j].plot(time_binned,flux_binned, color = linecolor, marker = '.', markersize=1, lw = 0) 
-                ax[i, j].plot(time_binned[intr],flux_binned[intr], color = transitcolor, marker = '.', markersize=1, lw = 0) 
+                ax[ii, j].plot(time_binned,flux_binned, color = linecolor, marker = '.', markersize=1, lw = 0) 
+                ax[ii, j].plot(time_binned[intr],flux_binned[intr], color = transitcolor, marker = '.', markersize=1, lw = 0) 
                 
                 # get rid of ticks and ticklabels 
-                ax[i,j].set_yticklabels([])
-                ax[i,j].set_xticklabels([])
-                ax[i,j].set_xticks([])
-                ax[i,j].set_yticks([])
+                ax[ii,j].set_yticklabels([])
+                ax[ii,j].set_xticklabels([])
+                ax[ii,j].set_xticks([])
+                ax[ii,j].set_yticks([])
 
         # ------------------    
         
@@ -5989,7 +6007,7 @@ def plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, t
         count += 1 # add to the count before each plot
         plt.subplot(len(T0_list), 3, count)
         plt.axis('off')
-        plt.imshow(img_intr)
+        plt.imshow(img_intr, cmap=plt.cm.viridis, origin = 'lower')
         plt.colorbar()
         plt.title("t = {} days \n In Transit Flux (e-/candence)".format(T0))
 
@@ -5997,7 +6015,7 @@ def plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, t
         count += 1
         plt.subplot(len(T0_list), 3, count)
         plt.axis('off')
-        plt.imshow(img_oot)
+        plt.imshow(img_oot, cmap=plt.cm.viridis, origin = 'lower')
         plt.colorbar()
         plt.title("Out of Transit Flux (e-/candence)")
 
@@ -6005,7 +6023,7 @@ def plot_in_out_TPF(tic, indir, X4_list, oot_list, t_list, intr_list, T0_list, t
         count += 1
         plt.subplot(len(T0_list), 3, count)
         plt.axis('off')
-        plt.imshow(img_diff)
+        plt.imshow(img_diff, cmap=plt.cm.viridis, origin = 'lower')
         plt.colorbar()
         plt.title("Difference Flux (e-/candence)")
 
@@ -6205,7 +6223,7 @@ def eep_target(tic, indir, syspath, temp, rad, args):
     phase2 = pd.read_csv('{}/LATTE_eep_data/eep_phase2.csv'.format(syspath)) # these are the post main-sequence tracks
 
     # we need the TOI file which has the stellar parameters (unfortunately this is a different file to the other TOI file - both are installed with --new-data)
-    infile = "{}data/TOI_list_star_params.txt".format(indir)
+    infile = "{}/data/TOI_list_star_params.txt".format(indir)
     exoplanets = pd.read_csv(infile, comment = '#')
     
     # if either the radius or the temperature is unknown, ust ignore it because it can't be plotted.

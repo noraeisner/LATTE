@@ -406,7 +406,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# --------------------------------------------
 		
 		Story.append(PageBreak()) # always start a new page for this analysis
-		Story.append(Spacer(1, 20))
+		Story.append(Spacer(1, 10))
 
 		im4 = Image(flux_aperture_name)
 	
