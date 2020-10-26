@@ -3890,7 +3890,6 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
                 TESS_binned_l.append(flux_binned)
                 small_binned_l.append(flux_binned_small)
                 
-                
 
                 # - - - - - - - - - - - - - - - - - - - - -
                 # do PCA analysis to try to detrend the LC.
@@ -3961,12 +3960,28 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
             y = np.linspace(0,mask.shape[0], mask.shape[0]*100)
             X, Y= np.meshgrid(x[:-1],y[:-1])
             Z = g(X[:-1],Y[:-1])
+ 
+             # get the pixels for the columns and rows
+            start_column = tpf[1].header['1CRV5P']
+            start_row = tpf[1].header['2CRV5P']
             
+            # only show the start and end pixel 
+            y_label_list = ['{}'.format(start_row),'{}'.format(start_row + im.shape[0])] # make a pixel label for the x and y axis
+            ax[i].set_yticks([0, y[:-1].max()-1])
+            ax[i].set_yticklabels(y_label_list)
+            
+            x_label_list = ['{}'.format(start_column),'{}'.format(start_column + im.shape[1])]
+            ax[i].set_xticks([0, x[:-1].max()-1])
+            ax[i].set_xticklabels(x_label_list)
+
             ax[i].set_title('Aperture: {}'.format(label[i]), fontsize = 18)
             ax[i].imshow(im, cmap=plt.cm.viridis, **kwargs, origin = 'lower')
             ax[i].contour(Z, [0.5], colors=color[i], linewidths=[4], 
                         extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
         
+            ax[i].set_xlabel("column (pixels)", labelpad=-9.5)
+            ax[i].set_ylabel("row (pixels)", labelpad=-20)
+
         # save the figure (unless this is in TEST mode)
         if test == 'no':
             plt.savefig('{}/{}/{}_apertures_{}.png'.format(indir, tic, tic, idx), format='png', bbox_inches = 'tight')
@@ -4173,7 +4188,7 @@ def download_tpf_lightkurve(indir, transit_list, sector, tic, test = 'no'):
                             extent=[0-0.5, x[:-1].max()-0.5,0-0.5, y[:-1].max()-0.5])
 
                 ax[i].set_xlabel("column (pixels)", labelpad=-9.5)
-                ax[i].set_ylabel("row (pixels)", labelpad=-12)
+                ax[i].set_ylabel("row (pixels)", labelpad=-20)
      
             # save the figure
             plt.savefig('{}/{}/{}_apertures_{}.png'.format(indir, tic, tic, idx), format='png', bbox_inches = 'tight')
@@ -5385,7 +5400,7 @@ def plot_TESS_stars_not_proj(tic, indir, transit_list, transit_sec, tpf_list, ar
     return catalogData['Tmag'][0], catalogData['Teff'][0], catalogData['rad'][0], mass, vmag, logg, plx, c_id 
 
 # LC per pixel
-def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, transit_list, args):
+def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, tpf_list, apmask_list, arrshape_list, t_list, transit_list, args):
     
     '''
     Plot the LC for each pixel around the time of the transit like event. Each LC is fit with a spline and corrected to flatten. 
@@ -5435,6 +5450,7 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         arrshape = arrshape_list[idx]
         t = t_list[idx]
         peak = transit_list[idx]
+        tpf = tpf_list[idx]
 
         ver_seg = np.where(mapimg[:,1:] != mapimg[:,:-1])
         hor_seg = np.where(mapimg[1:,:] != mapimg[:-1,:])
@@ -5488,13 +5504,13 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
                     # binned data -
                     time_binned    =    np.array(time)
                     flux_binned  =   np.array(flux)
-    
-
+                
                 # create a mask that only looks at the times cut around the transit-event
                 timemask = (time_binned < peak+1.5) & (time_binned > peak-1.5)
                 
                 time_binned = time_binned[timemask]
                 flux_binned = flux_binned[timemask]
+                
                 # ----------
                 # fit a spline to the cut-out of each pixel LC in order to flatten it
                 p = np.poly1d(np.polyfit(time_binned, flux_binned, 3))
@@ -5549,8 +5565,29 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
 
         print ("done.\n")
         # ------------------
+
+        # label the pixels 
+        start_column = tpf[1].header['1CRV5P']
+        start_row = tpf[1].header['2CRV5P']
+
+        y_start = '{}'.format(start_row)
+        y_end = '{}'.format(start_row + bkg.shape[0])
+
+        x_start = '{}'.format(start_column)
+        x_end = '{}'.format(start_column + bkg.shape[1])
         
-        plt.subplots_adjust(top=0.95, right = 0.99, bottom = 0.01, left = 0.01) 
+        ax[bkg.shape[0]-1, 0].set_xlabel(x_start)
+        ax[bkg.shape[0]-1, 0].set_ylabel(y_start)
+    
+        ax[0,0].set_ylabel(y_end)
+        ax[bkg.shape[0]-1,bkg.shape[1]-1].set_xlabel(x_end)
+    
+        fig.text(0.5,0.01, "column (pixel)", ha='center', fontsize = 13)
+        fig.text(0.01, 0.5, "row (pixel)", va='center', rotation='vertical', fontsize = 13)
+
+        # - - - - - - - - - - 
+
+        plt.subplots_adjust(top=0.95, right = 0.99, bottom = 0.04, left = 0.04) 
 
         print ("Waiting on plot...")
         plt.suptitle(r"T0 = {} $\pm$ 1.5 d".format(peak ),y=0.98, fontsize = 15)
@@ -6233,7 +6270,7 @@ def eep_target(tic, indir, syspath, temp, rad, args):
     # set up the plot
     fig, ax = plt.subplots(figsize=(7,4))
 
-    for i in range(300,1700, 100): # we have evolutionary tracks from 0.3 M_sun to 1.7 M_sun in steps of 0.1
+    for i in range(300,1700, 100): # we have evolutionary tracks from 0.3 M_sun to 1.6 M_sun in steps of 0.1
         colname_phase0_T = (str(i).rjust(6, "0")) + '0M_phase0_T'
         colname_phase0_R = (str(i).rjust(6, "0")) + '0M_phase0_R'
     

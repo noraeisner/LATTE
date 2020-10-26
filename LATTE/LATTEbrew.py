@@ -262,7 +262,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		# ------------
 		
 		# For each pixel in the TPF, extract and plot a lightcurve around the time of the marked transit event.
-		utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, args)
+		utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, tpf_list, apmask_list, arrshape_list,t_list, T0_list, args)
 		print ("Pixel level LCs plot... done.")
 		# ------------
 		
@@ -692,7 +692,7 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 	# ------------
 
 	# For each pixel in the TPF, extract and plot a lightcurve around the time of the marked transit event.
-	utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, args)
+	utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, tpf_list, apmask_list, arrshape_list, t_list, T0_list, args)
 	print ("Pixel level LCs plot... done.")
 	# ------------
 
