@@ -337,6 +337,11 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	print ("done.")
 	
 	# ------------
+	print ("Evolutionary tracks plot...", end =" ")
+	utils.eep_target(tic, indir, syspath, teff, srad, args)
+	print ("done.")
+	
+	# ------------
 
 	# SKIP FROM HERE....
 	
@@ -347,6 +352,10 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	The code runs slightly differently depending on whether one or multiple transits have been marked. 
 	This is because with multiple transits the code has information about the possible orbital period.
 	Need to ensure that the code has compiled correctly on the users computer. 
+
+	Reason why is doesn't work else where: the priors need to be set up ver carefully, and this has not been tested enough to know 
+	it can be automated to work reliably. Also, this code requires a fortran backend, which has not yet been included in LATTE. 
+	---> we're working on implementing this as it will be very useful. 
 	'''
 
 	# First check if Pyaneti is installed...
@@ -361,7 +370,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 			os.system("python3 {}/pyaneti_LATTE.py {} {} {} {} {} {} {}".format(syspath, tic, indir, syspath, mstar, teff, srad, transit_list_model))
 	
 	else:
-		print ("Pyaneti has not been installed so you can't model anything yet. Contact Nora or Oscar for the LATTE version of the Pyaneti code.")
+		#print ("Pyaneti has not been installed so you can't model anything yet. Contact Nora or Oscar for the LATTE version of the Pyaneti code.")
 		model = False
 
 	# ... UNTIL HERE
@@ -373,9 +382,9 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI = False,  bls = True, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI = False,  bls = True, model = model, mpi = args.mpi)
 		else:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = model, mpi = args.mpi)
 
 
 def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):

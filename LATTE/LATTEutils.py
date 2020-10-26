@@ -2303,6 +2303,7 @@ def TOI_TCE_files(indir):
 
     # ------ TOIs ------
     TOI_url = "https://tev.mit.edu/data/collection/193/csv/5/"
+
     r_TOI = requests.get(TOI_url) # create HTTP response object
         
     if r_TOI.status_code == 404:
@@ -2310,8 +2311,18 @@ def TOI_TCE_files(indir):
     
     with open("{}/data/TOI_list.txt".format(indir),'wb') as f:
            f.write(r_TOI.content)
-
-
+    
+    # this TOI file is needed for the TOI stellar paramaters
+    TOI_star_params_rls = 'https://exofop.ipac.caltech.edu/tess/download_toi.php?sort=toi&output=csv'
+    
+    r_TOI_star_params = requests.get(TOI_star_params_rls) # create HTTP response object
+      
+    if r_TOI_star_params.status_code == 404:
+        print ("Can't download the TOI list at the moment. Has the URL changed? If this persists contact Nora.")
+    
+    with open("{}/data/TOI_list_star_params.txt".format(indir),'wb') as f:
+           f.write(r_TOI_star_params.content)
+    
     # ------ TCE ------
     if not os.path.exists("{}/data/tesscurl_sector_all_dv.sh".format(indir)):
         with open("{}/data/tesscurl_sector_all_dv.sh".format(indir),'w') as f:
@@ -4424,13 +4435,15 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
     period = results.period[index]
     t0 = results.transit_time[index]
     duration = results.duration[index]
+    mid_transit_t0 = model.compute_stats(period, duration, t0)['transit_times'][0]
+    
+    # call the first round of plotting
     
 
-    # call the first round of plotting
-    plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results, period, duration, t0, args)
+    plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results, period, duration, t0, mid_transit_t0, args)
     
     stats_period = period
-    stats_t0 = t0
+    stats_t0 = mid_transit_t0
     stats_depth = model.compute_stats(period, duration, t0)['depth']
     stats_depth_phased = model.compute_stats(period, duration, t0)['depth_phased']
     stats_depth_half = model.compute_stats(period, duration, t0)['depth_half']
@@ -4451,12 +4464,13 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
     period2 = results2.period[index]
     t02 = results2.transit_time[index]
     duration2 = results2.duration[index]
+    mid_transit_t02 = model.compute_stats(period2, duration2, t02)['transit_times'][0]
     
     # call the second round of plotting - once the intitial transit has been removed
-    plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model2, results2,period2,duration2,t02, args, in_transit = in_transit, in_transit_notbinned = in_transit_notbinned)
+    plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model2, results2,period2,duration2,t02, mid_transit_t02, args, in_transit = in_transit, in_transit_notbinned = in_transit_notbinned)
 
     stats2_period = period2
-    stats2_t0 = t02
+    stats2_t0 = mid_transit_t02
     stats2_depth = model2.compute_stats(period2, duration2, t0)['depth']
     stats2_depth_phased = model2.compute_stats(period2, duration2, t0)['depth_phased']
     stats2_depth_half = model2.compute_stats(period2, duration2, t0)['depth_half']
@@ -4515,9 +4529,10 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
     period = results.period[index]
     t0 = results.transit_time[index]
     duration = results.duration[index]
-    
+    mid_transit_t0 = model.compute_stats(period, duration, t0)['transit_times'][0]
+
     # call the first round of plotting
-    plot_bls_FFI(tic, indir, alltime, allflux, model, results, period, duration, t0, args)
+    plot_bls_FFI(tic, indir, alltime, allflux, model, results, period, duration, t0, mid_transit_t0, args)
     
     stats_period = period
     stats_t0 = t0
@@ -4538,9 +4553,10 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
     period2 = results2.period[index]
     t02 = results2.transit_time[index]
     duration2 = results2.duration[index]
-    
+    mid_transit_t02 = model.compute_stats(period2, duration2, t02)['transit_times'][0]
+
     # call the second round of plotting - once the intitial transit has been removed
-    plot_bls_FFI(tic, indir, alltime, allflux, model2, results2,period2,duration2,t02, args, in_transit = in_transit)
+    plot_bls_FFI(tic, indir, alltime, allflux, model2, results2,period2,duration2,t02, mid_transit_t02, args, in_transit = in_transit)
 
     stats2_period = period2
     stats2_t0 = t02
@@ -5516,7 +5532,10 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         print ("done.\n")
         # ------------------
         
+        plt.subplots_adjust(top=0.95, right = 0.99, bottom = 0.01, left = 0.01) 
+
         print ("Waiting on plot...")
+        plt.suptitle(r"T0 = {} $\pm$ 1.5 d".format(peak ),y=0.98, fontsize = 15)
         plt.xlim(peak-1.5,peak+1.5)
 
         if args.save == True:
@@ -5667,7 +5686,7 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
     plt.close()
 
 # plot of the two BLS runs including phase folded on most likely period
-def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results, period, duration, t0, args, in_transit = [0], in_transit_notbinned = [0]):
+def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, results, period, duration, t0, mid_transit_t0, args, in_transit = [0], in_transit_notbinned = [0]):
     '''
     Plot the BLS. This functinon is called in data_bls().
 
@@ -5730,7 +5749,7 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
     
     # ------------
     # plot the periodogram
-    ax.plot(results.period, results.power, "k", lw=0.5, label = 'P = %.3f T0 = %.3f' % (period,t0))
+    ax.plot(results.period, results.power, "k", lw=0.5, label = 'P = %.3f T0 = %.3f' % (period,mid_transit_t0))
     ax.set_title(title)
     ax.set_xlim(results.period.min(), results.period.max())
     ax.set_xlabel("period (days)")
@@ -5776,6 +5795,7 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
         ax.plot(x[m], allflux[~in_transit_notbinned][m],marker =".", alpha = 0.4, color = color2, ms=2, lw = 0, MarkerFaceColor = 'none')
         ax.plot(x_binned[m_binned], allfluxbinned[~in_transit][m_binned], marker ="o", alpha = 0.6, color = 'black', ms=3, lw = 0, MarkerFaceColor = 'none')
     
+
     x = np.linspace(-0.5, 0.5, 1000)
     f = model.model(x + t0, period, duration, t0)
     ax.plot(x, f, lw=2, color = color1)
@@ -5793,8 +5813,9 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
     else:
         plt.close()
 
+
 # plot of the two BLS runs including phase folded on most likely period for the FFIs
-def plot_bls_FFI(tic, indir, alltime, allflux, model, results, period, duration, t0, args, in_transit = [0]):
+def plot_bls_FFI(tic, indir, alltime, allflux, model, results, period, duration, t0, mid_transit_t0, args, in_transit = [0]):
     '''
 
     Plot the BLS for the FFIs (these don't have binned data). This functinon is called in data_bls().
@@ -5853,7 +5874,7 @@ def plot_bls_FFI(tic, indir, alltime, allflux, model, results, period, duration,
         ax.axvline(period / n, alpha=0.4, lw=2, linestyle="dashed", color = color2)
     
     # Plot the periodogram
-    ax.plot(results.period, results.power, "k", lw=0.5, label = 'P = %.3f T0 = %.3f' % (period,t0))
+    ax.plot(results.period, results.power, "k", lw=0.5, label = 'P = %.3f T0 = %.3f' % (period,mid_transit_t0))
     
     ax.set_title(title)
     ax.set_xlim(results.period.min(), results.period.max())
@@ -6175,6 +6196,72 @@ def plot_periodigram(tic, indir, alltime, allflux,args):
         plt.show()
     else:
         plt.close()
+
+# plot the equivilaten evolutionary phase tracks 
+def eep_target(tic, indir, syspath, temp, rad, args):
+
+    # the eep tracks are downloaded when you install the code. These files are not large ~70 KB each
+    phase0 = pd.read_csv('{}/LATTE_eep_data/eep_phase0.csv'.format(syspath)) # these are the main-sequence tracks
+    phase2 = pd.read_csv('{}/LATTE_eep_data/eep_phase2.csv'.format(syspath)) # these are the post main-sequence tracks
+
+    # we need the TOI file which has the stellar parameters (unfortunately this is a different file to the other TOI file - both are installed with --new-data)
+    infile = "{}data/TOI_list_star_params.txt".format(indir)
+    exoplanets = pd.read_csv(infile, comment = '#')
+    
+    # if either the radius or the temperature is unknown, ust ignore it because it can't be plotted.
+    # also uknown radii default to 1, so get rid of these as they are wrong.
+    exoplanets_r = exoplanets[~(np.isnan(exoplanets['Stellar Radius (R_Sun) err']) & (exoplanets['Stellar Radius (R_Sun)'] == 1))]
+
+    # set up the plot
+    fig, ax = plt.subplots(figsize=(7,4))
+
+    for i in range(300,1700, 100): # we have evolutionary tracks from 0.3 M_sun to 1.7 M_sun in steps of 0.1
+        colname_phase0_T = (str(i).rjust(6, "0")) + '0M_phase0_T'
+        colname_phase0_R = (str(i).rjust(6, "0")) + '0M_phase0_R'
+    
+        colname_phase2_T = (str(i).rjust(6, "0")) + '0M_phase2_T'
+        colname_phase2_R = (str(i).rjust(6, "0")) + '0M_phase2_R'
+        
+        phase0_T = phase0[colname_phase0_T]
+        phase0_R = phase0[colname_phase0_R]
+        
+        phase2_T = phase2[colname_phase2_T]
+        phase2_R = phase2[colname_phase2_R]
+        
+        # the -99 values are just there as padding to make the lists the same length -- we dont' need them to mask out.
+        mask0 = (phase0_T != -99) & (phase0_R != -99)
+        mask2 = (phase2_T != -99) & (phase2_R != -99)
+        
+        # plot the 1 Solar Mass track in a different colour to make it stand out - easier for reference.
+        if i == 1000:
+            plt.plot(phase0_T[mask0], phase0_R[mask0], 'maroon', zorder = -1, lw = 2)
+            plt.plot(phase2_T[mask2],phase2_R[mask2], 'maroon', linestyle = ':', zorder = -1, lw = 2)
+        else:
+            plt.plot(phase0_T[mask0], phase0_R[mask0], 'k', zorder = -1)
+            plt.plot(phase2_T[mask2],phase2_R[mask2], 'grey', linestyle = ':', zorder = -1)
+    
+
+    # plot the TOI's and the target in question.    
+
+    plt.scatter(temp, rad, c= '#e60063', s = 25, zorder = 1)
+    plt.scatter(exoplanets_r['Stellar Eff Temp (K)'], exoplanets_r['Stellar Radius (R_Sun)'], zorder = -2, c = 'navy', alpha = 0.15, s = 4)
+    
+    plt.xlim(plt.xlim()[::-1]) # refert the axis. 
+    plt.ylim(0.2,3.3)
+    plt.xlabel(r"${\rm T_{eff}~(K)}$", fontsize = 15)
+    plt.ylabel(r"${\rm Radius~(R_{\odot})}$", fontsize = 15)
+    plt.xlim(8000,3000)
+    
+    plt.subplots_adjust(hspace = 0, top=0.98, right = 0.965, bottom = 0.18, left = 0.1) 
+    
+    if args.save == True:
+        plt.savefig('{}/{}/{}_eep.png'.format(indir, tic, tic), format='png', bbox_inches='tight', pad_inches=0.5)
+
+    if args.noshow == False:
+        plt.show()
+    else:
+        plt.close()    
+    
 
 # --------------------------------------------
 #                other functions             #

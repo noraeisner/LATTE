@@ -580,7 +580,7 @@ if __name__ == '__main__':
 
 			# check whether this file already exist
 			# if it already exists it will only be overwritten if --o function has been enabled to avoid file loss.
-			existing_files = glob("{}/*{}*".format(indir, tic))
+			existing_files = glob("{}/{}".format(indir, tic))
 			
 			if (len(existing_files) > 0)  and (args.o != True): 
 				print ("This file already exists therefore SKIP. To overwrite files run this code with --o in the command line.")

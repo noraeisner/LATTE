@@ -144,6 +144,8 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	
 	periodogram_name = '{}/{}/{}_periodogram.png'.format(indir, tic, tic)
 
+	eep_name = '{}/{}/{}_eep.png'.format(indir, tic, tic)
+
 	# ----- LOGOS ------
 	# if this is a unittest run, find the files for the logos stored in the test folder
 	if test != 'no':
@@ -164,7 +166,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 
 	doc = SimpleDocTemplate("{}/{}/DV_report_{}.pdf".format(indir,tic,tic) ,pagesize=A4,
 						   rightMargin=72,leftMargin=72,
-						   topMargin=40,bottomMargin=20)
+						   topMargin=30,bottomMargin=20)
 
 	width, height = A4 # this is useful when defining where to plot something on the page
 	
@@ -184,7 +186,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	
 	Story.append(Paragraph(ptext, styles["centre"]))
 	Story.append(Paragraph(subtext, styles["centre"]))
-	Story.append(Spacer(1, 30))
+	Story.append(Spacer(1, 25))
 	
 	# ----- ADD THE LOGOS -------
 	PHT_logo =   Image(PHT_logo_name)
@@ -238,17 +240,34 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# ------ stellar parameters table ------
 	# --------------------------------------
 	try:
-		srad = float(srad)
+		srad = np.round(srad, 2)
 	except:
-		srad = -999
+		srad = '--'
 	
 	try:
-		teff = float(teff)
+		teff = np.round(teff, 0)
 	except:
-		teff = -999
-	
+		teff = '--'
+
+	try:
+		mstar = np.round(mstar, 2)
+	except:
+		mstar = '--'
+
+	try:
+		plx = np.round(plx, 2)
+	except:
+		plx = '--'
+
+	try:
+		vmag = np.round(vmag, 2)
+	except:
+		vmag = '--'
+
+
 	nominal_mission_sectors = list(np.array(sectors_all)[np.array(sectors_all) < 27])
 	extended_mission_sectors = list(np.array(sectors_all)[np.array(sectors_all) > 26])
+
 
 	# mstar, vmag, logg, plx, c_id
 
@@ -256,12 +275,12 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 				   ['TIC ID',	 tic, ],
 				   ['Other name',	 c_id, ],
 				   ['RA/Dec',		"{}  {}".format(ra, dec), "degrees"],
-				   ['Radius',	 "{:.4f}".format(srad), "Solar Radii"],
-				   ['Mass',	     "{:.4f}".format(mstar), "Solar Mass"],
-				   ['Teff',	     "{:.0f}".format(teff), "Kelvin"],
-				   ['Parallax',	     "{:.4f}".format(plx), " "],
-				   ['T mag',     "{:.4f}".format(tessmag), "Mag"],
-				   ['V mag',     "{:.4f}".format(vmag), "Mag"],
+				   ['Radius',	 "{}".format(srad), "Solar Radii"],
+				   ['Mass',	     "{}".format(mstar), "Solar Mass"],
+				   ['Teff',	     "{}".format(teff), "Kelvin"],
+				   ['Parallax',	     "{}".format(plx), " "],
+				   ['T mag',     "{}".format(tessmag), "Mag"],
+				   ['V mag',     "{}".format(vmag), "Mag"],
 				   ['Sectors (nominal)',	  "{} *".format(str(nominal_mission_sectors)[1:-1]),],
 				   ['Sectors (extended)',	  "{} *".format(str(extended_mission_sectors)[1:-1]),],
 				   ['TCE',	  TCE, ],
@@ -329,6 +348,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# Background
 	# --------------------------------------------
 	Story.append(PageBreak()) # always start a new page for this analysis
+	Story.append(Spacer(1, 20))
 	im2 = Image(background_flux_name)
 	
 	if len(transit_list) == 1:
@@ -353,7 +373,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# --------------------------------------------
 	
 	if FFI == False:
-		Story.append(Spacer(1, 16))
+
 		im3 = Image(centroid_positions_name)
 
 		if len(transit_list) == 1:
@@ -384,6 +404,10 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# --------------------------------------------
 		# Flux Aperture
 		# --------------------------------------------
+		
+		Story.append(PageBreak()) # always start a new page for this analysis
+		Story.append(Spacer(1, 20))
+
 		im4 = Image(flux_aperture_name)
 	
 		if len(transit_list) == 1:
@@ -458,7 +482,8 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# can only put this in the report if astroquery is working. 
 		if astroquery_corrupt == False:
 
-			Story.append(Spacer(1, 16))
+			Story.append(PageBreak()) # always start a new page for this analysis
+			Story.append(Spacer(1, 20))
 		
 			im6 = Image(tess_stars_name)
 			
@@ -503,7 +528,9 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# --------------------------------------------
 		# pixel_LCs_name
 		# --------------------------------------------
-		Story.append(Spacer(1, 10))
+		Story.append(PageBreak()) # always start a new page for this analysis
+		Story.append(Spacer(1, 20))
+		
 		im8 = Image(pixel_LCs_name)
 		
 	
@@ -662,6 +689,27 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	Story.append(Paragraph(ptext, styles["Normal"]))
 	
 
+	# --------------------------------------------
+	# eep
+	# --------------------------------------------
+	Story.append(Spacer(1, 20))
+
+	imp = Image(eep_name)
+
+	imp._restrictSize(width*0.5, width*0.5)
+
+	Story.append(imp)
+	
+	fig_count += 1
+	Story.append(Spacer(1, 10))
+	periodogram_text = "Fig {}. The equivalent evolutionary phase (eep) tracks for main sequence evolution (solid lines) and post \
+	main-sequence evolution (dashed lines) for masses ranging from 0.3 to 1.7 solar masses (from right to left). \
+	The 1 Solar Mass track is shown in maroon. The blue points show the TOIs and the magenta point TIC {}.".format(fig_count, tic)
+	
+	ptext = '<font size=8>%s</font>' % periodogram_text
+	Story.append(Paragraph(ptext, styles["Normal"]))
+	
+
 	if model == True:
 
 		#Story.append(PageBreak()) # always start a new page for this analysis
@@ -807,7 +855,8 @@ class MCLine(Flowable):
 		"""
 		self.canv.setStrokeColor(grey)
 		self.canv.line(0, self.height, self.width, self.height)
-	  
+
+
 class MCLine_color(Flowable):
 	"""
 	Line flowable --- draws a line in a flowable in COLOUR

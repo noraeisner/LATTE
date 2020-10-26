@@ -71,7 +71,9 @@ class TestDataPlotting(unittest.TestCase):
 		utils.plot_background(tic, indir, alltime, allfbkg, transit_list, args)
 		utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, transit_list, args)
 		utils.plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, transit_list, args)
-
+		utils.plot_periodigram(tic, indir, alltime, allflux,args)
+		utils.eep_target(tic, indir, syspath, teff, srad, args)
+		
 		# --------
 		# now check that the plots were actually made!
 
