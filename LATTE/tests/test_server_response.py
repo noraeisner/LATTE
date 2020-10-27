@@ -13,16 +13,6 @@ import requests
 
 import warnings
 warnings.filterwarnings("ignore")
-
-import sys
-import LATTE.LATTEutils as utils
-
-# test the downloading of the data
-# get the outir (or indir) path
-syspath = str(os.path.abspath(utils.__file__))[0:-14]
-
-with open("{}/_config.txt".format(syspath), 'r') as f:
-	indir = str(f.readlines()[-1])
 		
 def download_LC_data():
 	# function to reach the external server to download the scipt - this is for the first sector only
