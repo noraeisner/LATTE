@@ -23,10 +23,15 @@ from argparse import ArgumentParser
 
 import LATTE
 from LATTE import LATTEutils, LATTEbrew
+from LATTE.LATTEconfig import LATTEconfig
 import sys
 
 # get the system path
 syspath = str(os.path.abspath(LATTEutils.__file__))[0:-14]
+
+# configuration file that defines the directory where output are stored, e.g., images, DV reports.
+# The user will be prompted to set it when the program is run the first time.
+config = LATTEconfig()
 
 # set up for supercomputer
 try:
@@ -212,14 +217,13 @@ if __name__ == '__main__':
 	args.mpi = True
 
 	# check whether a path already exists
-	if not os.path.exists("{}/_config.txt".format(syspath)):
+	if not config.inited:
 	
 		# if it doesn't exist ask the user to put it in the command line
 		indir = input("\n \n No output path has been set yet. \n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
 	
 		# SAVE the new output path
-		with open("{}/_config.txt".format(syspath),'w') as f:
-			f.write(str(indir))
+		config.output_path = indir
 		
 		print("\n New path: " + indir)
 	
@@ -254,20 +258,17 @@ if __name__ == '__main__':
 			indir = input("\n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
 	
 			# SAVE the new output path
-			with open("{}/_config.txt".format(syspath),'w') as f:
-				f.write(str(indir))	
+			config.output_path = indir
 			
 			print("\n New path: " + indir)
 		
 		else:
-			with open("{}/_config.txt".format(syspath), 'r') as f:
-				indir = str(f.readlines()[-1])
+			indir = config.output_path
 		
 			print ("LATTE will continue to run with the old path: {}".format(indir))
 	
 	else:
-		with open("{}/_config.txt".format(syspath), 'r') as f:
-			indir = str(f.readlines()[-1])
+		indir = config.output_path
 	
 	if args.targetlist == 'no':
 		print ("You need to provide an input target list to run this code. End.")
