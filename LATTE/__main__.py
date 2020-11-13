@@ -459,10 +459,12 @@ if __name__ == '__main__':
 				if (list(set(sectors_all)) == list(set(available_SC_sectors))) or (args.FFI == True):
 					sectors = simpledialog.askstring(title="Sectors",
 													  prompt="TIC {} was observed in sector(s):\n {} \n \n (Enter the sectors you wish to look at (e.g. 1,4) or 'all' for all of them.) " .format(tic, str(list(sectors_all))[1:-1]))
+					
 				else:
 					sectors = simpledialog.askstring(title="Sectors",
 												  	prompt="TIC {} was observed in sector(s):\n {} \n \n Available short-cadence sectors:\n {} \n  \n (Enter the sectors you wish to look at (e.g. 1,4) or 'all' for all of them.) " .format(tic, str(list(sectors_all))[1:-1], str(available_SC_sectors)[1:-1]))
 
+					
 				del all_targets_sector
 				del infile
 				del two_min_cadence_sec
@@ -501,7 +503,7 @@ if __name__ == '__main__':
 				dec = np.array([x["dec"] for x in outObject["data"]])[0]
 				
 				_,_,_,sectors_all,_,_,_,_,_ = tess_stars2px_function_entry(tic, ra, dec)
-
+		
 				# --------				
 
 				sectors = str(args.sector)
@@ -531,7 +533,8 @@ if __name__ == '__main__':
 			sectors = available_SC_sectors
 		else:
 			print ("Will look at sector(s):  {}     (the files are opened but not stored locally) \n ".format(str(sectors)[1:-1]))
-	
+		
+
 		# -------------------------------------
 		# ---- OPEN INTERACTIVE MATPLOTLIB ----
 		# -------------------------------------
@@ -744,7 +747,7 @@ if __name__ == '__main__':
 						
 						brew.brew_LATTE(tic, indir, syspath,transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 					except:
-#
+
 					 	failed_tics.append(tic)
 					 	print ("TIC {} failed to complete. Continue anyway. You can find a list of the failed IDs stored in the output folder.".format(tic))
 					 	continue

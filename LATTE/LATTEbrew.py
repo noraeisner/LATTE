@@ -169,6 +169,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	#			START PLOTTING		  	 - calls functions from LATTEutils.py
 	# -----------------------------------
 	
+
 	# create a plot of the fulllighcurves with the momentum dumps (MDs) marked and a zoom-in of the marked transits
 	# this plit is saved but not shown (as already shown in the interact part fo the code)
 	utils.plot_full_md(tic, indir, alltime,allflux,all_md,alltimebinned,allfluxbinned, transit_list, args)
@@ -183,6 +184,8 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	# plot the background flux at the time of the transit event.
 	utils.plot_background(tic, indir,alltime, allfbkg, transit_list, args)
 	
+
+
 	print ("Centroid and background plots... done.")
 	# -----------
 
@@ -219,14 +222,14 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		The function returns the mass of the star (also output from astroquery)- this is a useful input for the Pyaneti modelling		
 		'''
 		if args.mpi == False:
-			test_astroquery, _, _, mstar,vmag, logg, plx, c_id = utils.plot_TESS_stars(tic,indir, transit_sec, tpf_list, args)
+			test_astroquery, _, _, mstar, vmag, logg, plx, c_id = utils.plot_TESS_stars(tic,indir, transit_sec, tpf_list, args)
 			
 			if test_astroquery == -111:
-				tessmag, teff, srad, mstar,vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+				tessmag, teff, srad, mstar, vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
 				args.mpi = True
 
 		else:
-			test_astroquery, _, _, mstar,vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+			test_astroquery, _, _, mstar, vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
 
 		# keep track of whether astroquery is working (sometimes the site is down and we don't want this to stop us from running the code)
 		astroquery_corrupt = False
@@ -262,7 +265,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		# ------------
 		
 		# For each pixel in the TPF, extract and plot a lightcurve around the time of the marked transit event.
-		utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, tpf_list, apmask_list, arrshape_list,t_list, T0_list, args)
+		utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, tpf_list, apmask_list, arrshape_list, t_list, T0_list, args)
 		print ("Pixel level LCs plot... done.")
 		# ------------
 		
@@ -703,6 +706,18 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 		bls_stats1, bls_stats2 = utils.data_bls_FFI(tic, indir, alltime, allflux, args)
 	# ------------
 
+	# ------------
+	print ("Periodogram plot...", end =" ")
+	utils.plot_periodigram(tic, indir, alltime, allflux,args)
+	print ("done.")
+	
+	# ------------
+	print ("Evolutionary tracks plot...", end =" ")
+	utils.eep_target(tic, indir, syspath, teff, srad, args)
+	print ("done.")
+	
+	# ------------
+	
 	'''
 	If the modelling option is selected (in the GUI), model the transit event using Pyaneti (Barragan et al 2018)
 	which uses an Bayesian approach with an MCMC sampling to best fit and model the transit.

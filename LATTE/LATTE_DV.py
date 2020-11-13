@@ -289,7 +289,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	
 	
 	table_stellar=Table(data_stellar)
-	table_stellar=Table(data_stellar,colWidths=width * 0.2, style=[
+	table_stellar=Table(data_stellar,colWidths=width * 0.3, style=[
 						('LINEABOVE',(0,1),(-1,1),1,colors.black),
 						('LINEABOVE',(0,11),(-1,11),1,colors.black),
 						('FONTSIZE', (0,0),(-1,13), 8),
@@ -347,8 +347,10 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# --------------------------------------------
 	# Background
 	# --------------------------------------------
-	Story.append(PageBreak()) # always start a new page for this analysis
-	Story.append(Spacer(1, 20))
+	if FFI == False:
+		Story.append(PageBreak()) # always start a new page for this analysis
+		Story.append(Spacer(1, 20))
+
 	im2 = Image(background_flux_name)
 	
 	if len(transit_list) == 1:
@@ -404,9 +406,9 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# --------------------------------------------
 		# Flux Aperture
 		# --------------------------------------------
-		
-		Story.append(PageBreak()) # always start a new page for this analysis
-		Story.append(Spacer(1, 10))
+		if FFI == False:
+			Story.append(PageBreak()) # always start a new page for this analysis
+			Story.append(Spacer(1, 10))
 
 		im4 = Image(flux_aperture_name)
 	
@@ -462,7 +464,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 
 		im5 = Image(in_out_name)
 	
-		im5._restrictSize(width*0.9, width*0.9)
+		im5._restrictSize(width*0.85, width*0.85)
 	
 		Story.append(im5)
 	
@@ -482,8 +484,9 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# can only put this in the report if astroquery is working. 
 		if astroquery_corrupt == False:
 
-			Story.append(PageBreak()) # always start a new page for this analysis
-			Story.append(Spacer(1, 20))
+			if FFI == False:
+				Story.append(PageBreak()) # always start a new page for this analysis
+				Story.append(Spacer(1, 20))
 		
 			im6 = Image(tess_stars_name)
 			

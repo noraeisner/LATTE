@@ -2780,7 +2780,7 @@ def download_data(indir,sectors, tic, binfac = 5, test = 'no'):
                     dwload_link.append(download_url)
 
                 except:
-                    future_sectors.append(s)
+                    future_sectors.append(sector)
 
 
             if len(future_sectors):
@@ -4599,7 +4599,6 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
     
     return [stats_period, stats_t0, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [stats2_period, stats2_t0, stats2_depth, stats2_depth_phased, stats2_depth_half, stats2_depth_odd, stats2_depth_even]
 
-
 # --------------------------------------------
 #                    plots                   #
 # --------------------------------------------
@@ -5120,6 +5119,7 @@ def plot_TESS_stars(tic,indir, transit_sec, tpf_list, args):
     if not np.isfinite(logg): logg = '--'
     if not np.isfinite(mass): mass = '--'
     if not np.isfinite(plx): plx   = '--'
+
     # sometimes it's useufl to know if the star has another name
     # check whether it was osberved by one of these four large surveys
 
@@ -5405,7 +5405,7 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
     '''
     Plot the LC for each pixel around the time of the transit like event. Each LC is fit with a spline and corrected to flatten. 
     each LC is fitted with a 3 order polynomial in order to flatten. 
-
+    
     Parameters
     ----------
     tic : str
@@ -5430,7 +5430,7 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         time arrays    
     transit_list  :  int
         list of all the marked transits
-
+    
     Returns
     -------
         Plot of the normalised LC for each pixel around the time of the transit like event. 
@@ -5567,8 +5567,14 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         # ------------------
 
         # label the pixels 
-        start_column = tpf[1].header['1CRV5P']
-        start_row = tpf[1].header['2CRV5P']
+        
+        if args.FFI == False:
+            start_column = tpf[1].header['1CRV5P']
+            start_row = tpf[1].header['2CRV5P']
+        
+        else:
+            start_column = tpf.get_keyword('1CRV5P', hdu=1, default=0)
+            start_row = tpf.get_keyword('2CRV5P', hdu=1, default=0)
 
         y_start = '{}'.format(start_row)
         y_end = '{}'.format(start_row + bkg.shape[0])
@@ -5576,12 +5582,14 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         x_start = '{}'.format(start_column)
         x_end = '{}'.format(start_column + bkg.shape[1])
         
+        print ("YYYAAA", bkg.shape[1])
+
         ax[bkg.shape[0]-1, 0].set_xlabel(x_start)
         ax[bkg.shape[0]-1, 0].set_ylabel(y_start)
     
         ax[0,0].set_ylabel(y_end)
         ax[bkg.shape[0]-1,bkg.shape[1]-1].set_xlabel(x_end)
-    
+        
         fig.text(0.5,0.01, "column (pixel)", ha='center', fontsize = 13)
         fig.text(0.01, 0.5, "row (pixel)", va='center', rotation='vertical', fontsize = 13)
 
@@ -5867,7 +5875,6 @@ def plot_bls(tic, indir, alltime, allflux, alltimebinned, allfluxbinned, model, 
         plt.show()
     else:
         plt.close()
-
 
 # plot of the two BLS runs including phase folded on most likely period for the FFIs
 def plot_bls_FFI(tic, indir, alltime, allflux, model, results, period, duration, t0, mid_transit_t0, args, in_transit = [0]):
@@ -6251,6 +6258,7 @@ def plot_periodigram(tic, indir, alltime, allflux,args):
         plt.show()
     else:
         plt.close()
+
 
 # plot the equivilaten evolutionary phase tracks 
 def eep_target(tic, indir, syspath, temp, rad, args):
