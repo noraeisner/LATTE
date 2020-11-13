@@ -224,7 +224,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# Full Image with momentum dumps
 	# --------------------------------------------
 	im = Image(full_LC_name)
-	im._restrictSize(width*0.78, width*0.78)
+	im._restrictSize(width*0.76, width*0.76)
 	Story.append(im)
 	
 	fig_count += 1
@@ -289,7 +289,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	
 	
 	table_stellar=Table(data_stellar)
-	table_stellar=Table(data_stellar,colWidths=width * 0.3, style=[
+	table_stellar=Table(data_stellar,colWidths=width * 0.24, style=[
 						('LINEABOVE',(0,1),(-1,1),1,colors.black),
 						('LINEABOVE',(0,11),(-1,11),1,colors.black),
 						('FONTSIZE', (0,0),(-1,13), 8),
