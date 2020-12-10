@@ -113,7 +113,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	#------------------------------------------------------------------
 	
 	# plot the full light curve, with marked sectors and marked transit - binned and unbinned
-
+	
 	full_LC_name = "{}/{}/{}_fullLC_md.png".format(indir,tic,tic)
 	
 	background_flux_name = '{}/{}/{}_background.png'.format(indir, tic, tic)

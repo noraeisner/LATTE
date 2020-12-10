@@ -3022,7 +3022,7 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
     mom_df = pd.read_csv(momentum_dumps_list, comment = '#', delimiter = '\t')
 
     for sec in sector:
-
+        print (sec)
         # import the data
         print ("Importing FFI data sector {} ...".format(sec))
 
@@ -3033,11 +3033,11 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
         # sometimes this failes so try multiple times... (faisl due to large data file)
         count = 0
         it_workd = False
-        tpf = search_result.download(cutout_size=15)
+        tpf = search_result.download(cutout_size=11)
 
         while not it_workd and count < 5:  # try up to 4 times to download it
             try:
-                tpf = search_result.download(cutout_size=15)
+                tpf = search_result.download(cutout_size=11)
                 it_workd = True
             except:
                 count += 1
@@ -3136,6 +3136,8 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
         X1_list.append(X1) #  not corrected
         X4_list.append(X4) #  PCA corrected
         t_list.append(np.array(alltime))  # add it here because this list isn't flattened but the other one is
+
+
 
     alltime_list = list(np.hstack(alltime_list))
     all_md =       list(np.hstack(all_md) )
@@ -3294,7 +3296,7 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
         
         # aim to make the big aperture around 40 % smaller than the large aperture
         small_ap_count = round(large_ap_count * 0.60) # 60% of pipeline aperture
-    
+        
         # we are using the lighkurve optimization to extract the aperture.
         # this places an aperture on the central pixel and selects the brightest surrounding ones based on a threshhold value 
         # determine this threshhold value based on the number of pixels that we want using scipy minimizaton and the 'find aperure' function as defined below under 'other functions'
@@ -3309,6 +3311,7 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
         # if this is run with an input file then the needed folder might not exist yet...
         if not os.path.exists("{}/{}/".format(indir, tic)): # if this folder doesn't already exist, make it
             os.makedirs("{}/{}/".format(indir, tic))
+        
         # ---------
         
         # ----------
@@ -5173,10 +5176,14 @@ def plot_TESS_stars(tic,indir, transit_sec, tpf_list, args):
 
     plt.title('Sector {}'.format(sector))
     
-    tpf_wcs = extract_wcs(tpf)
-
+    if args.FFI == False:
+        tpf_wcs = extract_wcs(tpf)
+        tup = (np.nanmean(tpf[1].data['FLUX'], axis=0),tpf_wcs)
+    else:
+        tpf_wcs = tpf.wcs
+        tup = (np.nanmean(tpf.flux, axis=0),tpf_wcs)
     # create a tupple of the array of the data and the wcs projection of the TESS cutout
-    tup = (np.nanmean(tpf[1].data['FLUX'], axis=0),tpf_wcs)
+    
     
     # map the SDSS and TESS image onto each other - the output will be orented NORTH!
     wcs_out, shape_out = find_optimal_celestial_wcs(input_data =[tup, hdu])
@@ -5582,8 +5589,6 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
         x_start = '{}'.format(start_column)
         x_end = '{}'.format(start_column + bkg.shape[1])
         
-        print ("YYYAAA", bkg.shape[1])
-
         ax[bkg.shape[0]-1, 0].set_xlabel(x_start)
         ax[bkg.shape[0]-1, 0].set_ylabel(y_start)
     
@@ -6131,7 +6136,10 @@ def plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_li
         tpf_filt  =  tpf_filt_list[idx] # the filtered target pixel files 
         tpf = tpf_list[idx]
         
-        tpf_wcs = extract_wcs(tpf)
+        if args.FFI == False:
+            tpf_wcs = extract_wcs(tpf)
+        else:
+            tpf_wcs = tpf.wcs
         # create a tupple of the array of the data and the wcs projection of the TESS cutout
         tup = (np.nanmean(tpf[1].data['FLUX'],axis=0),tpf_wcs)
         
@@ -6358,11 +6366,12 @@ def unnorm(x,m,s):
     return a
 
 
-def find_aperture(val, ap_count, flux_array):
+def find_aperture(val, ap_count, tpf):
     '''
     function that finds the desired aperture. 
     Used with a scipy minimization to find the threshhold value that results in the numbre of pixels wanted for the aperture.
     '''
+    flux_array = tpf.flux
 
     # calculate the mask centerd on the central pixel (on target)
     target_mask = extract_aperture(flux_array, threshold=val)
