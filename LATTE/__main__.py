@@ -454,12 +454,13 @@ if __name__ == '__main__':
 				two_min_cadence_sec = sorted(list(all_targets_sector[all_targets_sector['TICID'] == int(tic)]['sec']))
 				
 				available_SC_sectors = sorted(list(np.array(list(set(sectors_all) & set(two_min_cadence_sec)))[np.array(list(set(sectors_all) & set(two_min_cadence_sec))) <= last_sec]))
+				available_LC_sectors = sorted(list(np.array(sectors_all)[sectors_all <= last_sec]))
 
 
 				if (list(set(sectors_all)) == list(set(available_SC_sectors))) or (args.FFI == True):
 					sectors = simpledialog.askstring(title="Sectors",
 													  prompt="TIC {} was observed in sector(s):\n {} \n \n (Enter the sectors you wish to look at (e.g. 1,4) or 'all' for all of them.) " .format(tic, str(list(sectors_all))[1:-1]))
-					
+
 				else:
 					sectors = simpledialog.askstring(title="Sectors",
 												  	prompt="TIC {} was observed in sector(s):\n {} \n \n Available short-cadence sectors:\n {} \n  \n (Enter the sectors you wish to look at (e.g. 1,4) or 'all' for all of them.) " .format(tic, str(list(sectors_all))[1:-1], str(available_SC_sectors)[1:-1]))
@@ -517,6 +518,7 @@ if __name__ == '__main__':
 		if sectors == None: # if the 'cancel' button is pressed, exit the program. 
 			sys.exit('Exit.')
 
+
 		if len(sectors) == 0:
 			sectors = 'all'
 
@@ -528,9 +530,14 @@ if __name__ == '__main__':
 		print ("\n")
 		
 		# print out the information that has been chosen to the command line.
-		if sectors == 'all':
+		if (sectors == 'all') and (args.FFI == False):
 			print ("Will look at sector(s): {}    (the files are opened but not stored locally) \n ".format(str(available_SC_sectors)[1:-1]))
 			sectors = available_SC_sectors
+
+		elif (sectors == 'all') and (args.FFI == True):
+			print ("Will look at sector(s): {}    (the files are opened but not stored locally) \n ".format(str(available_SC_sectors)[1:-1]))
+			sectors = available_LC_sectors
+				
 		else:
 			print ("Will look at sector(s):  {}     (the files are opened but not stored locally) \n ".format(str(sectors)[1:-1]))
 		

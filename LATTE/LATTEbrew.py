@@ -590,7 +590,7 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 		t0 = transit_list[0] # time of the first marking
 		
 		# calculate the phase
-		#phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltime])
+		# phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltime])
 
 		# phased plot where odd and even are different colours
 		phased = (np.array(alltime) - t0) % period
