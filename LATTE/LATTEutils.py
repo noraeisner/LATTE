@@ -3300,8 +3300,8 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
         # we are using the lighkurve optimization to extract the aperture.
         # this places an aperture on the central pixel and selects the brightest surrounding ones based on a threshhold value 
         # determine this threshhold value based on the number of pixels that we want using scipy minimizaton and the 'find aperure' function as defined below under 'other functions'
-        large_ap_thresh_val = minimize_scalar(find_aperture, bounds = [0,10], args = (large_ap_count, tpf)).x
-        small_ap_thresh_val = minimize_scalar(find_aperture, bounds = [0,10], args = (small_ap_count, tpf)).x
+        large_ap_thresh_val = minimize_scalar(find_aperture_FFI, bounds = [0,10], args = (large_ap_count, tpf)).x
+        small_ap_thresh_val = minimize_scalar(find_aperture_FFI, bounds = [0,10], args = (small_ap_count, tpf)).x
         
         # using the optimal threshhold values, determine the masks
         target_mask = tpf.create_threshold_mask(threshold=large_ap_thresh_val, reference_pixel='center')
@@ -4485,6 +4485,9 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
     stats_depth_even = model.compute_stats(period, duration, t0)['depth_even']
 
 
+    if (2*duration) >= period: # if the 'found' events are very short period, don't rn the BLS twice as the code would crash.
+        return [stats_period, stats_t0, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [-999]
+    
     # Find the in-transit points using a longer duration as a buffer to avoid ingress and egress
     in_transit = model.transit_mask(alltimebinned, period, 2*duration, t0)
     in_transit_notbinned = model.transit_mask(alltime, period, 2*duration, t0)
@@ -4576,6 +4579,11 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
     stats_depth_odd = model.compute_stats(period, duration, t0)['depth_odd']
     stats_depth_even = model.compute_stats(period, duration, t0)['depth_even']
 
+    
+    if (2*duration) >= period: # if the 'found' events are very short period, don't rn the BLS twice as the code would crash.
+        return [stats_period, stats_t0, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [-999]
+    
+
     # Find the in-transit points using a longer duration as a buffer to avoid ingress and egress
     in_transit = model.transit_mask(alltime, period, 2*duration, t0)
     # Re-run the algorithm, and plot the results
@@ -4653,7 +4661,7 @@ def plot_nn(tic, indir, alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_
             ax[i].plot(alltime_nn[i], np.array(allflux_nn[i]), color = colors[i], label = "*** {}  Tmag = {:3f} ***".format(tic, tessmag_list[i]), marker = '.', ms = 2, linewidth = 0)
 
         else:
-            ax[i].plot(alltime_nn[i], np.array(allflux_nn[i]), color = colors[i], label = "{}  Tmag = {:3f}   d = {:3f} arcsecs".format(outtics[i], tessmag_list[i], distance[i]), marker = '.', ms = 2, linewidth = 0)
+            ax[i].plot(alltime_nn[i], np.array(allflux_nn[i]), color = colors[i], label = "{}  Tmag = {:3f}   d = {:3f} arcmins".format(outtics[i], tessmag_list[i], distance[i]), marker = '.', ms = 2, linewidth = 0)
         
         ax[i].plot(alltimebinned_nn[i], np.array(allfluxbinned_nn[i]), color = colors2[i], marker = '.', ms = 1, linewidth = 0)
               
@@ -6366,12 +6374,26 @@ def unnorm(x,m,s):
     return a
 
 
-def find_aperture(val, ap_count, tpf):
+def find_aperture_FFI(val, ap_count, tpf):
     '''
     function that finds the desired aperture. 
     Used with a scipy minimization to find the threshhold value that results in the numbre of pixels wanted for the aperture.
     '''
+
     flux_array = tpf.flux
+
+    # calculate the mask centerd on the central pixel (on target)
+    target_mask = extract_aperture(flux_array, threshold=val)
+
+    # determine how many pixels this threshhold results in and compare to desired mask size
+    return abs(np.sum(target_mask) - ap_count)
+
+
+def find_aperture(val, ap_count, flux_array):
+    '''
+    function that finds the desired aperture. 
+    Used with a scipy minimization to find the threshhold value that results in the numbre of pixels wanted for the aperture.
+    '''
 
     # calculate the mask centerd on the central pixel (on target)
     target_mask = extract_aperture(flux_array, threshold=val)

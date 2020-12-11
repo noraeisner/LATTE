@@ -1,3 +1,17 @@
+# -----------------------------
+'''
+A test to see whether the DV reports are generated as we would expect them to be. 
+This uses previously generated input files and therfore doesn't test the generatino of the files, but only the compilation of the report. 
+'''
+
+import os
+import sys
+import time 
+import datetime
+import unittest
+import numpy as np
+from dateutil import parser
+
 import os 
 import numpy as np
 import pandas as pd
@@ -15,6 +29,42 @@ from reportlab.lib.colors import red, black, grey, darkcyan
 from reportlab.lib.enums import TA_RIGHT, TA_JUSTIFY, TA_CENTER
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
+
+
+
+import warnings
+warnings.filterwarnings("ignore")
+
+#custom modules to import
+
+# test the downloading of the data
+# get the outir (or indir) path
+syspath = '/Users/Nora/Documents/research/TESS/planethunters/code/LATTE/LATTE/'
+
+indir = "/Users/Nora/Documents/research/TESS/planethunters/code/LATTE/LATTE/LATTE_output"
+
+# -------------
+# test with these input parameters (this data is already downloaded so it's only testing that the plotting part works)
+tic = '38820496'
+sector = '28'
+sectors = [28]
+sectors_all = [28]
+transit_list = [1454.7]
+target_ra = 72.6941
+target_dec = -60.9055
+
+vmag = 10.358
+logg = 3.83849
+plx = 3.77138
+c_id = 'TYC 8876-01059-1'
+mstar = 1.05
+
+tessmag = 9.8200
+teff  = 5824
+srad  = 1.9325
+tpf_corrupt  = False
+astroquery_corrupt = False
+# -------------
 
 
 def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI, bls = False, model = False, mpi = False, test = 'no'):
@@ -60,7 +110,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	print ("\n Start compiling the data validation report...")
 
 	# TCE -----
-	lc_dv = np.genfromtxt('{}/data/tesscurl_sector_all_dv.sh'.format(indir), dtype = str)
+	lc_dv = np.genfromtxt('/Users/Nora/Documents/research/TESS/planethunters/code/LATTE/LATTE/LATTE_output/data2/tesscurl_sector_all_dv.sh', dtype = str)
 
 	TCE_links = []
 
@@ -79,7 +129,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	
 
 	# TOI -----
-	TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment = "#")
+	TOI_planets = pd.read_csv('/Users/Nora/Documents/research/TESS/planethunters/code/LATTE/LATTE/LATTE_output/data2/TOI_list.txt', comment = "#")
 	
 	TOIpl = TOI_planets.loc[TOI_planets['TIC'] == float(tic)]
 		
@@ -163,6 +213,8 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# -------------------------------------------
 	# Make a PDF summary file
 	# -------------------------------------------
+	print ("{}/{}/DV_report_{}.pdf".format(indir,tic,tic))
+
 
 	doc = SimpleDocTemplate("{}/{}/DV_report_{}.pdf".format(indir,tic,tic) ,pagesize=A4,
 						   rightMargin=72,leftMargin=72,
@@ -213,11 +265,11 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	Story.append(Spacer(1, 30))
 	# ----------------------------
 
-	line = MCLine(width*0.77)
-	Story.append(line)
+	#line = MCLine(width*0.77)
+	#Story.append(line)
 	Story.append(Spacer(1, 2))
-	line = MCLine_color(width*0.77)
-	Story.append(line)
+	#ine = MCLine_color(width*0.77)
+	##Story.append(line)
 	Story.append(Spacer(1, 20))
 
 	# --------------------------------------------
@@ -309,8 +361,8 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# ------ ADD A LINE TO SEPERATE SECTIONS -----
 
 	Story.append(Spacer(1, 20))
-	line = MCLine(width*0.77)
-	Story.append(line)
+	#line = MCLine(width*0.77)
+	#Story.append(line)
 
 	# ------
 	
@@ -686,12 +738,11 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 								('LINEABOVE',(0,8),(-1,8),1,colors.black),
 								('FONTSIZE', (0,0),(-1,7), 8),
 								])
-
 		# ------ ADD A LINE TO SEPERATE SECTIONS -------
 		
 		Story.append(Spacer(1, 20))
-		line = MCLine(width*0.77)
-		Story.append(line)
+		#line = MCLine(width*0.77)
+		#Story.append(line)
 		
 		# ------
 
@@ -715,7 +766,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		Story.append(Spacer(1, 15))
 
 		table_count += 1
-		Stellartable_text = "Table {}. Summary of the BLS fit.".format(table_count)
+		Stellartable_text = "Table {}. Summary of the two BLS fits. Fit one is run with the whole lightcurve and fit two is run with the highest detected signal-to-noise transits removed.".format(table_count)
 		ptext = '<font size=8>%s</font>' % Stellartable_text
 		Story.append(Paragraph(ptext, styles["Normal"]))
 
@@ -784,8 +835,8 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		Story.append(Paragraph(ptext, styles["centre"]))
 		Story.append(Spacer(1, 15))
 		
-		line = MCLine(width*0.77)
-		Story.append(line)
+		#line = MCLine(width*0.77)
+		#Story.append(line)
 
 		# --------------------------------------------
 		# Pyaneti Modeling results
@@ -819,8 +870,8 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		if os.path.exists("{}/{}/model_out/{}_parameters.csv".format(indir, tic, tic)):
 			
 			Story.append(Spacer(1, 12))
-			line = MCLine(width*0.77)
-			Story.append(line)
+			#line = MCLine(width*0.77)
+			#Story.append(line)
 			Story.append(Spacer(1, 12))
 
 			ptext = '<font size=10>Candidate Model Parameters</font>'
@@ -886,54 +937,38 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	doc.build(Story, onFirstPage=addPageNumber, onLaterPages=addPageNumber)
 
 
-# ----- ADDITIONAL MODULES ------
+# create a mock 'argparser' becasuse the argparse function doesn't work within the unittest module 
+# for now use all of the default values. 
+class Namespace:
+	def __init__(self, **kwargs):  # arbitrary number of input values
+		self.__dict__.update(kwargs)
 
-class MCLine(Flowable):
-	"""
-	Line flowable --- draws a line in a flowable
-	http://two.pairlist.net/pipermail/reportlab-users/2005-February/003695.html
-	"""
- 
-	#----------------------------------------------------------------------
-	def __init__(self, width, height=0):
-		Flowable.__init__(self)
-		self.width = width
-		self.height = height
- 
-	#----------------------------------------------------------------------
-	def __repr__(self):
-		return "Line(w=%s)" % self.width
- 
-	#----------------------------------------------------------------------
-	def draw(self):
-		"""
-		draw the line
-		"""
-		self.canv.setStrokeColor(grey)
-		self.canv.line(0, self.height, self.width, self.height)
+global args
+
+args = Namespace(new_data=False, tic='no',sector='no', targetlist='no', 
+	noshow=True, o=False, auto=False,nickname='noname', FFI=False, save=True,north=False,new_path=False,mpi=False)
+
+# test it with the default arguments (except noshow - we don't want the plots to show up in the test run)
+# --------------
+bls_stats1 = [0.6600000000000001,
+	2062.0604618978937,
+	(0.012115420682542677, 0.037394119299624454),
+	(0.0, np.inf),
+	(0.0, np.inf),
+	(0.012714619599408561, 0.04403243817677407),
+	(0.011513613718160398, 0.04408595326160724)]
+
+bls_stats2 =[-999]
+
+LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI = False,  bls = True, model = False, mpi = None)
 
 
-class MCLine_color(Flowable):
-	"""
-	Line flowable --- draws a line in a flowable in COLOUR
-	http://two.pairlist.net/pipermail/reportlab-users/2005-February/003695.html
-	"""
- 
-	#----------------------------------------------------------------------
-	def __init__(self, width, height=0):
-		Flowable.__init__(self)
-		self.width = width
-		self.height = height
- 
-	#----------------------------------------------------------------------
-	def __repr__(self):
-		return "Line(w=%s)" % self.width
- 
-	#----------------------------------------------------------------------
-	def draw(self):
-		"""
-		draw the line
-		"""
-		self.canv.setStrokeColor(darkcyan)
-		self.canv.line(0, self.height, self.width, self.height)
 
+
+
+
+
+
+
+
+		
