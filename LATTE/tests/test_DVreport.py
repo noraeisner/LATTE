@@ -34,6 +34,12 @@ transit_list = [1454.7]
 target_ra = 72.6941
 target_dec = -60.9055
 
+vmag = 10.358
+logg = 3.83849
+plx = 3.77138
+c_id = 'TYC 8876-01059-1'
+mstar = 1.05
+
 tessmag = 9.8200
 teff  = 5824
 srad  = 1.9325
@@ -57,30 +63,30 @@ args = Namespace(new_data=False, tic='no',sector='no', targetlist='no',
 class TestDVreport(unittest.TestCase):
 	
 	def test_DVreport(self):
-
-		ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = False, mpi = None, test = './LATTE/tests/')
-
+		
+		ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id,[0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = False, mpi = None, test = './LATTE/tests/')
+		
 		# now that it has been run, test to make sure that the report was created. 
 		# check that a NEW report was made, and not just an old one that exists from a previous test run 
 		DV_path = '{}/55525572/DV_report_55525572.pdf'.format(indir)
 
 		# Get file's Last modification time stamp only in terms of seconds since epoch 
 		time_created_DV = os.path.getmtime(DV_path)
-
+		
 		# Convert seconds since epoch to readable timestamp
 		t_create_DV = parser.parse(time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(time_created_DV)))
 		
 		# the time now (needed to get the time since creation)
 		t_now = (datetime.datetime.now())
-
+		
 		# -------
 		# time difference in minutes
 		time_since_creation_DV =  ((t_now - t_create_DV).seconds / 60)
-
+		
 		# make sure that the new DV report was made less than 0.1 minutes ago - we want to make sure it's a new file and not am old one.
 		self.assertLess(time_since_creation_DV, 0.1, "No full LC plot was generated in the last 60 seconds") # a less than b
-
-
+		
+		
 if __name__ == '__main__':
 
 	unittest.main()
