@@ -13,6 +13,8 @@ email: *nora.eisner@new.ox.ac.uk*
 
 --------
 
+### NOTE: The code was recently updated and now works for the primary as well as the extended TESS mission (i.e. beyond sector 26). This new version differs from the old version in how it downloads data, so please re-run with '--new-data' in order to download all the new relevant text files (these files are smaller than the previous ones and will increase the speed of the code). The previous files starting with 'tesscurl' are no longer needed and can be deleted. The pip install version of this code has also been updated.
+
 *The aim of this code is to provide a series of diagnostic tests which are used in order to determine the nature of events found in *TESS* lightcurves.*
 
 LATTE is an open source Python package that performs standard diagnostic tests to help identify, vet and characterise signals in the *TESS* lightcurves in order to weed out instrumental and astrophysical false positives. The program is designed to allow for a fast, in depth analysis of targets that have already been identified as promising candidates by the main *TESS* pipelines or via alternative methods such as citizen science. The code automatically downloads the data products for any chosen TIC ID (short or long cadence TESS data) and produces a number of diagnostic plots (outlined below) that are compiled in a concise report. 
@@ -30,7 +32,7 @@ LATTE requires python3 to be installed on your computer, which can be download f
 
 	pip3 install tessLATTE      
 
-In order for LATTE to work you will need to have the right versions of certain modules installed, so downloading it in a virtual environment. **Note: ensure that the matplotlib version that you are using is v3.2.0rc1 (pip install matplotlib==3.2.0rc1). You will also need a module called TKinter installed. If this is not already installed, please use: sudo apt-get install python3-tk.**
+In order for LATTE to work you will need to have the right versions of certain modules installed, so downloading it in a virtual environment. **Note: ensure that the matplotlib version that you are using is 3.2.0 (pip install matplotlib==3.2.0). You will also need a module called TKinter installed. If this is not already installed, please use: sudo apt-get install python3-tk.**
 
 The first time that the program is run you will be prompted to enter a path to a file on your computer where all the output data will be stored (this path can be changed later using --new-path). The first time that the code is run it will also have to download the text data files from MAST, which are around 325M. This download will only have to run in full once but may take a couple of minutes to complete. Please note that this step does not download any of the actual TESS data, but only text files that contain curl scripts that are needed to download individual light curves when LATTE is run. This one-time bulk download increases the speed of LATTE by ensuring that these curl scripts do not have be downloaded every time that the code is executed.
 
