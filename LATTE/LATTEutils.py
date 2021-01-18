@@ -2404,7 +2404,7 @@ def get_data_codes(indir):
                 # to a new file in binary mode.    
 
                 f.write(string)
-                print("Finished adding sectors codes for sector {}".format(sec))
+                print("Finished adding sector codes for sector {}".format(sec))
 
 def momentum_dumps_info(indir):
     '''
