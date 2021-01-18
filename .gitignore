@@ -13,3 +13,4 @@ pyaneti_LATTE
 pyaneti_LATTE.py
 ./_config.txt
 ./LATTE/_config.txt
+tessLATTE.egg-info
