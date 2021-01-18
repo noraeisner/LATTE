@@ -1,7 +1,0 @@
---2020-09-18 19:48:18--  http://exoplanetarchive.ipac.caltech.edu/data/ETSS//SuperWASP/FITS/DR1/tile252108/1SWASP%20J165508.35+202928.8.fits
-Resolving exoplanetarchive.ipac.caltech.edu (exoplanetarchive.ipac.caltech.edu)... 134.4.54.151
-Connecting to exoplanetarchive.ipac.caltech.edu (exoplanetarchive.ipac.caltech.edu)|134.4.54.151|:80... connected.
-HTTP request sent, awaiting response... 302 Found
-Location: https://exoplanetarchive.ipac.caltech.edu/data/ETSS//SuperWASP/FITS/DR1/tile252108/1SWASP J165508.35+202928.8.fits [following]
---2020-09-18 19:48:19--  https://exoplanetarchive.ipac.caltech.edu/data/ETSS//SuperWASP/FITS/DR1/tile252108/1SWASP%20J165508.35+202928.8.fits
-Connecting to exoplanetarchive.ipac.caltech.edu (exoplanetarchive.ipac.caltech.edu)|134.4.54.151|:443... connected.

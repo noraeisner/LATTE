@@ -169,7 +169,6 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	#			START PLOTTING		  	 - calls functions from LATTEutils.py
 	# -----------------------------------
 	
-
 	# create a plot of the fulllighcurves with the momentum dumps (MDs) marked and a zoom-in of the marked transits
 	# this plit is saved but not shown (as already shown in the interact part fo the code)
 	utils.plot_full_md(tic, indir, alltime,allflux,all_md,alltimebinned,allfluxbinned, transit_list, args)
@@ -179,13 +178,12 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	transit_sec = utils.transit_sec(in_sec, start_sec, end_sec, transit_list)
 	
 	# -----------
+
 	# plot how the centroids moved during the transit event
 	utils.plot_centroid(tic, indir,alltime12, allx1, ally1, allx2, ally2, transit_list, args)
 	# plot the background flux at the time of the transit event.
 	utils.plot_background(tic, indir,alltime, allfbkg, transit_list, args)
 	
-
-
 	print ("Centroid and background plots... done.")
 	# -----------
 
@@ -199,14 +197,10 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	# call function to extract the Target Pixel File information 
 	# this is needed in order to extract the LCs in different aperture sizes.
 	# the data is extracted using the open source Lightkurve package as they a built in function to extract LCs using different aperture sizes
-	#TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic)
+	TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic)
 	
-	print ("\n Start downloading of the target pixel files - this can take a little while (up to a minute) as the files are large \n")
-
-	X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf(indir, transit_sec, transit_list, tic)
-
 	# if the TPF wasn't corrupt then make the TPF files (only very ocassionally corrupt but don't want code to crash if it is corrrupt)
-	if (TESS_unbinned_t_l[0] != -111):
+	if (TESS_unbinned_t_l != -111):
 
 		tpf_corrupt = False
 		# plot the LCs using two different aperture sizes.
@@ -222,14 +216,9 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		The function returns the mass of the star (also output from astroquery)- this is a useful input for the Pyaneti modelling		
 		'''
 		if args.mpi == False:
-			test_astroquery, _, _, mstar, vmag, logg, plx, c_id = utils.plot_TESS_stars(tic,indir, transit_sec, tpf_list, args)
-			
-			if test_astroquery == -111:
-				tessmag, teff, srad, mstar, vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
-				args.mpi = True
-
+			test_astroquery, _, _, mstar = utils.plot_TESS_stars(tic,indir, transit_list, transit_sec, tpf_list, args)
 		else:
-			test_astroquery, _, _, mstar, vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+			test_astroquery, _, _, mstar = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
 
 		# keep track of whether astroquery is working (sometimes the site is down and we don't want this to stop us from running the code)
 		astroquery_corrupt = False
@@ -245,7 +234,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		
 		# Download the Target Pixel File using the raw MAST data - this comes in a different format as the TPFs extracted using Lightkurve
 		# This data is then corrected using Principal Component Analysis is orderto get rid of systematics.
-		#X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic)
+		X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic)
 		
 		# ------------
 		
@@ -265,7 +254,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		# ------------
 		
 		# For each pixel in the TPF, extract and plot a lightcurve around the time of the marked transit event.
-		utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, tpf_list, apmask_list, arrshape_list, t_list, T0_list, args)
+		utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list,t_list, T0_list, args)
 		print ("Pixel level LCs plot... done.")
 		# ------------
 		
@@ -325,40 +314,24 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	utils.plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, transit_list, outtics, tessmag_list, distance, args)
 	print ("Nearest neighbour plot... done.")
 	# ------------
-	
+
 	# if the BLS option is chose, a BLS search is run. The LCs are first detrended and smoothed using a moving average. 
 	# The corrected and uncorrected LCs are saves as a single plot for comparison and to verify that the correction worked well - saved but do not feature in the DV report. 
 	if BLS == True:
 		print ("Running BLS algorithm...", end =" ")
 		bls_stats1, bls_stats2 = utils.data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args)
 		print ("done.")
-
-
-	# ------------
-	print ("Periodogram plot...", end =" ")
-	utils.plot_periodigram(tic, indir, alltime, allflux,args)
-	print ("done.")
-	
-	# ------------
-	print ("Evolutionary tracks plot...", end =" ")
-	utils.eep_target(tic, indir, syspath, teff, srad, args)
-	print ("done.")
-	
 	# ------------
 
 	# SKIP FROM HERE....
-	
+
 	'''
-	NOTE: CURRENTLY ONLY WORKS ON NORA'S COMPUTER - WILL BE AVAILABLE IN NEXT RELEASE SO PLEASE SKIP THIS PART OF THE CODE
+	NOTE: CURRENTLY ONLY WORKS ON NORA'S COMPUTER - WILL BE AVAILABLE IN NEXT RELEASE SO PLEASE SCIP THIS PART OF THE CODE
 	If the modelling option is selected (in the GUI), model the transit event using Pyaneti (Barragan et al 2018)
 	which uses an Bayesian approach with an MCMC sampling to best fit and model the transit.
 	The code runs slightly differently depending on whether one or multiple transits have been marked. 
 	This is because with multiple transits the code has information about the possible orbital period.
 	Need to ensure that the code has compiled correctly on the users computer. 
-
-	Reason why is doesn't work else where: the priors need to be set up ver carefully, and this has not been tested enough to know 
-	it can be automated to work reliably. Also, this code requires a fortran backend, which has not yet been included in LATTE. 
-	---> we're working on implementing this as it will be very useful. 
 	'''
 
 	# First check if Pyaneti is installed...
@@ -373,7 +346,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 			os.system("python3 {}/pyaneti_LATTE.py {} {} {} {} {} {} {}".format(syspath, tic, indir, syspath, mstar, teff, srad, transit_list_model))
 	
 	else:
-		#print ("Pyaneti has not been installed so you can't model anything yet. Contact Nora or Oscar for the LATTE version of the Pyaneti code.")
+		print ("Pyaneti has not been installed so you can't model anything yet. Contact Nora or Oscar for the LATTE version of the Pyaneti code.")
 		model = False
 
 	# ... UNTIL HERE
@@ -385,9 +358,9 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI = False,  bls = True, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI = False,  bls = True, model = model, mpi = args.mpi)
 		else:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = model, mpi = args.mpi)
 
 
 def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):
@@ -558,14 +531,9 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 	'''
 
 	if args.mpi == False:
-		tessmag, teff, srad, mstar,vmag, logg, plx, c_id = utils.plot_TESS_stars(tic,indir, transit_sec, tpf_list, args)
-
-		if tessmag == -111:
-			tessmag, teff, srad, mstar,vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
-			args.mpi = True
-
+		tessmag, teff, srad, mstar = utils.plot_TESS_stars(tic,indir,transit_list, transit_sec, tpf_list, args)
 	else:
-		tessmag, teff, srad, mstar, vmag, logg, plx, c_id = utils.plot_TESS_stars_not_proj(tic,indir, transit_list, transit_sec, tpf_list, args)
+		tessmag, teff, srad, mstar = utils.plot_TESS_stars_not_proj(tic,indir,transit_list, transit_sec, tpf_list, args)
 
 	# keep track of whether astroquery is working (sometimes the site is down and we don't want this to stop us from running the code)
 	astroquery_corrupt = False
@@ -590,7 +558,7 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 		t0 = transit_list[0] # time of the first marking
 		
 		# calculate the phase
-		# phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltime])
+		#phased = np.array([-0.5+( ( t - t0-0.5*period) % period) / period for t in alltime])
 
 		# phased plot where odd and even are different colours
 		phased = (np.array(alltime) - t0) % period
@@ -669,8 +637,8 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 
 				T0_list.append(T0)
 
-	X1_list	 	    = 	X1_list_n
-	X4_list	 	    = 	X4_list_n
+	X1_list	 	= 	X1_list_n
+	X4_list	 	= 	X4_list_n
 	bkg_list		= 	bkg_list_n
 	apmask_list 	= 	apmask_list_n
 	arrshape_list   =   arrshape_list_n
@@ -695,7 +663,7 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 	# ------------
 
 	# For each pixel in the TPF, extract and plot a lightcurve around the time of the marked transit event.
-	utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, tpf_list, apmask_list, arrshape_list, t_list, T0_list, args)
+	utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, args)
 	print ("Pixel level LCs plot... done.")
 	# ------------
 
@@ -706,18 +674,6 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 		bls_stats1, bls_stats2 = utils.data_bls_FFI(tic, indir, alltime, allflux, args)
 	# ------------
 
-	# ------------
-	print ("Periodogram plot...", end =" ")
-	utils.plot_periodigram(tic, indir, alltime, allflux,args)
-	print ("done.")
-	
-	# ------------
-	print ("Evolutionary tracks plot...", end =" ")
-	utils.eep_target(tic, indir, syspath, teff, srad, args)
-	print ("done.")
-	
-	# ------------
-	
 	'''
 	If the modelling option is selected (in the GUI), model the transit event using Pyaneti (Barragan et al 2018)
 	which uses an Bayesian approach with an MCMC sampling to best fit and model the transit.
@@ -751,9 +707,9 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, bls_stats1, bls_stats2, False, astroquery_corrupt, FFI = True, bls = True, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, bls_stats1, bls_stats2, False, astroquery_corrupt, FFI = True, bls = True, model = model, mpi = args.mpi)
 		else:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, [0], [0], False, astroquery_corrupt, FFI = True, bls = False, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, [0], [0], False, astroquery_corrupt, FFI = True, bls = False, model = model, mpi = args.mpi)
 
 	else:
 		print ("\n  Complete! \n ")

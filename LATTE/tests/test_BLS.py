@@ -87,10 +87,10 @@ class TestBoxLeastSquareTest(unittest.TestCase):
 
         # check that the output numbers make sense
         self.assertAlmostEqual(float(bls_stats1[0]), float(16.910000000000014), places=5)
-        #self.assertAlmostEqual(float(bls_stats1[1]), float(0.3901880448498858), places=5)
+        self.assertAlmostEqual(float(bls_stats1[1]), float(0.3901880448498858), places=5)
 
         self.assertAlmostEqual(float(bls_stats2[0]), float(0.51))
-        #self.assertAlmostEqual(float(bls_stats2[1]), float( 0.305186334480843), places=5)
+        self.assertAlmostEqual(float(bls_stats2[1]), float( 0.305186334480843), places=5)
 
 
 if __name__ == '__main__':

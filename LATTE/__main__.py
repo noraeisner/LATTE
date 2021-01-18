@@ -2,7 +2,6 @@ import os
 import ast
 import csv
 import sys
-import json
 import warnings
 import matplotlib
 import numpy as np
@@ -13,15 +12,12 @@ from glob import glob
 from os.path import exists
 from tkinter import simpledialog
 from argparse import ArgumentParser
-from tess_stars2px import tess_stars2px_function_entry
-
 
 #custom modules to import
 from LATTE import LATTEbrew as brew 
 from LATTE import LATTEutils as utils
 #sys.tracebacklimit = 0
 warnings.filterwarnings('ignore')
-
 
 '''
 NOTE: a warning message currently appears when the code is exited (i.e. at the end of the code). 
@@ -143,12 +139,11 @@ if __name__ == '__main__':
 		# ------------------------------------------------
 
 		# ----- REFERENCE FILES DOWNLOAD -----
-		#utils.data_files(indir)
-		utils.get_data_codes(indir) # get the codes needed to downlaod the data directly (so that we don't need the url scipts anymore)
-		utils.tp_files(indir)  # downlaod the lost of all of the tic ids in that sector - this is needed to find the nearest neighbour tic ids.
-		utils.TOI_TCE_files(indir) # get a list of the TCEs and TOIs
-		utils.momentum_dumps_info(indir)  # note downn the momentum dumps - we need this for the FFI's only
-			
+		utils.data_files(indir)
+		utils.tp_files(indir)
+		utils.TOI_TCE_files(indir)
+		utils.momentum_dumps_info(indir)
+		
 		# -----
 
 	# if the user chooses to redefine the path
@@ -181,7 +176,7 @@ if __name__ == '__main__':
 				f.write(str(indir))	
 			
 			print("\n New path: " + indir)
-			
+	
 			if not os.path.exists("{}/data".format(indir)):
 				os.makedirs("{}/data".format(indir))
 
@@ -261,12 +256,13 @@ if __name__ == '__main__':
 	if (args.new_data != False) and (os.path.exists("{}/_config.txt".format(syspath))): 
 
 		# ----- REFERENCE FILES DOWNLOAD -----
-		#utils.data_files(indir)
-		utils.get_data_codes(indir) # get the codes needed to downlaod the data directly (so that we don't need the url scipts anymore)
-		utils.tp_files(indir)  # downlaod the lost of all of the tic ids in that sector - this is needed to find the nearest neighbour tic ids.
-		utils.TOI_TCE_files(indir) # get a list of the TCEs and TOIs
-		utils.momentum_dumps_info(indir)  # note downn the momentum dumps - we need this for the FFI's only
+		utils.data_files(indir)
+		utils.tp_files(indir)
+		utils.TOI_TCE_files(indir)
+		utils.momentum_dumps_info(indir)
 		# -----
+	
+
 
 	# -----------  INTERACTIVE VERSION  ------------
 	# ---------------------------------------------
@@ -307,35 +303,9 @@ if __name__ == '__main__':
 			# --------
 			# Run a function called TESS-point. This returns the sectors in which the target has 
 			# been observed as well as the RA and DEC of the target. 
-			
-			starTics = np.array(["{}".format(tic)], dtype=np.int64)
-			ticStringList = ["{0:d}".format(x) for x in starTics]
-		
-			# Setup mast query
-			request = {
-				"service": "Mast.Catalogs.Filtered.Tic",
-				"params": {
-					"columns": "*",
-					"filters": [{"paramName": "ID", "values": ticStringList}],
-				},
-				"format": "json",
-				"removenullcolumns": True}
-			
-		
-			headers, outString = utils.mastQuery(request)
-			
-			outObject = json.loads(outString)
-
-			if len(outObject["data"]) == 0:
-				sys.exit('{} is not a valid TIC ID number. Please try again.'.format(tic))
-	
-			ra = np.array([x["ra"] for x in outObject["data"]])[0]
-			dec = np.array([x["dec"] for x in outObject["data"]])[0]
-			
-			_,_,_,sectors_all,_,_,_,_,_ = tess_stars2px_function_entry(tic, ra, dec)
-
+			sectors_all, ra, dec = utils.tess_point(indir, tic) 
 			# --------
-		
+
 		# --------------------------------
 		# If either the TIC or the sectors or both have not already been identified, run Tkinter (interactive tools)
 		
@@ -374,11 +344,7 @@ if __name__ == '__main__':
 
 				TICprompt(ROOT)
 				# make the TIC a string
-				
-				try:
-					tic = str(tkTIC)
-				except: # if tkTIC is not defined, that's because the user pressed the 'cancel' button. In which case we will exit the program.
-					sys.exit('Exit.')
+				tic = str(tkTIC)
 
 				# If the FFI button was checked, change the FFI argument 
 
@@ -408,105 +374,16 @@ if __name__ == '__main__':
 			if args.sector == 'no':
 				# returns all of the sectors in which TESS observed the given TIC id - this uses TESS-point
 
-				#sectors_all, ra, dec = utils.tess_point(indir, tic) 
-
-				# --------
-				# Run a function called TESS-point. This returns the sectors in which the target has 
-				# been observed as well as the RA and DEC of the target. 
-				
-				starTics = np.array(["{}".format(tic)], dtype=np.int64)
-				ticStringList = ["{0:d}".format(x) for x in starTics]
-			
-				# Setup mast query
-				request = {
-					"service": "Mast.Catalogs.Filtered.Tic",
-					"params": {
-						"columns": "*",
-						"filters": [{"paramName": "ID", "values": ticStringList}],
-					},
-					"format": "json",
-					"removenullcolumns": True}
-				
-			
-				headers, outString = utils.mastQuery(request)
-				
-				outObject = json.loads(outString)
-
-				if len(outObject["data"]) == 0:
-					sys.exit('{} is not a valid TIC ID number. Please try again.'.format(tic))
-	
-				ra = np.array([x["ra"] for x in outObject["data"]])[0]
-				dec = np.array([x["dec"] for x in outObject["data"]])[0]
-				
-				_,_,_,sectors_all,_,_,_,_,_ = tess_stars2px_function_entry(tic, ra, dec)
-	
-				# --------
-
+				sectors_all, ra, dec = utils.tess_point(indir, tic) 
+		
 				# The user is shown a list of the sectors in which the target is observed 
 				# and asked to state which ones they want to assess
 
-				all_targets_sector = pd.read_csv("{}/data/all_targets_list.txt".format(indir), comment = '#', delimiter = ',')
-				
-				infile = pd.read_csv("{}/data/sector_download_codes.txt".format(indir), delimiter = ' ', names = ['sec', 'first', 'second'], comment = '#')
-				
-				last_sec = list(infile['sec'])[-1]
-				
-				two_min_cadence_sec = sorted(list(all_targets_sector[all_targets_sector['TICID'] == int(tic)]['sec']))
-				
-				available_SC_sectors = sorted(list(np.array(list(set(sectors_all) & set(two_min_cadence_sec)))[np.array(list(set(sectors_all) & set(two_min_cadence_sec))) <= last_sec]))
-				available_LC_sectors = sorted(list(np.array(sectors_all)[sectors_all <= last_sec]))
-
-
-				if (list(set(sectors_all)) == list(set(available_SC_sectors))) or (args.FFI == True):
-					sectors = simpledialog.askstring(title="Sectors",
-													  prompt="TIC {} was observed in sector(s):\n {} \n \n (Enter the sectors you wish to look at (e.g. 1,4) or 'all' for all of them.) " .format(tic, str(list(sectors_all))[1:-1]))
-
-				else:
-					sectors = simpledialog.askstring(title="Sectors",
-												  	prompt="TIC {} was observed in sector(s):\n {} \n \n Available short-cadence sectors:\n {} \n  \n (Enter the sectors you wish to look at (e.g. 1,4) or 'all' for all of them.) " .format(tic, str(list(sectors_all))[1:-1], str(available_SC_sectors)[1:-1]))
-
-					
-				del all_targets_sector
-				del infile
-				del two_min_cadence_sec
-				del last_sec
-
+				sectors = simpledialog.askstring(title="Sectors",
+												  prompt="TIC {} was observed in sector(s):\n {}. \n Enter the ones you wish to look at (e.g. 1,4) or 'all' for all of them.".format(tic, sectors_all))
 			else:
 				# still need to run tess point even if the targets are already defined as we need to check whether target appears in the stated sector - sanity check
-				#sectors_all, ra, dec = utils.tess_point(indir, tic) 
-
-				# --------
-				# Run a function called TESS-point. This returns the sectors in which the target has 
-				# been observed as well as the RA and DEC of the target. 
-				
-				starTics = np.array(["{}".format(tic)], dtype=np.int64)
-				ticStringList = ["{0:d}".format(x) for x in starTics]
-			
-				# Setup mast query
-				request = {
-					"service": "Mast.Catalogs.Filtered.Tic",
-					"params": {
-						"columns": "*",
-						"filters": [{"paramName": "ID", "values": ticStringList}],
-					},
-					"format": "json",
-					"removenullcolumns": True}
-				
-			
-				headers, outString = utils.mastQuery(request)
-				
-				outObject = json.loads(outString)
-
-				if len(outObject["data"]) == 0:
-					sys.exit('{} is not a valid TIC ID number. Please try again.'.format(tic))
-				
-				ra = np.array([x["ra"] for x in outObject["data"]])[0]
-				dec = np.array([x["dec"] for x in outObject["data"]])[0]
-				
-				_,_,_,sectors_all,_,_,_,_,_ = tess_stars2px_function_entry(tic, ra, dec)
-		
-				# --------				
-
+				sectors_all, ra, dec = utils.tess_point(indir, tic) 
 				sectors = str(args.sector)
 
 			# close the TKinter windows.
@@ -514,14 +391,10 @@ if __name__ == '__main__':
 			ROOT.destroy()
 		
 		# if no sector is defined or the word 'all' is written in the box, analyse all of the given sectors.
-		
-		if sectors == None: # if the 'cancel' button is pressed, exit the program. 
-			sys.exit('Exit.')
-
-
 		if len(sectors) == 0:
 			sectors = 'all'
 
+		
 		# if not all of them are chosen, convert the input list (given as a string) into a python readable list
 		if sectors != 'all':
 			sectors = sectors.split(",")
@@ -530,17 +403,12 @@ if __name__ == '__main__':
 		print ("\n")
 		
 		# print out the information that has been chosen to the command line.
-		if (sectors == 'all') and (args.FFI == False):
-			print ("Will look at sector(s): {}    (the files are opened but not stored locally) \n ".format(str(available_SC_sectors)[1:-1]))
-			sectors = available_SC_sectors
-
-		elif (sectors == 'all') and (args.FFI == True):
-			print ("Will look at sector(s): {}    (the files are opened but not stored locally) \n ".format(str(available_SC_sectors)[1:-1]))
-			sectors = available_LC_sectors
-				
+		if sectors == 'all':
+			print ("Will look at sector(s): {} \n".format(str(sectors_all)[1:-1]))
+			sectors = sectors_all
 		else:
-			print ("Will look at sector(s):  {}     (the files are opened but not stored locally) \n ".format(str(sectors)[1:-1]))
-		
+			print ("Will look at sector(s):  {} \n".format(str(sectors)[1:-1]))
+	
 
 		# -------------------------------------
 		# ---- OPEN INTERACTIVE MATPLOTLIB ----
@@ -571,8 +439,7 @@ if __name__ == '__main__':
 			targetlist = pd.read_csv("{}".format(args.targetlist)) # If a path is defined, open the input file
 		except:
 			print ("This target list can't be found. Check the path you have given and the name and format of the file.")
-			print ()
-			sys.exit('')
+
 		# check what kind of target list it is - with phase fold information or with period and t0 information
 		if 'period' in targetlist.columns:
 			pp = True # pp = phase fold
@@ -590,7 +457,7 @@ if __name__ == '__main__':
 
 			# check whether this file already exist
 			# if it already exists it will only be overwritten if --o function has been enabled to avoid file loss.
-			existing_files = glob("{}/{}".format(indir, tic))
+			existing_files = glob("{}/*{}*".format(indir, tic))
 			
 			if (len(existing_files) > 0)  and (args.o != True): 
 				print ("This file already exists therefore SKIP. To overwrite files run this code with --o in the command line.")
@@ -602,42 +469,11 @@ if __name__ == '__main__':
 
 			# load tess-point to identify the sectors tht it was observed in.
 			# need to know whether the target actually was observed in the stated sector. 
-			#sectors_all, ra, dec = utils.tess_point(indir, tic)
-
-			# --------
-			# Run a function called TESS-point. This returns the sectors in which the target has 
-			# been observed as well as the RA and DEC of the target. 
+			sectors_all, ra, dec = utils.tess_point(indir, tic)
 			
-			starTics = np.array(["{}".format(tic)], dtype=np.int64)
-			ticStringList = ["{0:d}".format(x) for x in starTics]
-		
-			# Setup mast query
-			request = {
-				"service": "Mast.Catalogs.Filtered.Tic",
-				"params": {
-					"columns": "*",
-					"filters": [{"paramName": "ID", "values": ticStringList}],
-				},
-				"format": "json",
-				"removenullcolumns": True}
-			
-		
-			headers, outString = utils.mastQuery(request)
-			
-			outObject = json.loads(outString)
-
-			if len(outObject["data"]) == 0:
-				sys.exit('{} is not a valid TIC ID number. Please try again.'.format(tic))
-	
-			ra = np.array([x["ra"] for x in outObject["data"]])[0]
-			dec = np.array([x["dec"] for x in outObject["data"]])[0]
-			
-			_,_,_,sectors_all,_,_,_,_,_ = tess_stars2px_function_entry(tic, ra, dec)
-
-			# --------
 			# convert the input list of sectors (string) to a list of numbers.
 			try:
-				sectors_in = str(row['sectors'])
+				sectors_in = str(int(row['sectors']))
 				sectors_in = ast.literal_eval(sectors_in)
 				if (type(sectors_in) == int) or (type(sectors_in) == float):
 					
@@ -658,6 +494,7 @@ if __name__ == '__main__':
 
 			failed_tics = [] #keep track of the TIC IDs that failed to complete
 
+
 			# ---- IF NO TRANSIT MARKED RUN WITH INTERFACE ----
 			if (pp == False) and (type(row['transits']) == float):
 				utils.interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
@@ -668,7 +505,6 @@ if __name__ == '__main__':
 					
 					# extract the information of the tiems of the transit like events. 
 					transit_list_in = (row['transits'])
-
 					transit_list = ast.literal_eval(transit_list_in)
 					
 					# convert the input transit times and sectors into transit_list in the form of a list
@@ -678,8 +514,7 @@ if __name__ == '__main__':
 					else:
 						transit_list = list(transit_list)
 				
-
-				# if the user entered a T0 and a period, the code will calcualte the times if the transit like events and use that. 
+				# if the user entered a T0 adn a period, the code will calcualte the times if the transit like events and use that. 
 
 				else:
 					# get up to 3 markings - more than that will just be cluttered and will take too long - this can be changed later if more or less are desired. 
@@ -690,7 +525,6 @@ if __name__ == '__main__':
 						transit = t0 + (i*period)
 						if transit < (t0 + 20):
 							transit_list.append(float(transit))
-				
 
 				# extract the other parameters from the input file.
 				BLS_in = row['BLS']
@@ -721,33 +555,13 @@ if __name__ == '__main__':
 				args.noshow = True  # don't show these, just save them
 				args.auto = True # the code will automatically choose it's own apertures in this mode
 
-				# sort the order of the transit list
-
-				transit_list = sorted(transit_list)
-				
 				if args.FFI == False:
 					try:
 						# ----------------------------------------
 						# 			 DOWNLOAD DATA 
 						# ----------------------------------------
 						alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir, sectors, tic)
-						
-						# check that the listed transit times are within the data
-	
-						transit_list_in_data = []
-	
-						for t in transit_list:
-						    in_data_mask = (np.array(alltime) < (t + 0.02)) & (np.array(alltime) > (t - 0.02)) 
-						    if (np.sum(in_data_mask)) != 0: # if there is data around the chosen transit time , keep it
-						    	transit_list_in_data.append(t)
-						    else:
-						    	print (" \n Transit time {}  is not within the available data. Skip this time. ".format(t))
-	
-						if len(transit_list_in_data) == 0: 
-							print ("\n TIC {} failed to complete. None of the chosen transit times are within the limits of the data. Check the times and the chosen sectors.".format(tic))
-							continue
-						
-						transit_list = transit_list_in_data
+					
 						# ----------------------------------------
 						#			   START BREWING ....
 						# ----------------------------------------
@@ -755,9 +569,9 @@ if __name__ == '__main__':
 						brew.brew_LATTE(tic, indir, syspath,transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
 					except:
 
-					 	failed_tics.append(tic)
-					 	print ("TIC {} failed to complete. Continue anyway. You can find a list of the failed IDs stored in the output folder.".format(tic))
-					 	continue
+						failed_tics.append(tic)
+						print ("TIC {} failed to complete. Continue anyway. You can find a list of the failed IDs stored in the output folder.".format(tic))
+						continue
 				else:
 					try:
 						# ----------------------------------------
@@ -765,7 +579,7 @@ if __name__ == '__main__':
 						# ----------------------------------------
 
 						alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = utils.download_data_FFI(indir, sectors, syspath, sectors_all, tic, args)
-
+	
 						# ----------------------------------------
 						#			   START BREWING ....
 						# ----------------------------------------

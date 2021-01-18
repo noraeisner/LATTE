@@ -72,11 +72,10 @@ class TestDataImport_TP(unittest.TestCase):
     def test_LC_request_response(self):
 
         # Call the service, which will send a request to the server.
-        X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf(indir, transit_sec, transit_list, tic, test = './LATTE/tests/tic55525572_tp.fits')
+        X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic, test = './LATTE/tests/tic55525572_tp.fits')
 
-        #If the request is sent successfully, then I expect a response to be returned.
+        # If the request is sent successfully, then I expect a response to be returned.
         self.assertAlmostEqual(float(X1_list[0][0][0]),float(23.402481079101562), places=5, msg ='TP data is not what it should be.')
-        self.assertAlmostEqual(float(X4_list[0][0][0]),float(22.052828), places=5, msg ='TP data is not what it should be.')
         self.assertAlmostEqual(float(oot_list[0][0]),float(0.0))
         self.assertAlmostEqual(float(intr_list[0][0]),float(0.0))
         self.assertAlmostEqual(float(bkg_list[0][0][0]),float(29.239688873291016), places=5)
@@ -84,6 +83,34 @@ class TestDataImport_TP(unittest.TestCase):
         self.assertAlmostEqual(float(arrshape_list[0][0]),float(18944.0))
         self.assertAlmostEqual(float(t_list[0][0]),float(1437.9924102871835), places=5,)
         self.assertAlmostEqual(float(T0_list[0]),float(1454.7))
+
+
+class TestDataImport_TP_lighkurve(unittest.TestCase):
+    '''
+    Test the extraction of the information from the TP file (which is already on the system)
+    '''
+
+    def test_LC_request_response(self):
+
+        # Call the service, which will send a request to the server.
+        TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic, test = './LATTE/tests/tic55525572_tp.fits')
+        
+        print(float(TESS_unbinned_t_l[0]))
+        print(float(TESS_binned_t_l[0]))
+        print(float(small_binned_t_l[0]))
+        print(float(TESS_unbinned_l[0]))
+        print(float(TESS_binned_l[0]))
+        print(float(small_binned_l[0]))
+
+        
+        # If the request is sent successfully, then I expect a response to be returned.
+        self.assertAlmostEqual(float(TESS_unbinned_t_l[0]), float(1437.9924102871835), msg='TP lighkurve data is not what it should be.')
+        self.assertAlmostEqual(float(TESS_binned_t_l[0]), float(1437.9972713631325), places=5)
+        self.assertAlmostEqual(float(small_binned_t_l[0]), float(1437.9972713631325), places=5)
+        self.assertAlmostEqual(float(TESS_unbinned_l[0]), float(0.9975904130977179), places=5)
+        self.assertAlmostEqual(float(TESS_binned_l[0]), float(0.9986087992155438), places=5)
+        self.assertAlmostEqual(float(small_binned_l[0]), float(0.9971978343909532), places=5)
+
 
 
 # ---------------------

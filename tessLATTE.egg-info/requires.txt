@@ -3,13 +3,13 @@ pandas
 seaborn
 requests
 lightkurve>1.2.0
-matplotlib
+matplotlib==3.2.0rc1
 astroplan
 astroquery
 sklearn
 scipy
 tess-point
-reproject>0.7
+reproject==0.4
 reportlab
-astropy<=4.0
+astropy==3.1.1
 mock>2.0.0

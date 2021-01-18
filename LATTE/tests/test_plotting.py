@@ -57,12 +57,10 @@ class TestDataPlotting(unittest.TestCase):
 
 		# download data needed to generate the plots
 		alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad = utils.download_data(indir,sector, tic, binfac = 5, test = './LATTE/tests/tic55525572_lc.fits')
-
-
-		#X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic, test = './LATTE/tests/tic55525572_tp.fits')
+		X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list = utils.download_tpf_mast(indir, transit_sec, transit_list, tic, test = './LATTE/tests/tic55525572_tp.fits')
 		
 		# this function downloads the data and saved plots that show the aperture sizes (for the large and small apertures)
-		X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf(indir, transit_sec, transit_list, tic, test = './LATTE/tests/tic55525572_tp.fits')
+		TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf_lightkurve(indir, transit_list, sectors, tic, test = './LATTE/tests/tic55525572_tp.fits')
 		# ---------
 
 		# create the plots that the normal routine makes
@@ -71,9 +69,7 @@ class TestDataPlotting(unittest.TestCase):
 		utils.plot_background(tic, indir, alltime, allfbkg, transit_list, args)
 		utils.plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, transit_list, args)
 		utils.plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, transit_list, args)
-		utils.plot_periodigram(tic, indir, alltime, allflux,args)
-		utils.eep_target(tic, indir, syspath, teff, srad, args)
-		
+
 		# --------
 		# now check that the plots were actually made!
 
@@ -94,7 +90,7 @@ class TestDataPlotting(unittest.TestCase):
 		time_created_centroid = os.path.getmtime(full_centroid)
 		time_created_bkg = os.path.getmtime(bkg_path)
 		time_created_pixel = os.path.getmtime(pixel_path)
-
+		 
 		time_created_ap_LC = os.path.getmtime(ap_LC_path)
 		time_created_apertures = os.path.getmtime(apertures_path)
 
@@ -117,9 +113,15 @@ class TestDataPlotting(unittest.TestCase):
 		time_since_creation_bkg =  ((t_now - t_create_bkg).seconds / 60) 
 		time_since_creation_pixel =  ((t_now - t_create_pixel).seconds / 60) 
 
+		time_since_creation_bkg =  ((t_now - t_create_ap_LC).seconds / 60) 
+		time_since_creation_pixel =  ((t_now - t_create_apertures).seconds / 60) 
+
 		# check that the expected files were created less than a minute ago
 		self.assertLess(time_since_creation_full_LC, 1, "No (new) full LC plot was made in the last five minutes") # a less than b
 		self.assertLess(time_since_creation_centroid, 1, "No (new) centroid plot was made in the last five minutes") # a less than b
+		self.assertLess(time_since_creation_bkg, 1, "No (new) background plot was made in the last five minutes") # a less than b
+		self.assertLess(time_since_creation_pixel, 1, "No (new) pixel level LC plot was made in the last five minutes") # a less than b
+
 		self.assertLess(time_since_creation_bkg, 1, "No (new) background plot was made in the last five minutes") # a less than b
 		self.assertLess(time_since_creation_pixel, 1, "No (new) pixel level LC plot was made in the last five minutes") # a less than b
 
