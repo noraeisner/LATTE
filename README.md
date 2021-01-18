@@ -13,7 +13,7 @@ email: *nora.eisner@new.ox.ac.uk*
 
 --------
 
-### NOTE: the LATTE code is currently being improved to make it run faster, have less dependencies on other modules, and include some additional diagnostics. To use this code instead, go to the LATTE-dev branch. I note that this code has not been fully tested. The current (main branch) LATTE code can only be used for the nominal TESS mission (sectors 1 -26), whereas the new version can be used for all TESS sectors. The new code will be merged soon once the code has been fully tested. The pip install version is the 'new' version that runs on all of the sectors. 
+### NOTE: The code was recently updated and now works for the primary as well as the extended TESS mission (i.e. beyond sector 26). This new version differs from the old version in how it downloads data, so please re-run with '--new-data' in order to download all the new relevant text files (these files are smaller than the previous ones and will increase the speed of the code). The previous files starting with 'tesscurl' are no longer needed and can be deleted. The pip install version of this code has also been updated.
 
 *The aim of this code is to provide a series of diagnostic tests which are used in order to determine the nature of events found in *TESS* lightcurves.*
 
