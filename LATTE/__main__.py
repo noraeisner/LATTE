@@ -19,6 +19,7 @@ from tess_stars2px import tess_stars2px_function_entry
 #custom modules to import
 from LATTE import LATTEbrew as brew 
 from LATTE import LATTEutils as utils
+from LATTE.LATTEconfig import LATTEconfig
 #sys.tracebacklimit = 0
 warnings.filterwarnings('ignore')
 
@@ -70,10 +71,12 @@ if __name__ == '__main__':
 
 
 	# ------------------------------------------------
-	# Check what the current path is - when the program is first downloaded the path is set to 'no/path/set/yet' and the user is automatically prompted to change'no/path/set/yet'
-	# Get the path to where the package is installed. This is where the configuration file and the images (for the DV report are stored)
-
+	# the current path - used to resolve other files in the package, e.g., pyaneti_LATTE.py
 	syspath = str(os.path.abspath(utils.__file__))[0:-14]
+
+	# configuration file that defines the directory where output are stored, e.g., images, DV reports.
+	# The user will be prompted to set it when the program is run the first time.
+	config = LATTEconfig()
 	# ----------
 
 	def yes_or_no():
@@ -101,7 +104,7 @@ if __name__ == '__main__':
 	'''
 
 	# check whether a path already exists
-	if not os.path.exists("{}/_config.txt".format(syspath)):
+	if not config.inited:
 
 		# if it doesn't exist ask the user to put it in the command line
 		indir = input("\n \n No output path has been set yet. \n \n Please enter a path to save the files (e.g. ./LATTE_output or /Users/yourname/Desktop/LATTE_output) : " )
@@ -124,8 +127,7 @@ if __name__ == '__main__':
 			sys.exit('')
 
 		# SAVE the new output path
-		with open("{}/_config.txt".format(syspath),'w') as f:
-			f.write(str(indir))
+		config.output_path = indir
 		
 		print("\n New path: " + indir)
 	
@@ -177,8 +179,7 @@ if __name__ == '__main__':
 				sys.exit('')
 	
 			# SAVE the new output path
-			with open("{}/_config.txt".format(syspath),'w') as f:
-				f.write(str(indir))	
+			config.output_path = indir
 			
 			print("\n New path: " + indir)
 			
@@ -187,8 +188,7 @@ if __name__ == '__main__':
 
 
 		else:
-			with open("{}/_config.txt".format(syspath), 'r') as f:
-				indir = str(f.readlines()[-1])
+			indir = config.output_path
 				
 			print ("LATTE will continue to run with the old path: {}".format(indir))
 
@@ -211,16 +211,14 @@ if __name__ == '__main__':
 	
 			if intry > 0:
 				# SAVE the new output path
-				with open("{}/_config.txt".format(syspath),'w') as f:
-					f.write(str(indir))	
+				indir = config.output_path
 
 			if not os.path.exists("{}/data".format(indir)):
 				os.makedirs("{}/data".format(indir))
 				
 
 	else:
-		with open("{}/_config.txt".format(syspath), 'r') as f:
-			indir = str(f.readlines()[-1])
+		indir = config.output_path
 	
 
 		#try three times to find the output path
@@ -242,9 +240,7 @@ if __name__ == '__main__':
 	
 		if intry > 0:
 			# SAVE the new output path
-			with open("{}/_config.txt".format(syspath),'w') as f:
-				f.write(str(indir))	
-
+			config.output_path = indir
 
 		if not os.path.exists("{}/data".format(indir)):
 			os.makedirs("{}/data".format(indir))
@@ -258,7 +254,7 @@ if __name__ == '__main__':
 	The program will check what data has already been downloaded and only download new data files.
 	'''
 
-	if (args.new_data != False) and (os.path.exists("{}/_config.txt".format(syspath))): 
+	if (args.new_data != False) and config.inited:
 
 		# ----- REFERENCE FILES DOWNLOAD -----
 		#utils.data_files(indir)

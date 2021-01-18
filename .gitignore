@@ -11,5 +11,5 @@ README_pip.md
 MANIFEST.in
 pyaneti_LATTE
 pyaneti_LATTE.py
-./_config.txt
-./LATTE/_config.txt
+_LATTE_test_config/
+_LATTE_test_config*

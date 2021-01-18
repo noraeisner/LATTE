@@ -17,12 +17,10 @@ import warnings
 
 warnings.filterwarnings("ignore")
 from LATTE import LATTEutils
+from LATTE.LATTEconfig import LATTEconfig
 
-# get the outir (or indir) path
-syspath = str(os.path.abspath(LATTEutils.__file__))[0:-14]
-
-with open("{}/_config.txt".format(syspath), 'r') as f:
-	outdir = str(f.readlines()[-1])
+# get the outdir path
+outdir = LATTEconfig().output_path
 
 class TestTESSpoint(unittest.TestCase):
 
