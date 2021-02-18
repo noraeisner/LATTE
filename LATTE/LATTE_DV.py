@@ -375,7 +375,8 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# --------------------------------------------
 	
 	if FFI == False:
-
+		Story.append(Spacer(1, 16))
+		
 		im3 = Image(centroid_positions_name)
 
 		if len(transit_list) == 1:
@@ -407,7 +408,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# Flux Aperture
 		# --------------------------------------------
 		if FFI == False:
-			Story.append(PageBreak()) # always start a new page for this analysis
+			#Story.append(PageBreak()) # always start a new page for this analysis
 			Story.append(Spacer(1, 10))
 
 		im4 = Image(flux_aperture_name)
