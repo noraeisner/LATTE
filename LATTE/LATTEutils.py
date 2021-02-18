@@ -53,6 +53,8 @@ from LATTE import LATTEbrew as brew
 main_pot_color = '#ffa31a'
 main_plot_fontsize = 13
 md_color = '#143085'
+cutout_window = 0.7
+individual_ylim = False
 
 '''
 Overview of LATTE scipts:
@@ -523,7 +525,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     ax[1].tick_params(axis="y",direction="inout", labelsize = main_plot_fontsize) #, pad= -20)
     ax[1].tick_params(axis="x",direction="inout", labelsize = main_plot_fontsize) #, pad= -17)   
     ax[1].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
-    ax[1].set_xlabel("Time (Time (BJD-2457000))", fontsize = main_plot_fontsize)
+    ax[1].set_xlabel("Time (BJD-2457000)", fontsize = main_plot_fontsize)
     ax[1].set_ylabel("Normalised Flux", fontsize = main_plot_fontsize)
     ax[1].vlines(all_md, minf-1,minf + height*0.3, lw =1,  colors = md_color, label = "Momentum Dump")
     
@@ -688,6 +690,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     
     #  -----  BREW  ------
     brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
+
 
 def interact_LATTE_test(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     
@@ -1116,7 +1119,7 @@ def interact_LATTE_test(tic, indir, syspath, sectors_all, sectors, ra, dec, args
     ax[1].tick_params(axis="y",direction="inout", labelsize = main_plot_fontsize) #, pad= -20)
     ax[1].tick_params(axis="x",direction="inout", labelsize = main_plot_fontsize) #, pad= -17)   
     ax[1].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
-    ax[1].set_xlabel("Time (Time (BJD-2457000))", fontsize = main_plot_fontsize)
+    ax[1].set_xlabel("Time (BJD-2457000)", fontsize = main_plot_fontsize)
     ax[1].set_ylabel("Normalised Flux", fontsize = main_plot_fontsize)
     ax[1].vlines(all_md, minf-1,minf + height*0.3, lw =1,  colors = md_color, label = "Momentum Dump")
     
@@ -4840,6 +4843,8 @@ def plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binn
         The time of the transit event is indicated by the vertical line. 
     
     '''
+
+    print ("PLOT APERTURE SIZES")
     if args.FFI == True:
         frame_width = 1.5
     else:
@@ -4904,7 +4909,7 @@ def plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binn
     
     else:   
 
-
+        print ("PLOT APERTURE SIZES 3")
         plt.figure(figsize=(gs*6,4))
 
         for g,peak in enumerate(transit_list):
@@ -4948,14 +4953,17 @@ def plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binn
                 plt.xlabel('Time (BJD-2457000)')
                 plt.title('Aperture Size Test, Transit {}'.format(g+1), fontsize = main_plot_fontsize)
 
+        print ("PLOT APERTURE SIZES 4")
 
         if args.save == True:
+            print ("PLOT APERTURE SIZES 5")
             plt.subplots_adjust(bottom = 0.13, right = 0.97, top = 0.94)
             plt.savefig('{}/{}/{}_aperture_size.png'.format(indir, tic, tic), format='png')
 
         if args.noshow == False:
             plt.show()
         else:
+            print ("PLOT APERTURE SIZES 6")
             plt.close()
 
 # plot the background flux around the time of the transit like event.
@@ -5684,7 +5692,7 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
 
     for peak in transit_list:
 
-        mask_dd = (np.array(time_dd) < peak+0.75) & (np.array(time_dd) > peak-0.75)
+        mask_dd = (np.array(time_dd) < peak+cutout_window) & (np.array(time_dd) > peak-cutout_window)
 
         minf0 = np.nanmin(np.array(flux_dd)[mask_dd])
         maxf0 = np.nanmax(np.array(flux_dd)[mask_dd])
@@ -5693,13 +5701,14 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
         maxf_list.append(maxf0)
 
     minf = np.nanmin(minf_list)
-    maxf = np.nanmin(maxf_list)
+    maxf = np.nanmax(maxf_list)
+
     height = maxf - minf
 
     for g,peak in enumerate(transit_list):
 
-        mask_dd = (np.array(time_dd) < peak+0.75) & (np.array(time_dd) > peak-0.75)
-        mask_dd_binned = (np.array(time_dd_binned) < peak+0.75) & (np.array(time_dd_binned) > peak-0.75)
+        mask_dd = (np.array(time_dd) < peak+cutout_window) & (np.array(time_dd) > peak-cutout_window)
+        mask_dd_binned = (np.array(time_dd_binned) < peak+cutout_window) & (np.array(time_dd_binned) > peak-cutout_window)
 
         if np.sum(mask_dd) != 0:
 
@@ -5711,19 +5720,21 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
 
             height_cut = maxf - minf
 
+            # plot the momentum dumps and the markings. 
             # plot the lines first so that they are behind the data - we need to be able to see the data well...
             plt.vlines(line_dd, minf-(height_cut/10), minf + height_cut*0.25 , colors = md_color, label = "Momentum Dump", zorder=1)
             plt.vlines([peak], minf-(height_cut/10),minf + height*0.25 , linewidth = 4, colors = 'darkred', linestyle = '--', zorder=2, alpha = 0.85)
 
-            # plot the momentum dumps and the markings. 
+            
             plt.plot(np.array(time_dd)[mask_dd], np.array(flux_dd)[mask_dd], 'o', markersize = 4, color = main_pot_color, alpha = 0.8, label = "unbinned", markerfacecolor='white', zorder=3)
             plt.plot(np.array(time_dd_binned)[mask_dd_binned], np.array(flux_dd_binned)[mask_dd_binned], marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 5, label = 'binning = 7', markerfacecolor='k', zorder=4)
 
-            plt.xlim(peak-0.75, peak+0.75)
+            plt.xlim(peak-cutout_window, peak+cutout_window)
 
 
             try:
-                plt.ylim(minf-height_cut/10, maxf + height_cut/10)
+                if individual_ylim == False:
+                    plt.ylim(minf-(height_cut/10), maxf + (height_cut/10))
             except:
                 print ('axis limits error (momentun dumps)')
 
