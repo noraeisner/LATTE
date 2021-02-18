@@ -1,4 +1,4 @@
-import os 
+import os
 import numpy as np
 import pandas as pd
 
@@ -17,7 +17,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image,  Table, TableStyle, PageBreak, Flowable
 
 
-def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI, bls = False, model = False, mpi = False, test = 'no'):
+def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, mass_ast, radius_ast, logg_ast, numax, deltanu, plx, c_id, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI, bls = False, model = False, mpi = False, test = 'no'):
 
 	'''
 	funtion that makes compiles all of the information and figures into a comprehensive pdf summary document.
@@ -27,7 +27,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
     tic  :   str
         target TIC ID
     indir  :  str
-        path to directory where all the plots and data will be saved. 
+        path to directory where all the plots and data will be saved.
     sectors_all  :   list
         all the sectors in which the target has been/ will be observed
     target_ra   :  float
@@ -47,7 +47,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	FFI  :  bool
 		whether the input data is from FFIs (True = from FFIs)
 	bls  :  bool  (false)
-		whether the bls search was run 
+		whether the bls search was run
 	model  :  bool  (false)
 		whether the transit was modelled (only works if payenti has sucessfully been installed)
     Returns
@@ -70,79 +70,87 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 
 	if len(TCE_links) == 0:
 		TCE = " - "
-	
+
 	else:
 		TCE_links = np.sort(TCE_links)
 		TCE_link = TCE_links[0]  # this link should allow you to acess the MAST DV report
 		TCE = 'Yes **'
 		TCE_link = '<link href="%s" color="blue">here</link>' % TCE_link
-	
+
 
 	# TOI -----
 	TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment = "#")
-	
+
 	TOIpl = TOI_planets.loc[TOI_planets['TIC'] == float(tic)]
-		
+
 	if len(TOIpl) == 0:
 		TOI = ' -  '
 	else:
 		TOI = (float(TOIpl["Full TOI ID"]))
-	
+
 	# ------ PARAMS ------
 	ra = float(target_ra)
 	dec = float(target_dec)
-	
-	
+
+
 	def addPageNumber(canvas, doc):
 		"""
 		Add the page numbers to the document
 		"""
 		width, height = A4 # this is useful when defining where to plot something on the page
-	
+
 		page_num = canvas.getPageNumber()
 		text = "%s" % page_num
 		header = "TIC {}".format(tic)
-		
+
 		canvas.setFont('Helvetica',8)
 		canvas.drawString(width*0.85, height * 0.95, header)
 		canvas.drawRightString(200*mm, 10*mm, text)
- 
+
 
 	#------------------------------------------------------------------
 	# Recall the names of all the plots that will be in the DV report
 	#------------------------------------------------------------------
-	
+
 	# plot the full light curve, with marked sectors and marked transit - binned and unbinned
-	
+
 	full_LC_name = "{}/{}/{}_fullLC_md.png".format(indir,tic,tic)
-	
+
+	full_LC_notransits_name = "{}/{}/{}_fullLC_md_notransits.png".format(indir,tic,tic) # only used in the 'asteroseismic only' version of LATTE
+
 	background_flux_name = '{}/{}/{}_background.png'.format(indir, tic, tic)
-	
+
 	centroid_positions_name = '{}/{}/{}_centroids.png'.format(indir, tic, tic)
-	
+
 	flux_aperture_name= '{}/{}/{}_aperture_size.png'.format(indir, tic, tic)
-	
+
 	tess_stars_name = '{}/{}/{}_star_field.png'.format(indir, tic, tic)
-	
+
 	#SDSS_stars_name = '{}/{}/{}_SDSSstar_field.png'.format(indir, tic, tic)
 
 	nearest_neighbour_name = '{}/{}/{}_nearest_neighbours.png'.format(indir, tic, tic)
-	
+
 	pixel_LCs_name = '{}/{}/{}_individual_pixel_LCs_0.png'.format(indir, tic,tic)
-	
+
 	bls1 = '{}/{}/{}_bls_first.png'.format(indir, tic, tic)
-	
+
 	bls2 = '{}/{}/{}_bls_second.png'.format(indir, tic, tic)
-	
+
 	in_out_name = '{}/{}/{}_flux_comparison.png'.format(indir, tic, tic)
-	
+
 	model_name = '{}/{}/model_out/{}b_tr.png'.format(indir, tic, tic)
 
 	phasefold_name = '{}/{}/{}_phase_folded.png'.format(indir, tic, tic)
-	
+
 	apertures_name = '{}/{}/{}_apertures_0.png'.format(indir, tic, tic)
-	
+
 	periodogram_name = '{}/{}/{}_periodogram.png'.format(indir, tic, tic)
+
+	periodogram_numax_name = '{}/{}/{}_diagnostic_numax.png'.format(indir, tic, tic)
+
+	periodogram_correlation_name = '{}/{}/{}_scaled_correlation.png'.format(indir, tic, tic)
+
+	periodogram_echelle_name = '{}/{}/{}_echelle.png'.format(indir, tic, tic)
 
 	eep_name = '{}/{}/{}_eep.png'.format(indir, tic, tic)
 
@@ -153,7 +161,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		LATTE_logo_name = '{}/LATTE_imgs/LATTE_logo.png'.format(test)
 		TESS_logo_name  = '{}/LATTE_imgs/TESS_logo.png'.format(test)
 
-	# otherwise they're located in the place where the program is insatlled. 
+	# otherwise they're located in the place where the program is insatlled.
 	else:
 		PHT_logo_name  =  '{}/LATTE_imgs/PHT_logo.jpg'.format(syspath)
 		LATTE_logo_name = '{}/LATTE_imgs/LATTE_logo.png'.format(syspath)
@@ -169,12 +177,12 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 						   topMargin=30,bottomMargin=20)
 
 	width, height = A4 # this is useful when defining where to plot something on the page
-	
+
 	Story=[]
 
 	fig_count = 0
 	table_count = 0
-	
+
 	# title
 	title = "PHT Data Validation Report"
 	subheading = "TIC {}".format(tic)
@@ -183,11 +191,11 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	styles.add(ParagraphStyle(name='centre', alignment=TA_CENTER))
 	ptext = '<font size=12><b>%s</b></font>' % title
 	subtext = '<font size=12><b>%s</b></font>' % subheading
-	
+
 	Story.append(Paragraph(ptext, styles["centre"]))
 	Story.append(Paragraph(subtext, styles["centre"]))
 	Story.append(Spacer(1, 25))
-	
+
 	# ----- ADD THE LOGOS -------
 	PHT_logo =   Image(PHT_logo_name)
 	PHT_logo.drawHeight = 0.5*inch*PHT_logo.drawHeight / PHT_logo.drawWidth
@@ -207,7 +215,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 					rowHeights=[1 * mm]))
 
 	logo_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTRE'),('VALIGN', (0, 0), (-1,-1), 'MIDDLE')]))
-	
+
 	Story.append(logo_table)
 
 	Story.append(Spacer(1, 30))
@@ -220,22 +228,41 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	Story.append(line)
 	Story.append(Spacer(1, 20))
 
-	# --------------------------------------------
-	# Full Image with momentum dumps
-	# --------------------------------------------
-	im = Image(full_LC_name)
-	im._restrictSize(width*0.76, width*0.76)
-	Story.append(im)
-	
-	fig_count += 1
+	if len(transit_list) == 0: # if in asteroseismic mode
+		# --------------------------------------------
+		# Full Image with momentum dumps - asterseismic mode
+		# --------------------------------------------
+		im = Image(full_LC_notransits_name)
+		im._restrictSize(width*0.76, width*0.76)
+		Story.append(im)
 
-	full_image_text = "Fig {}. Full lightcurve for target TIC {}. The solid blue lines at the bottom of the figure indicated the \
-	times of the reaction wheel momentum dumps and the dashed black line(s) show the time(s) of the marked transit event(s). Momentum dumps \
-	occur around every 2 to 2.5 days and typically last around half an hour.".format(fig_count,tic)
-	
-	ptext = '<font size=8>%s</font>' % full_image_text
-	Story.append(Paragraph(ptext, styles["Normal"]))
-	
+		fig_count += 1
+
+		full_image_text = "Fig {}. Full lightcurve for target TIC {}. The solid blue lines at the bottom of the figure indicated the \
+		times of the reaction wheel momentum dumps, which  \
+		occur around every 2 to 2.5 days and typically last around half an hour.".format(fig_count,tic)
+
+		ptext = '<font size=8>%s</font>' % full_image_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
+
+
+	else:
+		# --------------------------------------------
+		# Full Image with momentum dumps
+		# --------------------------------------------
+		im = Image(full_LC_name)
+		im._restrictSize(width*0.76, width*0.76)
+		Story.append(im)
+
+		fig_count += 1
+
+		full_image_text = "Fig {}. Full lightcurve for target TIC {}. The solid blue lines at the bottom of the figure indicated the \
+		times of the reaction wheel momentum dumps and the dashed black line(s) show the time(s) of the marked transit event(s). Momentum dumps \
+		occur around every 2 to 2.5 days and typically last around half an hour.".format(fig_count,tic)
+
+		ptext = '<font size=8>%s</font>' % full_image_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
+
 	# --------------------------------------
 	# ------ stellar parameters table ------
 	# --------------------------------------
@@ -243,7 +270,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		srad = np.round(srad, 2)
 	except:
 		srad = '--'
-	
+
 	try:
 		teff = np.round(teff, 0)
 	except:
@@ -270,41 +297,75 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 
 
 	# mstar, vmag, logg, plx, c_id
+	if mass_ast == -999: # classic mode (no asteroseismology)
+		#mass_ast, radius_ast, logg_ast
+		data_stellar= [['Parameter',  "Value", "Unit"],
+					   ['TIC ID',	 tic, ],
+					   ['Other name',	 c_id, ],
+					   ['RA/Dec',		"{}  {}".format(round(ra,5), round(dec,5)), "degrees"],
+					   ['Radius',	 "{}".format(srad), "Solar Radii"],
+					   ['Mass',	     "{}".format(mstar), "Solar Mass"],
+					   ['Teff',	     "{}".format(teff), "Kelvin"],
+					   ['Parallax',	     "{}".format(plx), " "],
+					   ['T mag',     "{}".format(tessmag), "Mag"],
+					   ['V mag',     "{}".format(vmag), "Mag"],
+					   ['Sectors (nominal)',	  "{} *".format(str(nominal_mission_sectors)[1:-1]),],
+					   ['Sectors (extended)',	  "{} *".format(str(extended_mission_sectors)[1:-1]),],
+					   ['TCE',	  TCE, ],
+					   ['TOI',	  "{}".format(str(TOI)), ],
+					   ]
 
-	data_stellar= [['Parameter',  "Value", "Unit"],
-				   ['TIC ID',	 tic, ],
-				   ['Other name',	 c_id, ],
-				   ['RA/Dec',		"{}  {}".format(ra, dec), "degrees"],
-				   ['Radius',	 "{}".format(srad), "Solar Radii"],
-				   ['Mass',	     "{}".format(mstar), "Solar Mass"],
-				   ['Teff',	     "{}".format(teff), "Kelvin"],
-				   ['Parallax',	     "{}".format(plx), " "],
-				   ['T mag',     "{}".format(tessmag), "Mag"],
-				   ['V mag',     "{}".format(vmag), "Mag"],
-				   ['Sectors (nominal)',	  "{} *".format(str(nominal_mission_sectors)[1:-1]),],
-				   ['Sectors (extended)',	  "{} *".format(str(extended_mission_sectors)[1:-1]),],
-				   ['TCE',	  TCE, ],
-				   ['TOI',	  "{}".format(str(TOI)), ],
-				   ]
-	
-	
-	table_stellar=Table(data_stellar)
-	table_stellar=Table(data_stellar,colWidths=width * 0.24, style=[
-						('LINEABOVE',(0,1),(-1,1),1,colors.black),
-						('LINEABOVE',(0,11),(-1,11),1,colors.black),
-						('FONTSIZE', (0,0),(-1,13), 8),
-						])
+
+		table_stellar=Table(data_stellar)
+		table_stellar=Table(data_stellar,colWidths=width * 0.24, style=[
+							('LINEABOVE',(0,1),(-1,1),1,colors.black),
+							('LINEABOVE',(0,14),(-1,14),1,colors.black),
+							('FONTSIZE', (0,0),(-1,13), 8),
+							])
+
+	else:
+		#mass_ast, radius_ast, logg_ast
+		data_stellar= [['Parameter',  "Value", "Seismic", "Unit"],
+					   ['TIC ID',	 tic, " " ],
+					   ['Other name',	 c_id, ],
+					   ['RA/Dec',		"{}  {}".format(round(ra,5), round(dec,5)), " " , "degrees"],
+					   ['Teff',	     "{}".format(teff)," ", "Kelvin"],
+					   ['Radius',	 "{}".format(srad), "{}".format(round(radius_ast,3)), "Solar Radii"],
+					   ['Mass',	     "{}".format(mstar),"{}".format(round(mass_ast,3)) , "Solar Mass"],
+					   ['logg',	     "{}".format(logg),"{}".format(round(logg_ast,3)) , "Solar Mass"],
+					   ['numax', " ","{}".format(round(numax,3)) , "uHz"],
+					   ['Delta nu'," ","{}".format(round(deltanu,3)) , "uHz"],
+					   ['Parallax',	     "{}".format(plx)," ", " "],
+					   ['T mag',     "{}".format(tessmag)," ", "Mag"],
+					   ['V mag',     "{}".format(vmag), " ", "Mag"],
+					   ['Sectors (nominal)',	  "{} *".format(str(nominal_mission_sectors)[1:-1]),],
+					   ['Sectors (extended)',	  "{} *".format(str(extended_mission_sectors)[1:-1]),],
+					   ['TCE',	  TCE, " "," " ],
+					   ['TOI',	  "{}".format(str(TOI))," " , " "],
+					   ]
+
+
+		table_stellar=Table(data_stellar)
+		table_stellar=Table(data_stellar,colWidths=width * 0.18, rowHeights = 5*mm, style=[
+							('ALIGN', (0,0), (-1,16), "LEFT"),
+							('VALIGN', (0,0), (-1,16), "MIDDLE"),
+							('LINEABOVE',(0,1),(-1,1),1,colors.black),
+							('LINEABOVE',(0,17),(-1,17),1,colors.black),
+							('FONTSIZE', (0,0),(-1,16), 6),
+							])
+
 
 	data_len = len(data_stellar)
-	
+
+
 	for each in range(data_len):
 		if each % 2 == 0:
 			bg_color = colors.whitesmoke
 		else:
 			bg_color = colors.white
-	
+
 		table_stellar.setStyle(TableStyle([('BACKGROUND', (0, each), (-1, each), bg_color)]))
-	
+
 
 	# ------ ADD A LINE TO SEPERATE SECTIONS -----
 
@@ -313,15 +374,15 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	Story.append(line)
 
 	# ------
-	
+
 	Story.append(Spacer(1, 20))
 	#ptext = '<font size=9>Target Properties</font>'
 	#Story.append(Paragraph(ptext, styles["Normal"]))
 	#Story.append(Spacer(1, 12))
-	
+
 	Story.append(table_stellar)
 	Story.append(Spacer(1, 15))
-	
+
 	table_count += 1
 
 	exofop_url = "https://exofop.ipac.caltech.edu/tess/target.php?id={}".format(tic)
@@ -339,412 +400,475 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 			* List of the sectors in which the target will be, or has been, \
 			observed.".format(table_count,exofop_link)
 
-	
+
 	ptext = '<font size=8>%s</font>' % Stellartable_text
 	Story.append(Paragraph(ptext, styles["Normal"]))
 
 
-	# --------------------------------------------
-	# Background
-	# --------------------------------------------
-	if FFI == False:
-		Story.append(PageBreak()) # always start a new page for this analysis
-		Story.append(Spacer(1, 20))
-
-	im2 = Image(background_flux_name)
-	
-	if len(transit_list) == 1:
-		im2._restrictSize(width*0.55, width*0.55)
-	
-	else:
-		im2._restrictSize(width*0.8, width*0.8)
-	
-	Story.append(im2)
-
-	fig_count += 1
-	Story.append(Spacer(1, 1))
-	background_text = "Fig {}. Background flux vs. time around the time of each transit-like event. \
-		The vertical orange line indicates the time of the transit-like event.".format(fig_count)
-	
-	ptext = '<font size=8>%s</font>' % background_text
-	Story.append(Paragraph(ptext, styles["Normal"]))
-	
-
-	# --------------------------------------------
-	# Centroid Position
-	# --------------------------------------------
-	
-	if FFI == False:
-		Story.append(Spacer(1, 16))
-		
-		im3 = Image(centroid_positions_name)
-
-		if len(transit_list) == 1:
-			im3._restrictSize(width*0.52, width*0.52)
-		else:
-			im3._restrictSize(width*0.7, width*0.7)
-	
-		Story.append(im3)
-		
-		fig_count += 1
-		centroid_text = "Fig {}. The x and y centroid positions around the time of each transit-like event. The black points shows the CCD column and row position of the target’s flux-weighted centroid. \
-			The red shows the CCD column and row local motion differential velocity aberration (DVA), pointing drift, and thermal effects. \
-			The vertical orange line indicates the time of the transit-like event".format(fig_count)
-		
-		ptext = '<font size=8>%s</font>' % centroid_text
-
-		Story.append(Spacer(1, 5))
-
-		Story.append(Paragraph(ptext, styles["Normal"]))
-		
-		Story.append(Spacer(1, 16))
-
-		#Story.append(PageBreak()) # always start a new page for this analysis
-
-	# the following plots will only exist if the TPF file is not corrupt - otherwise skip these.
-	if tpf_corrupt == False:
-
+	if len(transit_list) != 0: # normal mode
 		# --------------------------------------------
-		# Flux Aperture
+		# Background
 		# --------------------------------------------
 		if FFI == False:
+			Story.append(PageBreak()) # always start a new page for this analysis
+			Story.append(Spacer(1, 20))
+
+		im2 = Image(background_flux_name)
+
+		if len(transit_list) == 1:
+			im2._restrictSize(width*0.55, width*0.55)
+
+		else:
+			im2._restrictSize(width*0.8, width*0.8)
+
+		Story.append(im2)
+
+		fig_count += 1
+		Story.append(Spacer(1, 1))
+		background_text = "Fig {}. Background flux vs. time around the time of each transit-like event. \
+			The vertical orange line indicates the time of the transit-like event.".format(fig_count)
+
+		ptext = '<font size=8>%s</font>' % background_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
+
+
+		# --------------------------------------------
+		# Centroid Position
+		# --------------------------------------------
+
+		if FFI == False:
+
+			Story.append(Spacer(1, 16))
+
+			im3 = Image(centroid_positions_name)
+
+			if len(transit_list) == 1:
+				im3._restrictSize(width*0.52, width*0.52)
+			else:
+				im3._restrictSize(width*0.7, width*0.7)
+
+			Story.append(im3)
+
+			fig_count += 1
+			centroid_text = "Fig {}. The x and y centroid positions around the time of each transit-like event. The black points shows the CCD column and row position of the target’s flux-weighted centroid. \
+				The red shows the CCD column and row local motion differential velocity aberration (DVA), pointing drift, and thermal effects. \
+				The vertical orange line indicates the time of the transit-like event".format(fig_count)
+
+			ptext = '<font size=8>%s</font>' % centroid_text
+
+			Story.append(Spacer(1, 5))
+
+			Story.append(Paragraph(ptext, styles["Normal"]))
+
+			Story.append(Spacer(1, 16))
+
 			#Story.append(PageBreak()) # always start a new page for this analysis
-			Story.append(Spacer(1, 10))
 
-		im4 = Image(flux_aperture_name)
-	
-		if len(transit_list) == 1:
-			im4._restrictSize(width*0.55, width*0.55)
-		else:
-			im4._restrictSize(width*0.7, width*0.7)
-		Story.append(im4)
-		
-		fig_count += 1
-		Story.append(Spacer(1, 16))
-		flux_aperture_text = "Fig {}. The lightcurve around the time of each transit-like event extracted with the SPOC pipeline \
-			defined aperture (binned:blue, unbinned:grey) and the with an aperture that is 40 per cent smaller (red). The flux is extracted \
-			from the target pixel files (TPFs) and has not been detrended or \
-			corrected for systematics. The vertical orange line indicates the time of the transit-like event.".format(fig_count)
-		
-		ptext = '<font size=8>%s</font>' % flux_aperture_text
-		Story.append(Paragraph(ptext, styles["Normal"]))
-		
+		# the following plots will only exist if the TPF file is not corrupt - otherwise skip these.
+		if tpf_corrupt == False:
+
+			# --------------------------------------------
+			# Flux Aperture
+			# --------------------------------------------
+			if FFI == False:
+				#Story.append(PageBreak()) # always start a new page for this analysis
+				Story.append(Spacer(1, 10))
+
+			im4 = Image(flux_aperture_name)
+
+			if len(transit_list) == 1:
+				im4._restrictSize(width*0.55, width*0.55)
+			else:
+				im4._restrictSize(width*0.7, width*0.7)
+			Story.append(im4)
+
+			fig_count += 1
+			Story.append(Spacer(1, 16))
+			flux_aperture_text = "Fig {}. The lightcurve around the time of each transit-like event extracted with the SPOC pipeline \
+				defined aperture (binned:blue, unbinned:grey) and the with an aperture that is 40 per cent smaller (red). The flux is extracted \
+				from the target pixel files (TPFs) and has not been detrended or \
+				corrected for systematics. The vertical orange line indicates the time of the transit-like event.".format(fig_count)
+
+			ptext = '<font size=8>%s</font>' % flux_aperture_text
+			Story.append(Paragraph(ptext, styles["Normal"]))
+
+			# --------------------------------------------
+			# Apertures Sizes
+			# --------------------------------------------
+
+			Story.append(Spacer(1, 25))
+
+			im45 = Image(apertures_name)
+
+			im45._restrictSize(width*0.4, width*0.4)
+
+			Story.append(im45)
+
+			fig_count += 1
+
+			Story.append(Spacer(1, 16))
+
+			if FFI == False:
+				aperture_text = "Fig {}. The apertures used to extract the lightcurves. The blue aperture on the right shows the \
+				optimum aperture determined by the SPOC pipeline, which is used for the extraction of 2-minute cadence light curves shown in Figure 1. \
+				The red outline on the left shows an aperture that is around 40 per cent smaller than the SPOC pipeline aperture which was used to extract the \
+				red lightcurve shown in Figure {}.".format(fig_count, (fig_count-1))
+			else:
+				aperture_text = "Fig {}. The larger (right hand side, blue) and the smaller (left hamd side, red) apertures used to extract the lightcurves shown in Figure {}.".format(fig_count, (fig_count-1))
+
+			ptext = '<font size=8>%s</font>' % aperture_text
+			Story.append(Paragraph(ptext, styles["Normal"]))
+
+
+			# --------------------------------------------
+			# In and Out of Transit Comparison
+			# --------------------------------------------
+
+			Story.append(Spacer(1, 25))
+
+			im5 = Image(in_out_name)
+
+			im5._restrictSize(width*0.85, width*0.85)
+
+			Story.append(im5)
+
+			fig_count += 1
+			Story.append(Spacer(1, 16))
+			flux_aperture_text = "Fig {}. Difference images for target TIC {} for each transit like event. \
+			Left: mean in-transit flux(left). Middle: mean out-of-transit flux. Right: difference between the mean out-of-transit and mean in-transit flux. \
+			Ensure that the change in brightness occurs on target.".format(fig_count, tic)
+
+			ptext = '<font size=8>%s</font>' % flux_aperture_text
+			Story.append(Paragraph(ptext, styles["Normal"]))
+
+
+			# --------------------------------------------
+			# tess stars + SDSS star field
+			# --------------------------------------------
+			# can only put this in the report if astroquery is working.
+			if astroquery_corrupt == False:
+
+				if FFI == False:
+					Story.append(PageBreak()) # always start a new page for this analysis
+					Story.append(Spacer(1, 20))
+
+				im6 = Image(tess_stars_name)
+
+				# if not with mpi (two star images)
+				if mpi == False:
+					im6._restrictSize(width*0.7, width*0.5)
+				else:
+					im6._restrictSize(width*0.35, width*0.35)
+
+				Story.append(im6)
+
+				fig_count += 1
+				tess_stars_text = "Fig {}. The locations of nearby GAIA DR2 stars with a magnitude difference less than 5 (orange circle) within the Tess \
+				Cut Out around TIC {} (red star). Only shown for one sector. Right: SDSS image of the surrounding field.".format(fig_count, tic)
+
+				ptext = '<font size=8>%s</font>' % tess_stars_text
+				Story.append(Paragraph(ptext, styles["Normal"]))
+
+				Story.append(Spacer(1, 30))
+
 		# --------------------------------------------
-		# Apertures Sizes
+		# nearest neighbours
 		# --------------------------------------------
-		
-		Story.append(Spacer(1, 25))
-
-		im45 = Image(apertures_name)
-		
-		im45._restrictSize(width*0.4, width*0.4)
-		
-		Story.append(im45)
-		
-		fig_count += 1
-
-		Story.append(Spacer(1, 16))
-
+		#Story.append(PageBreak()) # always start a new page for this analysis
 		if FFI == False:
-			aperture_text = "Fig {}. The apertures used to extract the lightcurves. The blue aperture on the right shows the \
-			optimum aperture determined by the SPOC pipeline, which is used for the extraction of 2-minute cadence light curves shown in Figure 1. \
-			The red outline on the left shows an aperture that is around 40 per cent smaller than the SPOC pipeline aperture which was used to extract the \
-			red lightcurve shown in Figure {}.".format(fig_count, (fig_count-1))
-		else:
-			aperture_text = "Fig {}. The larger (right hand side, blue) and the smaller (left hamd side, red) apertures used to extract the lightcurves shown in Figure {}.".format(fig_count, (fig_count-1))
+			im7 = Image(nearest_neighbour_name)
 
-		ptext = '<font size=8>%s</font>' % aperture_text
-		Story.append(Paragraph(ptext, styles["Normal"]))
-			
-		
-		# --------------------------------------------
-		# In and Out of Transit Comparison
-		# --------------------------------------------
-		
-		Story.append(Spacer(1, 25))
+			im7._restrictSize(width*0.8, width*0.8)
 
-		im5 = Image(in_out_name)
-	
-		im5._restrictSize(width*0.85, width*0.85)
-	
-		Story.append(im5)
-	
-		fig_count += 1
-		Story.append(Spacer(1, 16))
-		flux_aperture_text = "Fig {}. Difference images for target TIC {} for each transit like event. \
-		Left: mean in-transit flux(left). Middle: mean out-of-transit flux. Right: difference between the mean out-of-transit and mean in-transit flux. \
-		Ensure that the change in brightness occurs on target.".format(fig_count, tic)
-		
-		ptext = '<font size=8>%s</font>' % flux_aperture_text
-		Story.append(Paragraph(ptext, styles["Normal"]))
-	
-	
-		# --------------------------------------------
-		# tess stars + SDSS star field
-		# --------------------------------------------
-		# can only put this in the report if astroquery is working. 
-		if astroquery_corrupt == False:
+			Story.append(im7)
+			fig_count += 1
+			Story.append(Spacer(1, 10))
+			nn_text = "Fig {}. Lightcurves of the five closest stars to target {} (top pannel). \
+				The distances to the target star and the TESS magnitudes are shown for each star. Only ever shown for one sector.".format(fig_count,tic)
 
-			if FFI == False:
+			ptext = '<font size=8>%s</font>' % nn_text
+			Story.append(Paragraph(ptext, styles["Normal"]))
+
+
+		# this plot also only exists if the TPF downloaded sucessfully
+		if tpf_corrupt == False:
+			# --------------------------------------------
+			# pixel_LCs_name
+			# --------------------------------------------
+			Story.append(PageBreak()) # always start a new page for this analysis
+			Story.append(Spacer(1, 20))
+
+			im8 = Image(pixel_LCs_name)
+
+
+			im8._restrictSize(width*0.65, width*0.65)
+
+			Story.append(im8)
+			fig_count += 1
+			pixLC_text = "Fig {}. Normalised flux extracted for each pixel, using the SPOC pipeline mask, around the time of the transit-like event. \
+			The orange/red data points show the in-transit data. The solid red lines show the SPOC pipeline mask. Only shown for one sector.".format(fig_count)
+
+			ptext = '<font size=8>%s</font>' % pixLC_text
+			Story.append(Paragraph(ptext, styles["Normal"]))
+
+		# ------ Phase Folded LC ------
+
+		if len(transit_list) > 1:
+
+			# --------------------------------------------
+			# Phase Folded
+			# --------------------------------------------
+			impf = Image(phasefold_name)
+
+			impf._restrictSize(width*0.35, width*0.35)
+
+			Story.append(impf)
+
+			fig_count += 1
+			Story.append(Spacer(1, 10))
+			flux_aperture_text = "Fig {}. Phase folded lightcurve where the odd and the even transits are shown in different colours. Ensure that the odd and even transits have comparabel shapes and depths.".format(fig_count)
+
+			ptext = '<font size=8>%s</font>' % flux_aperture_text
+			Story.append(Paragraph(ptext, styles["Normal"]))
+
+
+		# ------ BLS -------
+
+		if bls == True:
+
+			if len(bls_stats2) > 1: # if the first AND second BLS worked
 				Story.append(PageBreak()) # always start a new page for this analysis
-				Story.append(Spacer(1, 20))
-		
-			im6 = Image(tess_stars_name)
-			
-			# if not with mpi (two star images)
-			if mpi == False:
-				im6._restrictSize(width*0.7, width*0.5)
-			else:
-				im6._restrictSize(width*0.35, width*0.35)
-	
-			Story.append(im6)
-		
-			fig_count += 1
-			tess_stars_text = "Fig {}. The locations of nearby GAIA DR2 stars with a magnitude difference less than 5 (orange circle) within the Tess \
-			Cut Out around TIC {} (red star). Only shown for one sector. Right: SDSS image of the surrounding field.".format(fig_count, tic)
-			
-			ptext = '<font size=8>%s</font>' % tess_stars_text
+
+				Story.append(Spacer(1, 12))
+				blsim1 = Image(bls1)
+				blsim2 = Image(bls2)
+
+				blsim1._restrictSize(width*0.6, width*0.6)
+				blsim2._restrictSize(width*0.6, width*0.6)
+
+				bls_table = (Table([[blsim1, blsim2]],
+								colWidths=[width * 0.45], rowHeights=[width * 0.6]))
+
+				bls_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTRE'),('VALIGN', (0, 0), (-1,-1), 'MIDDLE')]))
+
+				Story.append(bls_table)
+
+				fig_count += 1
+
+				if FFI == False:
+
+					bls1_text = "Fig {}. Box Least Square fitting (BLS) for whole lightcurve binned to 10 minutes. Top left panel: log liklihood periodogram. \
+									The solid red line indicates the peak period and the dashed orange lines show the integer \
+									harmonics of this period. Middle left panel: Full light curve, unbinned (orange) and binned to 10 minutes (black). \
+									The peak period is highlighted by the solid red lines. Bottom left Panel: Phase folded light curve where the found transit-event is fit \
+									with a simple box (red line). The pannels on the right show the same diagnostics, however the diagnostic \
+									was run with the highest detected signal-to-noise transits, from the initial BLS search, removed. ".format(fig_count)
+
+				else:
+					bls1_text = "Fig {}. Box Least Square fitting (BLS) for whole lightcurve. Top left panel: log liklihood periodogram. \
+									The solid blue line indicates the peak period and the dashed red lines show the integer \
+									harmonics of this period. Middle left panel: Full light curve, unbinned LC (orange) . \
+									The peak period is highlighted by the solid blue lines. Bottom left Panel: Phase folded light curve where the found transit-event is fit \
+									with a simple box (blue line). The pannels on the right show the same diagnostics, however the diagnostic \
+									was run with the highest detected signal-to-noise transits, from the initial BLS search, removed. ".format(fig_count)
+
+
+				ptext = '<font size=8>%s</font>' % bls1_text
+				Story.append(Paragraph(ptext, styles["Normal"]))
+
+
+
+				# --------------------
+				# ---- BLS TABLE -----
+
+				data_bls= [['Parameter',				  "bls1",														"bls2"],
+							   ['period',			    "{:.3f}".format(bls_stats1[0]),	         						 "{:.3f}".format(bls_stats2[0])],
+							   ['t0',			        "{:.2f}".format(bls_stats1[1]),	         						 "{:.2f}".format(bls_stats2[1])],
+							   ['depth',			    "{:.5f} ± {:.5f}".format(bls_stats1[2][0],bls_stats1[2][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[2][0],bls_stats2[2][1]) ],
+							   ['depth phased',			"{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[3][0],bls_stats2[3][1]) ],
+							   ['depth half',			"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[4][0],bls_stats2[4][1]) ],
+							   ['depth odd',			"{:.5f} ± {:.5f}".format(bls_stats1[5][0],bls_stats1[5][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[5][0],bls_stats2[5][1]) ],
+							   ['depth even',			"{:.5f} ± {:.5f}".format(bls_stats1[6][0],bls_stats1[6][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[6][0],bls_stats2[6][1]) ],
+							   ]
+
+				table_bls=Table(data_bls)
+				table_bls=Table(data_bls,colWidths=width * 0.2, style=[
+									('LINEABOVE',(0,1),(-1,1),1,colors.black),
+									('LINEABOVE',(0,8),(-1,8),1,colors.black),
+									('FONTSIZE', (0,0),(-1,7), 8),
+									])
+
+			else: # if the first BLS returned a period that was very short such that the second one didn't work.
+				Story.append(PageBreak()) # always start a new page for this analysis
+
+				Story.append(Spacer(1, 12))
+				blsim1 = Image(bls1)
+				#blsim2 = Image(bls2)
+
+				blsim1._restrictSize(width*0.6, width*0.6)
+
+				Story.append(blsim1)
+
+				fig_count += 1
+
+				if FFI == False:
+
+					bls1_text = "Fig {}. Box Least Square fitting (BLS) for whole lightcurve binned to 10 minutes. Top panel: log liklihood periodogram. \
+									The solid red line indicates the peak period and the dashed orange lines show the integer \
+									harmonics of this period. Middle panel: Full light curve, unbinned (orange) and binned to 10 minutes (black). \
+									The peak period is highlighted by the solid red lines. Bottom panel: Phase folded light curve where the found transit-event is fit \
+									with a simple box (red line). ".format(fig_count)
+
+				else:
+					bls1_text = "Fig {}. Box Least Square fitting (BLS) for whole lightcurve. Top panel: log liklihood periodogram. \
+									The solid blue line indicates the peak period and the dashed red lines show the integer \
+									harmonics of this period. Middle panel: Full light curve, unbinned LC (orange) . \
+									The peak period is highlighted by the solid blue lines. Bottom  panel: Phase folded light curve where the found transit-event is fit \
+									with a simple box (blue line). ".format(fig_count)
+
+
+				ptext = '<font size=8>%s</font>' % bls1_text
+				Story.append(Paragraph(ptext, styles["Normal"]))
+
+
+				# --------------------
+				# ---- BLS TABLE -----
+
+				data_bls= [['Parameter',				  "bls1"													 ],
+							   ['period',			    "{:.3f}".format(bls_stats1[0])	         					 ],
+							   ['t0',			        "{:.2f}".format(bls_stats1[1])	         					 ],
+							   ['depth',			    "{:.5f} ± {:.5f}".format(bls_stats1[2][0],bls_stats1[2][1])	 ],
+							   ['depth phased',			"{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1])	 ],
+							   ['depth half',			"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1])	 ],
+							   ['depth odd',			"{:.5f} ± {:.5f}".format(bls_stats1[5][0],bls_stats1[5][1])	 ],
+							   ['depth even',			"{:.5f} ± {:.5f}".format(bls_stats1[6][0],bls_stats1[6][1])	 ],
+							   ]
+
+				table_bls=Table(data_bls)
+				table_bls=Table(data_bls,colWidths=width * 0.25, style=[
+									('LINEABOVE',(0,1),(-1,1),1,colors.black),
+									('LINEABOVE',(0,8),(-1,8),1,colors.black),
+									('FONTSIZE', (0,0),(-1,7), 8),
+									])
+
+			# ------ ADD A LINE TO SEPERATE SECTIONS -------
+
+			Story.append(Spacer(1, 20))
+			line = MCLine(width*0.77)
+			Story.append(line)
+
+			# ------
+
+			Story.append(Spacer(1, 16))
+			ptext = '<font size=10>BLS parameters</font>'
 			Story.append(Paragraph(ptext, styles["Normal"]))
-		
-			Story.append(Spacer(1, 30))
-			
-	# --------------------------------------------
-	# nearest neighbours
-	# --------------------------------------------
-	#Story.append(PageBreak()) # always start a new page for this analysis
-	if FFI == False:
-		im7 = Image(nearest_neighbour_name)
-		
-		im7._restrictSize(width*0.8, width*0.8)
-	
-		Story.append(im7)
-		fig_count += 1
-		Story.append(Spacer(1, 10))
-		nn_text = "Fig {}. Lightcurves of the five closest stars to target {} (top pannel). \
-			The distances to the target star and the TESS magnitudes are shown for each star. Only ever shown for one sector.".format(fig_count,tic)
-		
-		ptext = '<font size=8>%s</font>' % nn_text
-		Story.append(Paragraph(ptext, styles["Normal"]))
-	
+			Story.append(Spacer(1, 15))
 
-	# this plot also only exists if the TPF downloaded sucessfully
-	if tpf_corrupt == False:
-		# --------------------------------------------
-		# pixel_LCs_name
-		# --------------------------------------------
-		Story.append(PageBreak()) # always start a new page for this analysis
-		Story.append(Spacer(1, 20))
-		
-		im8 = Image(pixel_LCs_name)
-		
-	
-		im8._restrictSize(width*0.65, width*0.65)
-	
-		Story.append(im8)
-		fig_count += 1
-		pixLC_text = "Fig {}. Normalised flux extracted for each pixel, using the SPOC pipeline mask, around the time of the transit-like event. \
-		The orange/red data points show the in-transit data. The solid red lines show the SPOC pipeline mask. Only shown for one sector.".format(fig_count)
-		
-		ptext = '<font size=8>%s</font>' % pixLC_text
-		Story.append(Paragraph(ptext, styles["Normal"]))
-	
-	# ------ Phase Folded LC ------
+			data_len = len(data_bls)
 
-	if len(transit_list) > 1:
+			for each in range(data_len):
+				if each % 2 == 0:
+					bg_color = colors.whitesmoke
+				else:
+					bg_color = colors.white
 
-		# --------------------------------------------
-		# Phase Folded
-		# --------------------------------------------
-		impf = Image(phasefold_name)
+				table_bls.setStyle(TableStyle([('BACKGROUND', (0, each), (-1, each), bg_color)]))
 
-		impf._restrictSize(width*0.35, width*0.35)
 
-		Story.append(impf)
-		
-		fig_count += 1
-		Story.append(Spacer(1, 10))
-		flux_aperture_text = "Fig {}. Phase folded lightcurve where the odd and the even transits are shown in different colours. Ensure that the odd and even transits have comparabel shapes and depths.".format(fig_count)
-		
-		ptext = '<font size=8>%s</font>' % flux_aperture_text
-		Story.append(Paragraph(ptext, styles["Normal"]))
-		
+			Story.append(table_bls)
+			Story.append(Spacer(1, 15))
 
-	# ------ BLS -------
-	
-	if bls == True:
-		
-		if len(bls_stats2) > 1: # if the first AND second BLS worked
-			Story.append(PageBreak()) # always start a new page for this analysis
-	
-			Story.append(Spacer(1, 12))
-			blsim1 = Image(bls1)
-			blsim2 = Image(bls2)
-	
-			blsim1._restrictSize(width*0.6, width*0.6)
-			blsim2._restrictSize(width*0.6, width*0.6)
-	
-			bls_table = (Table([[blsim1, blsim2]],
-							colWidths=[width * 0.45], rowHeights=[width * 0.6]))
-		
-			bls_table.setStyle(TableStyle([('ALIGN', (0, 0), (-1, -1), 'CENTRE'),('VALIGN', (0, 0), (-1,-1), 'MIDDLE')]))
-			
-			Story.append(bls_table)
-	
-			fig_count += 1
-	
-			if FFI == False:
-	
-				bls1_text = "Fig {}. Box Least Square fitting (BLS) for whole lightcurve binned to 10 minutes. Top left panel: log liklihood periodogram. \
-								The solid red line indicates the peak period and the dashed orange lines show the integer \
-								harmonics of this period. Middle left panel: Full light curve, unbinned (orange) and binned to 10 minutes (black). \
-								The peak period is highlighted by the solid red lines. Bottom left Panel: Phase folded light curve where the found transit-event is fit \
-								with a simple box (red line). The pannels on the right show the same diagnostics, however the diagnostic \
-								was run with the highest detected signal-to-noise transits, from the initial BLS search, removed. ".format(fig_count)
-			
-			else:
-				bls1_text = "Fig {}. Box Least Square fitting (BLS) for whole lightcurve. Top left panel: log liklihood periodogram. \
-								The solid blue line indicates the peak period and the dashed red lines show the integer \
-								harmonics of this period. Middle left panel: Full light curve, unbinned LC (orange) . \
-								The peak period is highlighted by the solid blue lines. Bottom left Panel: Phase folded light curve where the found transit-event is fit \
-								with a simple box (blue line). The pannels on the right show the same diagnostics, however the diagnostic \
-								was run with the highest detected signal-to-noise transits, from the initial BLS search, removed. ".format(fig_count)
-			
-	
-			ptext = '<font size=8>%s</font>' % bls1_text
+			table_count += 1
+			Stellartable_text = "Table {}. Summary of the BLS fit.".format(table_count)
+			ptext = '<font size=8>%s</font>' % Stellartable_text
 			Story.append(Paragraph(ptext, styles["Normal"]))
-			
-	
-	
-			# --------------------
-			# ---- BLS TABLE -----
-	
-			data_bls= [['Parameter',				  "bls1",														"bls2"],
-						   ['period',			    "{:.3f}".format(bls_stats1[0]),	         						 "{:.3f}".format(bls_stats2[0])],
-						   ['t0',			        "{:.2f}".format(bls_stats1[1]),	         						 "{:.2f}".format(bls_stats2[1])],
-						   ['depth',			    "{:.5f} ± {:.5f}".format(bls_stats1[2][0],bls_stats1[2][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[2][0],bls_stats2[2][1]) ],
-						   ['depth phased',			"{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[3][0],bls_stats2[3][1]) ],
-						   ['depth half',			"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[4][0],bls_stats2[4][1]) ],
-						   ['depth odd',			"{:.5f} ± {:.5f}".format(bls_stats1[5][0],bls_stats1[5][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[5][0],bls_stats2[5][1]) ],
-						   ['depth even',			"{:.5f} ± {:.5f}".format(bls_stats1[6][0],bls_stats1[6][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[6][0],bls_stats2[6][1]) ],
-						   ]
-			
-			table_bls=Table(data_bls)
-			table_bls=Table(data_bls,colWidths=width * 0.2, style=[
-								('LINEABOVE',(0,1),(-1,1),1,colors.black),
-								('LINEABOVE',(0,8),(-1,8),1,colors.black),
-								('FONTSIZE', (0,0),(-1,7), 8),
-								])
-		
-		else: # if the first BLS returned a period that was very short such that the second one didn't work.
-			Story.append(PageBreak()) # always start a new page for this analysis
-	
-			Story.append(Spacer(1, 12))
-			blsim1 = Image(bls1)
-			#blsim2 = Image(bls2)
-	
-			blsim1._restrictSize(width*0.6, width*0.6)
 
-			Story.append(blsim1)
-	
-			fig_count += 1
-	
-			if FFI == False:
-	
-				bls1_text = "Fig {}. Box Least Square fitting (BLS) for whole lightcurve binned to 10 minutes. Top panel: log liklihood periodogram. \
-								The solid red line indicates the peak period and the dashed orange lines show the integer \
-								harmonics of this period. Middle panel: Full light curve, unbinned (orange) and binned to 10 minutes (black). \
-								The peak period is highlighted by the solid red lines. Bottom panel: Phase folded light curve where the found transit-event is fit \
-								with a simple box (red line). ".format(fig_count)
-			
-			else:
-				bls1_text = "Fig {}. Box Least Square fitting (BLS) for whole lightcurve. Top panel: log liklihood periodogram. \
-								The solid blue line indicates the peak period and the dashed red lines show the integer \
-								harmonics of this period. Middle panel: Full light curve, unbinned LC (orange) . \
-								The peak period is highlighted by the solid blue lines. Bottom  panel: Phase folded light curve where the found transit-event is fit \
-								with a simple box (blue line). ".format(fig_count)
-			
-	
-			ptext = '<font size=8>%s</font>' % bls1_text
-			Story.append(Paragraph(ptext, styles["Normal"]))
-			
-	
-			# --------------------
-			# ---- BLS TABLE -----
-	
-			data_bls= [['Parameter',				  "bls1"													 ],
-						   ['period',			    "{:.3f}".format(bls_stats1[0])	         					 ],
-						   ['t0',			        "{:.2f}".format(bls_stats1[1])	         					 ],
-						   ['depth',			    "{:.5f} ± {:.5f}".format(bls_stats1[2][0],bls_stats1[2][1])	 ],
-						   ['depth phased',			"{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1])	 ],
-						   ['depth half',			"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1])	 ],
-						   ['depth odd',			"{:.5f} ± {:.5f}".format(bls_stats1[5][0],bls_stats1[5][1])	 ],
-						   ['depth even',			"{:.5f} ± {:.5f}".format(bls_stats1[6][0],bls_stats1[6][1])	 ],
-						   ]
-			
-			table_bls=Table(data_bls)
-			table_bls=Table(data_bls,colWidths=width * 0.2, style=[
-								('LINEABOVE',(0,1),(-1,1),1,colors.black),
-								('LINEABOVE',(0,8),(-1,8),1,colors.black),
-								('FONTSIZE', (0,0),(-1,7), 8),
-								])
-
-		# ------ ADD A LINE TO SEPERATE SECTIONS -------
-		
-		Story.append(Spacer(1, 20))
-		line = MCLine(width*0.77)
-		Story.append(line)
-		
-		# ------
-
-		Story.append(Spacer(1, 16))
-		ptext = '<font size=10>BLS parameters</font>'
-		Story.append(Paragraph(ptext, styles["Normal"]))
-		Story.append(Spacer(1, 15))
-	
-		data_len = len(data_bls)
-		
-		for each in range(data_len):
-			if each % 2 == 0:
-				bg_color = colors.whitesmoke
-			else:
-				bg_color = colors.white
-		
-			table_bls.setStyle(TableStyle([('BACKGROUND', (0, each), (-1, each), bg_color)]))
-		
-		
-		Story.append(table_bls)
-		Story.append(Spacer(1, 15))
-
-		table_count += 1
-		Stellartable_text = "Table {}. Summary of the BLS fit.".format(table_count)
-		ptext = '<font size=8>%s</font>' % Stellartable_text
-		Story.append(Paragraph(ptext, styles["Normal"]))
-
-		Story.append(PageBreak())
-		# -----------
+			Story.append(PageBreak())
+			# -----------
 
 	# analysis of the star i.e. periodogram and the evolutionary tracks
-	
+
 	#periodogram_name
 
 	# --------------------------------------------
-	# Peiodogram
+	# Periodogram
 	# --------------------------------------------
 	Story.append(Spacer(1, 20))
 
 	imp = Image(periodogram_name)
 
-	imp._restrictSize(width*0.5, width*0.5)
+	imp._restrictSize(width*0.55, width*0.55)
 
 	Story.append(imp)
-	
+
 	fig_count += 1
 	Story.append(Spacer(1, 10))
-	periodogram_text = "Fig {}. Lomb scargle periodogram of the TESS lightcurve (black line) and a boxcar-smoothed periogram (pink line) computerd with a window length of 20 micro Hz.".format(fig_count)
-	
+	periodogram_text = "Fig {}. Lomb scargle power spectrum of the TESS lightcurve (black line) and a boxcar-smoothed periogram (pink line) computed with a window length of 20 micro Hz.".format(fig_count)
+
 	ptext = '<font size=8>%s</font>' % periodogram_text
 	Story.append(Paragraph(ptext, styles["Normal"]))
-	
+
+
+	if radius_ast != -999: # this is asteroseismic mode:
+
+		# --------------------------------------------
+		# astersoseismology periodogram nummax
+		# --------------------------------------------
+
+		Story.append(Spacer(1, 20))
+
+		imast = Image(periodogram_numax_name)
+
+		imast._restrictSize(width*0.6, width*0.6)
+
+		Story.append(imast)
+
+		fig_count += 1
+		Story.append(Spacer(1, 10))
+		astero_text = "Fig {}. Top panel: power spectrum with the ".format(fig_count)
+
+		astrtext = '<font size=8>%s</font>' % astero_text
+		Story.append(Paragraph(astrtext, styles["Normal"]))
+
+		# --------------------------------------------
+		# astersoseismology periodogram correlation
+		# --------------------------------------------
+
+		Story.append(Spacer(1, 20))
+
+		imastcorr = Image(periodogram_correlation_name)
+
+		imastcorr._restrictSize(width*0.55, width*0.55)
+
+		Story.append(imastcorr)
+
+		fig_count += 1
+		Story.append(Spacer(1, 10))
+		asterocorr_text = "Fig {}. ".format(fig_count)
+
+		astcortext = '<font size=8>%s</font>' % asterocorr_text
+		Story.append(Paragraph(astcortext, styles["Normal"]))
+
+		# --------------------------------------------
+		# astersoseismology periodogram echelle
+		# --------------------------------------------
+
+		Story.append(Spacer(1, 20))
+
+		imechcorr = Image(periodogram_echelle_name)
+
+		imechcorr._restrictSize(width*0.55, width*0.55)
+
+		Story.append(imechcorr)
+
+		fig_count += 1
+		Story.append(Spacer(1, 10))
+		echellecorr_text = "Fig {}. Echelle diragram.".format(fig_count)
+
+		echelletext = '<font size=8>%s</font>' % echellecorr_text
+		Story.append(Paragraph(echelletext, styles["Normal"]))
+
+
 
 	# --------------------------------------------
 	# eep
@@ -753,19 +877,19 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 
 	imp = Image(eep_name)
 
-	imp._restrictSize(width*0.5, width*0.5)
+	imp._restrictSize(width*0.55, width*0.55)
 
 	Story.append(imp)
-	
+
 	fig_count += 1
 	Story.append(Spacer(1, 10))
 	periodogram_text = "Fig {}. The equivalent evolutionary phase (eep) tracks for main sequence evolution (solid lines) and post \
 	main-sequence evolution (dashed lines) for masses ranging from 0.3 to 1.6 solar masses (from right to left). \
 	The 1 Solar Mass track is shown in maroon. The blue points show the TOIs and the magenta point TIC {}.".format(fig_count, tic)
-	
+
 	ptext = '<font size=8>%s</font>' % periodogram_text
 	Story.append(Paragraph(ptext, styles["Normal"]))
-	
+
 
 	if model == True:
 
@@ -777,48 +901,48 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 
 		model_title = "Modeling"
 		model_text = "The modeling of target TIC {} using the open source {} package.".format(tic, pyaneti_link)
-		
+
 		ptext = '<font size=11><b>%s</b></font>' % model_title
 		Story.append(Paragraph(ptext, styles["centre"]))
 		Story.append(Spacer(1, 10))
 		ptext = '<font size=11>%s</font>' % model_text
 		Story.append(Paragraph(ptext, styles["centre"]))
 		Story.append(Spacer(1, 15))
-		
+
 		line = MCLine(width*0.77)
 		Story.append(line)
 
 		# --------------------------------------------
 		# Pyaneti Modeling results
 		# --------------------------------------------
-		
+
 		Story.append(Spacer(1, 12))
 		im_model = Image(model_name)
-			
+
 		im_model._restrictSize(width*0.5, width*0.5)
-			
+
 		Story.append(im_model)
 		fig_count += 1
 
 		model_text = "Fig {}. The phase folded lightcurve from the the Pyaneti modeling. The solid black line shows the best fit model. See Table 2 for model parameters.".format(fig_count)
-			
+
 		ptext = '<font size=8>%s</font>' % model_text
 		Story.append(Paragraph(ptext, styles["Normal"]))
-		
+
 
 		# ---------------
 		# pyaneti modeling table
-	
+
 		# ----------------------------------------------
 		# print a table of the model/pyaneti parameters
 		# ----------------------------------------------
-		
+
 		# this can only be done if the pyaneti model has been run
 		# as this takes quite a while this might not always be the case.
 
 
 		if os.path.exists("{}/{}/model_out/{}_parameters.csv".format(indir, tic, tic)):
-			
+
 			Story.append(Spacer(1, 12))
 			line = MCLine(width*0.77)
 			Story.append(line)
@@ -827,18 +951,18 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 			ptext = '<font size=10>Candidate Model Parameters</font>'
 			Story.append(Paragraph(ptext, styles["Normal"]))
 			Story.append(Spacer(1, 8))
-		
+
 			manifest_table = pd.read_csv('{}/{}/model_out/{}_parameters.csv'.format(indir, tic, tic))
-		
+
 			#manifest_table
 			params = ['T0', 'P', 'e', 'w', 'b', 'a/R*', 'rp/R*', 'Rp', 'Tperi', 'i', 'a', 'Insolation', 'rho*', 'g_p', 'Teq', 'T_tot', 'T_full']
 			elements = []
-		
+
 			param_vals = []
 			param_errs = []
 			param_units= []
-		
-		
+
+
 			for st in params:
 				try:
 					s = (manifest_table[manifest_table['Var']==st])
@@ -849,11 +973,11 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 					param_vals.append(-999)
 					param_errs.append(-999)
 					param_units.append(-999)
-		
+
 			data_params = [['Parameters', 'Value', 'Uncertainty', 'Unit']]
 			for p,v,e,u in zip(params, param_vals, param_errs, param_units):
 				data_params.append([p,v,e,u])
-		
+
 			table_model=Table(data_params)
 			table_model=Table(data_params,colWidths=width * 0.2, style=[
 								('LINEABOVE',(0,1),(-1,1),1,colors.black),
@@ -861,18 +985,18 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 								('LINEABOVE',(0,len(params)+1),(-1,len(params)+1),1,colors.black),
 								('FONTSIZE', (0,0),(-1,len(params)), 8),
 								])
-		
+
 
 			data_len = len(data_params)
-			
+
 			for each in range(data_len):
 				if each % 2 == 0:
 					bg_color = colors.whitesmoke
 				else:
 					bg_color = colors.white
-			
+
 				table_model.setStyle(TableStyle([('BACKGROUND', (0, each), (-1, each), bg_color)]))
-			
+
 
 			Story.append(table_model)
 
@@ -881,7 +1005,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 			Stellartable_text = "Table {}. The candidate paramaters from the Pyaneti modeling.".format(table_count)
 			ptext = '<font size=8>%s</font>' % Stellartable_text
 			Story.append(Paragraph(ptext, styles["Normal"]))
-		
+
 
 
 	doc.build(Story, onFirstPage=addPageNumber, onLaterPages=addPageNumber)
@@ -894,17 +1018,17 @@ class MCLine(Flowable):
 	Line flowable --- draws a line in a flowable
 	http://two.pairlist.net/pipermail/reportlab-users/2005-February/003695.html
 	"""
- 
+
 	#----------------------------------------------------------------------
 	def __init__(self, width, height=0):
 		Flowable.__init__(self)
 		self.width = width
 		self.height = height
- 
+
 	#----------------------------------------------------------------------
 	def __repr__(self):
 		return "Line(w=%s)" % self.width
- 
+
 	#----------------------------------------------------------------------
 	def draw(self):
 		"""
@@ -919,17 +1043,17 @@ class MCLine_color(Flowable):
 	Line flowable --- draws a line in a flowable in COLOUR
 	http://two.pairlist.net/pipermail/reportlab-users/2005-February/003695.html
 	"""
- 
+
 	#----------------------------------------------------------------------
 	def __init__(self, width, height=0):
 		Flowable.__init__(self)
 		self.width = width
 		self.height = height
- 
+
 	#----------------------------------------------------------------------
 	def __repr__(self):
 		return "Line(w=%s)" % self.width
- 
+
 	#----------------------------------------------------------------------
 	def draw(self):
 		"""
@@ -937,4 +1061,3 @@ class MCLine_color(Flowable):
 		"""
 		self.canv.setStrokeColor(darkcyan)
 		self.canv.line(0, self.height, self.width, self.height)
-
