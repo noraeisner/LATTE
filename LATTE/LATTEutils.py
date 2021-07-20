@@ -5156,6 +5156,8 @@ def plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binn
             plt.show()
         else:
             plt.close()
+    
+    else:   
 
 
         plt.figure(figsize=(gs*6,4))
