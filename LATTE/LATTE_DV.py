@@ -873,7 +873,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# --------------------------------------------
 	# eep
 	# --------------------------------------------
- 	if os.path.exists(eep_name):
+	if os.path.exists(eep_name):
 		Story.append(Spacer(1, 20))
 
 		imp = Image(eep_name)
