@@ -2426,7 +2426,7 @@ def data_files(indir):
         LC_url = "https://archive.stsci.edu/missions/tess/download_scripts/sector/tesscurl_sector_{}_lc.sh".format(sec)
         r_LC = requests.get(LC_url) # create HTTP response object
 
-        if r_LC.status_code == 404:
+        if r_LC.status_code >= 400:
             print ("Data only available up to Sector {} -- try downloading more data later".format(sec))
             break
 
@@ -2452,7 +2452,7 @@ def data_files(indir):
         TP_url = "https://archive.stsci.edu/missions/tess/download_scripts/sector/tesscurl_sector_{}_tp.sh".format(sec)
         r_TP = requests.get(TP_url) # create HTTP response object
 
-        if r_TP.status_code == 404:
+        if r_TP.status_code >= 400:
             print ("TP data only available up to Sector {} -- try downloading more data later".format(sec))
             break
 
@@ -2515,7 +2515,7 @@ def tp_files(indir):
 
         r_target_list = requests.get(target_list) # create HTTP response object
 
-        if r_target_list.status_code == 404:
+        if r_target_list.status_code >= 400:
             print ("Target lists only available up to Sector {} -- try downloading more data later".format(sec))
             break
 
@@ -2559,7 +2559,7 @@ def TOI_TCE_files(indir):
 
     r_TOI = requests.get(TOI_url) # create HTTP response object
 
-    if r_TOI.status_code == 404:
+    if r_TOI.status_code >= 400:
         print ("Can't download the TOI list at the moment. Has the URL changed? If this persists contact Nora.")
 
     with open("{}/data/TOI_list.txt".format(indir),'wb') as f:
@@ -2570,7 +2570,7 @@ def TOI_TCE_files(indir):
 
     r_TOI_star_params = requests.get(TOI_star_params_rls) # create HTTP response object
 
-    if r_TOI_star_params.status_code == 404:
+    if r_TOI_star_params.status_code >= 400:
         print ("Can't download the TOI list at the moment. Has the URL changed? If this persists contact Nora.")
 
     with open("{}/data/TOI_list_star_params.txt".format(indir),'wb') as f:
@@ -2599,7 +2599,7 @@ def TOI_TCE_files(indir):
         TCE_url = "https://archive.stsci.edu/missions/tess/download_scripts/sector/tesscurl_sector_{}_dv.sh".format(sec)
         r_TCE = requests.get(TCE_url) # create HTTP response object
 
-        if r_TCE.status_code == 404:
+        if r_TCE.status_code >= 400:
             print ("You're all caught up on your list of TCE and TOIS up to Sector {} -- try downloading more data later".format(sec-1))
             break
 
@@ -2638,7 +2638,7 @@ def get_data_codes(indir):
         LC_url = "https://archive.stsci.edu/missions/tess/download_scripts/sector/tesscurl_sector_{}_lc.sh".format(sec)
         r_LC = requests.get(LC_url) # create HTTP response object
 
-        if r_LC.status_code == 404:
+        if r_LC.status_code >= 400:
             print ("You're all caught up with your codes up to Sector {} -- try downloading more data later".format(sec-1))
             break
 
