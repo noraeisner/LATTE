@@ -873,22 +873,23 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 	# --------------------------------------------
 	# eep
 	# --------------------------------------------
-	Story.append(Spacer(1, 20))
+ 	if os.path.exists(eep_name):
+		Story.append(Spacer(1, 20))
 
-	imp = Image(eep_name)
+		imp = Image(eep_name)
 
-	imp._restrictSize(width*0.55, width*0.55)
+		imp._restrictSize(width*0.55, width*0.55)
 
-	Story.append(imp)
+		Story.append(imp)
 
-	fig_count += 1
-	Story.append(Spacer(1, 10))
-	periodogram_text = "Fig {}. The equivalent evolutionary phase (eep) tracks for main sequence evolution (solid lines) and post \
-	main-sequence evolution (dashed lines) for masses ranging from 0.3 to 1.6 solar masses (from right to left). \
-	The 1 Solar Mass track is shown in maroon. The blue points show the TOIs and the magenta point TIC {}.".format(fig_count, tic)
+		fig_count += 1
+		Story.append(Spacer(1, 10))
+		periodogram_text = "Fig {}. The equivalent evolutionary phase (eep) tracks for main sequence evolution (solid lines) and post \
+		main-sequence evolution (dashed lines) for masses ranging from 0.3 to 1.6 solar masses (from right to left). \
+		The 1 Solar Mass track is shown in maroon. The blue points show the TOIs and the magenta point TIC {}.".format(fig_count, tic)
 
-	ptext = '<font size=8>%s</font>' % periodogram_text
-	Story.append(Paragraph(ptext, styles["Normal"]))
+		ptext = '<font size=8>%s</font>' % periodogram_text
+		Story.append(Paragraph(ptext, styles["Normal"]))
 
 
 	if model == True:
