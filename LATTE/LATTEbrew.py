@@ -39,7 +39,7 @@ These functions are either called from within __main__.py (if run with input tar
 Brew keeps track if any part of the code crashes (e.g. the downloading of the TPF - so that these are omitted in the generation of the DV report).
 '''
 
-def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, upper_axis_lim_final, lower_axis_lim_final, tessmag, teff, srad, ra, dec, input_numax, input_analysis_window, args):
+def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, upper_axis_lim_final, lower_axis_lim_final, tessmag, teff, srad, ra, dec, input_numax, input_analysis_window, url_list, args):
 	'''
 	This function combines all the results from LATTE and calls all the different functions -
 	it makes the plots, saves them, runs the BLS model and the pyaneti model before making a PHT DV report (if this option is selected.)
@@ -201,7 +201,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 
 		print ("\n Start downloading of the target pixel files - this can take a little while (up to a minute) as the files are large \n")
 
-		X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf(indir, transit_sec, transit_list, tic)
+		X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list = utils.download_tpf(indir, transit_sec, transit_list, tic, url_list)
 
 		# if the TPF wasn't corrupt then make the TPF files (only very ocassionally corrupt but don't want code to crash if it is corrrupt)
 		if (TESS_unbinned_t_l[0] != -111):
@@ -323,13 +323,20 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		'''
 
 		# get the tic IDs of the six nearest stars
-		ticids, distance, target_ra, target_dec = utils.nn_ticids(indir, transit_sec, tic)
+		if args.FFI == False:
+			ticids, distance, target_ra, target_dec = utils.nn_ticids(indir, transit_sec, tic)
 
-		# download the data for these stars
-		alltime_nn, allflux_nn, all_md_nn, alltimebinned_nn, allfluxbinned_nn,outtics,tessmag_list, distance = utils.download_data_neighbours(indir, transit_sec[0], ticids, distance)
+			# download the data for these stars
+			alltime_nn, allflux_nn, all_md_nn, alltimebinned_nn, allfluxbinned_nn,outtics,tessmag_list, distance = utils.download_data_neighbours(indir, transit_sec[0], ticids, distance)
 
-		# plot the LCs
-		utils.plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, transit_list, outtics, tessmag_list, distance, args)
+			# plot the LCs
+			utils.plot_nn(tic, indir,alltime_nn, allflux_nn, alltimebinned_nn, allfluxbinned_nn, transit_list, outtics, tessmag_list, distance, args)
+
+		else:
+			target_ra = ra
+			target_dec = dec
+			distance = None
+
 		print ("Nearest neighbour plot... done.")
 		# ------------
 
@@ -456,12 +463,12 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, mass_ast, radius_ast, logg_ast, numax, deltanu, plx, c_id, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI = False,  bls = True, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, mass_ast, radius_ast, logg_ast, numax, deltanu, plx, c_id, bls_stats1, bls_stats2, tpf_corrupt, astroquery_corrupt, FFI = args.FFI,  bls = True, model = model, mpi = args.mpi)
 		else:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, mass_ast, radius_ast, logg_ast, numax, deltanu, plx, c_id, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = False,  bls = False, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_dec, tessmag, teff, srad, mstar, vmag, logg, mass_ast, radius_ast, logg_ast, numax, deltanu, plx, c_id, [0], [0], tpf_corrupt, astroquery_corrupt, FFI = args.FFI,  bls = False, model = model, mpi = args.mpi)
 
 
-def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args):
+def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_normal, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, upper_axis_lim_final, lower_axis_lim_final, args):
 
 	'''
 	This function that runs LATTE - makes the plots, saves them, runs the BLS model and the pyaneti model before
@@ -779,7 +786,7 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 
 	# ------------
 	print ("Periodogram plot...", end =" ")
-	mass_ast, radius_ast, logg_ast = utils.plot_periodogram(tic, indir, alltime, allflux, 0, -999, -999, args)
+	mass_ast, radius_ast, logg_ast, numax, deltanu = utils.plot_periodogram(tic, indir, alltime, allflux, 0, -999, -999, args)
 
 	print ("done.")
 
@@ -823,9 +830,9 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 		from LATTE import LATTE_DV as ldv
 
 		if BLS == True:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, bls_stats1, bls_stats2, False, astroquery_corrupt, FFI = True, bls = True, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, mstar, vmag, logg, mass_ast, radius_ast, logg_ast, numax, deltanu, plx, c_id, bls_stats1, bls_stats2, False, astroquery_corrupt, FFI = True, bls = True, model = model, mpi = args.mpi)
 		else:
-			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, mstar, vmag, logg, plx, c_id, [0], [0], False, astroquery_corrupt, FFI = True, bls = False, model = model, mpi = args.mpi)
+			ldv.LATTE_DV(tic, indir, syspath, transit_list, sectors_all, ra, dec, tessmag, teff, srad, mstar, vmag, logg, mass_ast, radius_ast, logg_ast, numax, deltanu, plx, c_id, [0], [0], False, astroquery_corrupt, FFI = True, bls = False, model = model, mpi = args.mpi)
 
 	else:
 		print ("\n  Complete! \n ")

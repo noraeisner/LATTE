@@ -79,15 +79,15 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 
 
 	# TOI -----
-	TOI_planets = pd.read_csv('{}/data/TOI_list.txt'.format(indir), comment = "#")
-
-	TOIpl = TOI_planets.loc[TOI_planets['TIC'] == float(tic)]
-
+	TOI_planets = pd.read_csv('{}/data/TOI_list_star_params.txt'.format(indir), comment = "#")
+	
+	TOIpl = TOI_planets.loc[TOI_planets['TIC ID'] == float(tic)]
+	
 	if len(TOIpl) == 0:
 		TOI = ' -  '
 	else:
-		TOI = (float(TOIpl["Full TOI ID"]))
-
+		TOI = str(list(TOIpl["TOI"]))[1:-1]
+	
 	# ------ PARAMS ------
 	ra = float(target_ra)
 	dec = float(target_dec)
@@ -409,7 +409,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# --------------------------------------------
 		# Background
 		# --------------------------------------------
-		if FFI == False:
+		if (FFI != False):
 			Story.append(PageBreak()) # always start a new page for this analysis
 			Story.append(Spacer(1, 20))
 
@@ -436,7 +436,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# Centroid Position
 		# --------------------------------------------
 
-		if FFI == False:
+		if (FFI == False) or (FFI == 'SPOC'):
 
 			Story.append(Spacer(1, 16))
 
@@ -470,7 +470,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 			# --------------------------------------------
 			# Flux Aperture
 			# --------------------------------------------
-			if FFI == False:
+			if (FFI == False) or (FFI == 'SPOC'):
 				#Story.append(PageBreak()) # always start a new page for this analysis
 				Story.append(Spacer(1, 10))
 
@@ -480,6 +480,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 				im4._restrictSize(width*0.55, width*0.55)
 			else:
 				im4._restrictSize(width*0.7, width*0.7)
+
 			Story.append(im4)
 
 			fig_count += 1
@@ -495,29 +496,29 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 			# --------------------------------------------
 			# Apertures Sizes
 			# --------------------------------------------
-
-			Story.append(Spacer(1, 25))
-
-			im45 = Image(apertures_name)
-
-			im45._restrictSize(width*0.4, width*0.4)
-
-			Story.append(im45)
-
-			fig_count += 1
-
-			Story.append(Spacer(1, 16))
-
-			if FFI == False:
-				aperture_text = "Fig {}. The apertures used to extract the lightcurves. The blue aperture on the right shows the \
-				optimum aperture determined by the SPOC pipeline, which is used for the extraction of 2-minute cadence light curves shown in Figure 1. \
-				The red outline on the left shows an aperture that is around 40 per cent smaller than the SPOC pipeline aperture which was used to extract the \
-				red lightcurve shown in Figure {}.".format(fig_count, (fig_count-1))
-			else:
-				aperture_text = "Fig {}. The larger (right hand side, blue) and the smaller (left hamd side, red) apertures used to extract the lightcurves shown in Figure {}.".format(fig_count, (fig_count-1))
-
-			ptext = '<font size=8>%s</font>' % aperture_text
-			Story.append(Paragraph(ptext, styles["Normal"]))
+			if (FFI == False) or (FFI == 'SPOC'):
+				Story.append(Spacer(1, 25))
+	
+				im45 = Image(apertures_name)
+	
+				im45._restrictSize(width*0.4, width*0.4)
+	
+				Story.append(im45)
+	
+				fig_count += 1
+	
+				Story.append(Spacer(1, 16))
+	
+				if FFI == False:
+					aperture_text = "Fig {}. The apertures used to extract the lightcurves. The blue aperture on the right shows the \
+					optimum aperture determined by the SPOC pipeline, which is used for the extraction of 2-minute cadence light curves shown in Figure 1. \
+					The red outline on the left shows an aperture that is around 40 per cent smaller than the SPOC pipeline aperture which was used to extract the \
+					red lightcurve shown in Figure {}.".format(fig_count, (fig_count-1))
+				else:
+					aperture_text = "Fig {}. The larger (right hand side, blue) and the smaller (left hamd side, red) apertures used to extract the lightcurves shown in Figure {}.".format(fig_count, (fig_count-1))
+	
+				ptext = '<font size=8>%s</font>' % aperture_text
+				Story.append(Paragraph(ptext, styles["Normal"]))
 
 
 			# --------------------------------------------
@@ -575,7 +576,7 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 		# nearest neighbours
 		# --------------------------------------------
 		#Story.append(PageBreak()) # always start a new page for this analysis
-		if FFI == False:
+		if (FFI == False):
 			im7 = Image(nearest_neighbour_name)
 
 			im7._restrictSize(width*0.8, width*0.8)

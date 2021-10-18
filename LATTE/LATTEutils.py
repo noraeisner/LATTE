@@ -20,6 +20,7 @@ from astropy.wcs import WCS
 import astropy.io.fits as pf
 #from astropy.io.fits import pf.Undefined, pf.BinTableHDU
 from astropy import units as u
+from astropy.table import Table
 from astropy.coordinates import SkyCoord
 from astropy.stats import median_absolute_deviation, BoxLeastSquares
 
@@ -54,6 +55,8 @@ md_color = '#143085'
 cutout_window = 0.7
 individual_ylim = False
 
+sb.set(style='ticks')
+sb.set_color_codes('deep')
 
 '''
 Overview of LATTE scipts:
@@ -700,6 +703,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
         if len (transit_times) > 0:
 
             plot_background(tic, indir, alltime, allfbkg, transit_times, args, ql = True)
+            plt.show()
         else:
             deltxt = plt.text(3.7,-10,"Please enter at least one transit time!", color = 'red', size=9)
             print ("select at least one transit time to run this")
@@ -729,7 +733,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
 
             transit_sectors = transit_sec(in_sec,start_sec, end_sec, transit_times)
 
-            _, _, _, _, _, _, _, _, _, _,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, _ = download_tpf(indir, transit_sectors, transit_times, tic)
+            _, _, _, _, _, _, _, _, _, _,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, _ = download_tpf(indir, transit_sectors, transit_times, tic, url_list)
 
             plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, transit_times, args, ql = True)
 
@@ -837,7 +841,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
         interact_LATTE_asteroseismology(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, upper_axis_lim_final, lower_axis_lim_final, tessmag, teff, srad, ra, dec, args)
     else:
         #  -----  BREW  ------
-        brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, upper_axis_lim_final, lower_axis_lim_final, tessmag, teff, srad, ra, dec, -999, -999, args)
+        brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, upper_axis_lim_final, lower_axis_lim_final, tessmag, teff, srad, ra, dec, -999, -999, [-111], args)
 
 
 def interact_LATTE_asteroseismology(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, upper_axis_lim_final, lower_axis_lim_final, tessmag, teff, srad, ra, dec, args):
@@ -1522,7 +1526,7 @@ def interact_LATTE_asteroseismology(tic, indir, syspath, transit_list, simple, B
     # get the entered numax times and make sure that all the values are floats
 
     #  -----  BREW  ------
-    brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, upper_axis_lim_final, lower_axis_lim_final, tessmag, teff, srad, ra, dec, final_numax, final_analysis_window, args)
+    brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, upper_axis_lim_final, lower_axis_lim_final, tessmag, teff, srad, ra, dec, final_numax, final_analysis_window,[-111], args)
 
 
 # interactive tool to identify the aperture masks when run in the FFI mode
@@ -1948,8 +1952,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
     return alltime, allflux, allflux_small, allflux_flat, all_md, allfbkg,allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
 
 
-# the main interactive tool used to identify the times of the transit-like events when run in FFI mode
-def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
+def interact_LATTE_FFI_OLD(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     '''
     Function to run the Interactive LATTE code for the FFI using the matplotlib interactive tool.
     Calls the plot where the transit-event times can be identifies and the plotting/modeling options specified.
@@ -1974,19 +1977,39 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
 
     '''
 
+    '''
     # ----- download the data ------
     # by default you have to manually choose the different aperture sizes
-    if args.auto == False:
+
+    # CHECK what ffi data products are available
+    data_urls, args = check_FFI_data_products(tic,sector, args)
+
+    # see whether there is SPOC/QLP data
+    if args.FFI == 'SPOC':
+        alltime, allflux, allflux_err, all_md, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, url_list, args = download_data_FFI_SPOC(indir, sector, syspath, sectors_all, tic, args, save = False)
+
+    elif args.FFI == 'QLP':
+        alltime, allflux, allflux_small, allflux_err, all_md, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, X1_list, X4_list, t_list, tpf_list, tpf_filt_list,arrshape_list = download_data_FFI_QLP(indir, sector, syspath, sectors_all, tic, args, data_urls, save = False)
+        alltime0 = alltime
+        allflux_list = allflux
+        bkg_list = [-111]
+        apmask_list = [-111]
+        allfbkg_t = alltime
+
+        alltime, allflux_list, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args
+    # the above function returns [-111] if there is no SPOC or QLP data
+    elif (args.FFI == False) and (args.auto == False):
         alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
 
     # if the auto mode is selected in the command line, the aperture sizes are chosen automatically based on an intensity threshhold.
-    else:
+    elif (args.FFI == False) and (args.auto == True):
         print ("Start TPF data download.....", end =" ")
-        alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = download_data_FFI(indir, sectors, syspath, sectors_all, tic, args)
+        alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t ,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = download_data_FFI(indir, sectors, syspath, sectors_all, tic, args)
         print ("done.\n")
 
     # make sure all the plots are closed before starting the next section
     plt.close('all')
+
 
     # --------------------------------------------
     # Plot the interactive plot - uses matplolib -
@@ -1995,18 +2018,19 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
     # allflux is detrended
 
     # ------- median absolute deviation in order to determine the clipping
+    if args.FFI == False:
+        MAD = median_absolute_deviation(allflux0, ignore_nan = True)
 
-    MAD = median_absolute_deviation(allflux0, ignore_nan = True)
+        madrange = (100 * MAD)
 
-    madrange = (100 * MAD)
-
-    # make a mask for the points we want to get rid of
-    ymask = (allflux0 < 1 + madrange) * (allflux0 > 1 - madrange)
+        # make a mask for the points we want to get rid of
+        ymask = (allflux0 < 1 + madrange) * (allflux0 > 1 - madrange)
 
 
-    alltime = np.array(alltime0)[ymask]
-    allflux = np.array(allflux0)[ymask]
-    # -------------------------------------
+        alltime = np.array(alltime0)[ymask]
+        allflux = np.array(allflux0)[ymask]
+
+        # -------------------------------------
 
     fig, ax = plt.subplots(2, 1, figsize=(10,7))
     plt.tight_layout()
@@ -2361,8 +2385,741 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
     if save == False:
         args.save = save
 
-    #  -----  BREW  ------
-    brew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args)
+
+
+    # ----------------------------------------
+    #               START BREWING ....
+    # ----------------------------------------
+    if args.FFI == 'SPOC':
+        print ("20 minute cadence SPOC data available")
+        # if the SPOC data is available, you can use run the normal report
+        brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
+
+    else:
+        brew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux_list, allflux_small, allflux, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args)
+
+'''
+
+# the main interactive tool used to identify the times of the transit-like events when run in FFI mode
+def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
+    '''
+    Function to run the Interactive LATTE code for the FFI using the matplotlib interactive tool.
+    Calls the plot where the transit-event times can be identifies and the plotting/modeling options specified.
+
+    Parameters
+    ----------
+    tic  :   str
+        target TIC ID
+    indir  :  str
+        path to directory where all the plots and data will be saved.
+    sectors_all  :   list
+        all the sectors in which the target has been/ will be observed
+    sectors  :  list
+        the sectors which will be analysed
+    ra  : float
+        right ascension of the target
+    dec   :
+        declinatino of the target.
+
+    *args
+        if auto = False, the aperture will be chosen automatically using an intensity threshhold.
+
+    '''
+
+    # ----- download the data ------
+    # by default you have to manually choose the different aperture sizes
+
+    # see whether there is SPOC/QLP data
+    global in_sec
+
+    # ----- download the data ------
+    # by default you have to manually choose the different aperture sizes
+
+    # CHECK what ffi data products are available
+    data_urls, args = check_FFI_data_products(tic,sectors, args)
+
+    # see whether there is SPOC/QLP data
+    if args.FFI == 'SPOC':
+        alltime, allflux, allflux_err, all_md, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, url_list, args = download_data_FFI_SPOC(indir, sectors, syspath, sectors_all, tic, args, data_urls, save = False)
+
+    elif args.FFI == 'QLP':
+
+        alltime0, allflux0, allflux_small, allflux_err, all_md, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, X1_list, X4_list, bkg_list, t_list, tpf_list, tpf_filt_list,arrshape_list = download_data_FFI_QLP(indir, sectors, syspath, sectors_all, tic, args, data_urls, save = False)
+
+        allflux_list = allflux0
+        bkg_list = bkg_list
+        apmask_list = [-111]
+        allfbkg_t = alltime0
+
+    # the above function returns [-111] if there is no SPOC or QLP data
+    elif (args.FFI == True) and (args.auto == False):
+        alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
+
+    # if the auto mode is selected in the command line, the aperture sizes are chosen automatically based on an intensity threshhold.
+    elif (args.FFI == True) and (args.auto == True):
+        print ("Start TPF data download.....", end =" ")
+        alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t ,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = download_data_FFI(indir, sectors, syspath, sectors_all, tic, args)
+        print ("done.\n")
+
+
+    # --------------------------------------------
+    # Plot the interactive plot - uses matplolib -
+    # --------------------------------------------
+
+    # allflux is detrended
+    # ------- median absolute deviation in order to determine the clipping
+    print (args.FFI)
+    print ("- - - - - - - - - - - - - - -")
+
+    if (args.FFI != 'SPOC'):
+        MAD = median_absolute_deviation(allflux0, ignore_nan = True)
+
+        madrange = (50 * MAD)
+
+        # make a mask for the points we want to get rid of
+        ymask = (allflux0 < 1 + madrange) * (allflux0 > 1 - madrange)
+
+
+        alltime = np.array(alltime0)[ymask]
+        allflux = np.array(allflux0)[ymask]
+        # -------------------------------------
+
+        fluxmin = np.nanmin(allflux)
+        fluxmax = np.nanmax(allflux)
+        flux_diff = fluxmax - fluxmin
+
+    # function to define the plotting area around the transit event.
+    # this needs to be in a function as the area changes with the interactive slider.
+    fig, ax = plt.subplots(2, 1, figsize=(11,7.5))
+    plt.tight_layout()
+
+    # Adjust the plots region to leave some space for the sliders and buttons
+    fig.subplots_adjust(left=0.24, bottom=0.3)
+
+    fluxmin = np.nanmin(allflux)
+    fluxmax = np.nanmax(allflux)
+    flux_diff = fluxmax - fluxmin
+    # function to define the plotting area around the transit event.
+    # this needs to be in a function as the area changes with the interactive slider.
+    def cutout(transit):
+        mask = (np.array(alltime) > transit-1) & (np.array(alltime) < transit+1)
+
+        return [np.array(alltime)[mask], np.array(allflux)[mask], np.array(alltime), np.array(allflux)]
+
+    # ---------------
+
+    # define the slider that let's you chose the sector to look at
+    class PageSlider(matplotlib.widgets.Slider):
+
+        def __init__(self, ax, label, numpages = 10, valinit=0, valfmt='%1d',
+                     closedmin=True, closedmax=True,
+                     dragging=True, **kwargs):
+
+            self.facecolor=kwargs.get('facecolor',"w")
+            self.activecolor = kwargs.pop('activecolor',"b")
+            self.fontsize = kwargs.pop('fontsize', 10)
+            self.numpages = numpages
+
+            super(PageSlider, self).__init__(ax, label, 0, numpages,
+                                valinit=valinit, valfmt=valfmt, **kwargs)
+
+            # make it so that numpages is the index of the array of the
+            global in_sec
+
+            self.poly.set_visible(False)
+            self.vline.set_visible(False)
+            self.pageRects = []
+            for i in range(numpages):
+
+                facecolor = self.activecolor if i==valinit else self.facecolor
+                r  = Rectangle((float(i)/numpages, 0), 1./numpages, 1,
+                                    transform=ax.transAxes, facecolor=facecolor)
+                ax.add_artist(r)
+                self.pageRects.append(r)
+
+                seclist_names = ['All'] + in_sec
+
+                sec_i = seclist_names[i]
+
+                ax.text(float(i)/numpages+0.5/numpages, 0.5, str(sec_i),
+                        ha="center", va="center", transform=ax.transAxes,
+                        fontsize=self.fontsize)
+            self.valtext.set_visible(False)
+
+            divider = mpl_toolkits.axes_grid1.make_axes_locatable(ax)
+            bax = divider.append_axes("right", size="5%", pad=0.05)
+            fax = divider.append_axes("right", size="5%", pad=0.05)
+            self.button_back = matplotlib.widgets.Button(bax, label=r'$\blacktriangleleft$',
+                            color=self.facecolor, hovercolor=self.activecolor)
+            self.button_forward = matplotlib.widgets.Button(fax, label=r'$\blacktriangleright$',
+                            color=self.facecolor, hovercolor=self.activecolor)
+            self.button_back.label.set_fontsize(self.fontsize)
+            self.button_forward.label.set_fontsize(self.fontsize)
+            self.button_back.on_clicked(self.backward)
+            self.button_forward.on_clicked(self.forward)
+
+        def _update(self, event):
+            super(PageSlider, self)._update(event)
+            i = int(self.val)
+            if i >=self.valmax:
+                return
+            self._colorize(i)
+
+        def _colorize(self, i):
+            for j in range(self.numpages):
+                self.pageRects[j].set_facecolor(self.facecolor)
+            self.pageRects[i].set_facecolor(self.activecolor)
+
+        def forward(self, event):
+            current_i = int(self.val)
+            i = current_i+1
+            if (i < self.valmin) or (i >= self.valmax):
+                return
+            self.set_val(i)
+            self._colorize(i)
+
+        def backward(self, event):
+            current_i = int(self.val)
+            i = current_i-1
+            if (i < self.valmin) or (i >= self.valmax):
+                return
+            self.set_val(i)
+            self._colorize(i)
+
+    # ---------------
+
+    # define the initial conditions - this is what appears on the plot initially but can change later.
+    transit = np.nanmean(alltime)  # start the cut-out in the centre of the plot.
+    binfac = 7
+
+    # FIRST PLOT - FULL LC
+    # plot the unbinned flux
+    [line_full] = ax[0].plot(alltime, allflux , marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3,  markerfacecolor='k')
+    # ---------------
+
+    # SECOND PLOT - CUT OUT LC
+    # plot the cut out around the time of the transit - called with function as it can be changed with the slider.
+    [line] =  ax[1].plot(cutout(transit)[0], cutout(transit)[1], marker='o',color = 'k', alpha = 0.9, lw = 0, markersize = 3,  markerfacecolor='k')
+    # ---------------
+
+    global transit_slider_ax
+    global transit_slider
+
+    if len(in_sec) == 1:
+
+        # Define two sliders to change the y axis scale
+        scale_slider_upper_ax  = fig.add_axes([0.24, 0.19, 0.33, 0.03], facecolor='silver')
+        scale_slider_upper = Slider(scale_slider_upper_ax, 'Flux limits', 1, fluxmax + (flux_diff*0.1), valinit=fluxmax, color='white')
+        scale_slider_upper.valtext.set_visible(False)
+
+        scale_slider_lower_ax  = fig.add_axes([0.57, 0.19, 0.33, 0.03], facecolor='white') # x, y, width, height
+        scale_slider_lower = Slider(scale_slider_lower_ax, ' ', fluxmin - (flux_diff*0.1), 1,valinit=fluxmin, color='silver')
+        scale_slider_lower.valtext.set_visible(False)
+
+        # Define the slider to change the transit-event time (and cut out region)
+        transit_slider_ax  = fig.add_axes([0.24, 0.15, 0.66, 0.03])  # location of the slider
+        transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltime), np.nanmax(alltime), valinit=transit, color='teal')
+
+    # if there it's in more than one sector there is an extra slide bar to chose to look at individual sectors.
+    else:
+        # Define the slider to change the y axis scale
+        scale_slider_upper_ax  = fig.add_axes([0.24, 0.2, 0.33, 0.02], facecolor='silver')
+        scale_slider_upper = Slider(scale_slider_upper_ax, 'Flux limits', 1, fluxmax + (flux_diff*0.1), valinit=fluxmax, color='white')
+        scale_slider_upper.valtext.set_visible(False)
+
+        scale_slider_lower_ax  = fig.add_axes([0.57, 0.2, 0.33, 0.02], facecolor='white')
+        scale_slider_lower = Slider(scale_slider_lower_ax, ' ', fluxmin - (flux_diff*0.1), 1,valinit=fluxmin, color='silver')
+        scale_slider_lower.valtext.set_visible(False)
+
+        # Define the slider to change the transit-event time (and cut out region)
+        transit_slider_ax  = fig.add_axes([0.24, 0.17, 0.66, 0.02])  # location of the slider
+        transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltime), np.nanmax(alltime), valinit=transit, color='teal')
+
+        # define the slider to change the plotting region
+        sector_slider_ax  = fig.add_axes([0.24, 0.11, 0.66, 0.03])
+        sector_slider = PageSlider(sector_slider_ax, 'Sector', len(in_sec) + 1, activecolor=main_pot_color)
+
+    # ---------------
+
+    # deifne the intial x and y axis limits - y limit can be changed with slider, x limit cannot.
+    ax[0].set_title("TIC {}    Sectors {}".format(tic,str(in_sec)[1:-1]))
+    ax[0].set_xlim([np.nanmin(alltime), np.nanmax(alltime)])
+    ax[0].set_ylim([fluxmin, fluxmax])
+
+    ax[1].set_xlim([np.nanmean(alltime)-1, np.nanmean(alltime)+1])
+    ax[1].set_ylim([fluxmin, fluxmax])
+
+    # ---------------
+    # Define an action for acessing the required cut-out data and drawing the line when the slider's value changes
+    def sliders_on_changed(val):
+        line.set_xdata(cutout(transit_slider.val)[0])
+        line.set_ydata(cutout(transit_slider.val)[1])
+
+        fig.canvas.draw_idle()  # update figure
+
+    # draw a line at the time of the chosen transit-event (from slider) on the top and bottom plot
+    lver0 = ax[0].axvline(transit, color = 'r', linewidth = 2)
+    lver1 = ax[1].axvline(transit, color = 'r', linewidth = 2)
+
+    # ---------------
+    # Define an action for modifying the plot region on the second plot
+    def update_axis(val):
+        # ---------------
+        # only ever plot one line so get rid of the old ones before plotting the new ones...
+        if (len (ax[0].lines) > 1) or (len(ax[1].lines) > 1):
+            ax[0].lines[-1].remove()
+            ax[1].lines[-1].remove()
+
+        # draw a line at the time of the chosen transit-event (from slider) on the top and bottom plot
+        lver0 = ax[0].axvline(transit_slider.val, color = 'r', linewidth = 2)
+        lver1 = ax[1].axvline(transit_slider.val, color = 'r', linewidth = 2)
+
+        ax[1].set_xlim([transit_slider.val - 1,transit_slider.val + 1])
+        lver0.set_xdata(transit_slider.val)
+        lver1.set_xdata(transit_slider.val)
+
+    def update_plotting_region(val):
+        global in_sec
+        seclist_names = ['All'] + in_sec
+
+        index = int(val)
+
+        if index == 0:
+            ax[0].set_title("TIC {}     Sectors {}".format(tic,str(in_sec)[1:-1]))
+            ax[0].set_xlim([np.nanmin(alltime), np.nanmax(alltime)])
+        else:
+            ax[0].set_title("TIC {}   Sector {}".format(tic,seclist_names[index]))
+            ax[0].set_xlim([start_sec[index-1][0],end_sec[index-1][0]])
+
+
+    def update_yaxis_upper(val):
+
+        upper_axis_lim = scale_slider_upper.val
+        lower_axis_lim = scale_slider_lower.val
+
+        ax[0].set_ylim([lower_axis_lim, upper_axis_lim])
+        ax[1].set_ylim([lower_axis_lim, upper_axis_lim])
+
+    def update_yaxis_lower(val):
+
+        upper_axis_lim = scale_slider_upper.val
+        lower_axis_lim = scale_slider_lower.val
+
+        ax[0].set_ylim([lower_axis_lim, upper_axis_lim])
+        ax[1].set_ylim([lower_axis_lim, upper_axis_lim])
+
+
+    # ------ ON CLICK -------
+    # define the action that lets you click on the image in order to chose the location instead of using the slider - probably more useful
+    def onclick(event):
+
+        # just need to know the x (time) position of the click. The y (flux) position doesn't matter.
+        val = event.xdata
+
+        # check that the click was within the plotting region. If not ignore the click
+        if (event.inaxes == ax[0]) or (event.inaxes == ax[1]):
+
+            # SECOND PLOT - CUT OUT LC
+            # plot the cut out around the time of the transit - changed by clicked on the image (either one of them)
+            line.set_xdata(cutout(val)[0])
+            line.set_ydata(cutout(val)[1])
+
+            # ---------------
+            # only ever plot one line so get rid of the old ones before plotting the new ones...
+            if (len (ax[0].lines) > 1) or (len(ax[1].lines) > 1):
+                ax[0].lines[-1].remove()
+                ax[1].lines[-1].remove()
+
+            # draw a line at the time of the chosen transit-event (from slider) on the top and bottom plot
+            lver0 = ax[0].axvline(val, color = 'r', linewidth = 2)
+            lver1 = ax[1].axvline(val, color = 'r', linewidth = 2)
+
+            # if clicked on the image to select the time to zoom in on then update the plot in this function.
+            ax[1].set_xlim([val - 1,val + 1])
+            lver0.set_xdata(val)
+            lver1.set_xdata(val)
+
+            # also update the location of the slider (aesthetic reasons only)
+            # Define the slider to change the transit-event time (and cut out region) - this might slow the code down as it re-plots the slider everytime but I can't find an efficient way to do this differently for now.
+            fig.canvas.draw_idle()  # update figure
+
+            # these values need to be global as are needed but the clicking and the slider events
+            global transit_slider_ax
+            global transit_slider
+
+            transit_slider_ax.remove() # remove the old bar and plot a new one which has the colour bar in the right place
+
+            if len(in_sec) == 1:
+                transit_slider_ax  = fig.add_axes([0.24, 0.15, 0.66, 0.03])  # location of the slider
+                transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltime), np.nanmax(alltime), valinit=val, color='teal')
+            else:
+                transit_slider_ax  = fig.add_axes([0.24, 0.17, 0.66, 0.02])  # location of the slider
+                transit_slider = Slider(transit_slider_ax, 'Transit', np.nanmin(alltime), np.nanmax(alltime), valinit=val, color='teal')
+
+
+        # if clicked outside of the region activate the slider bar
+        else:
+            # Link the functions (actions) to the corresponding sliders
+            transit_slider.on_changed(update_axis)
+            scale_slider_upper.on_changed(update_yaxis_upper)
+            scale_slider_lower.on_changed(update_yaxis_lower)
+            transit_slider.on_changed(sliders_on_changed)
+
+    # alternatively one can click on the image in order to change the zoom in region of the plot.
+    fig.canvas.mpl_connect('button_press_event', onclick)
+
+    # ---------------------
+
+    # Define buttons which allow the user to interactively choose options:
+    # run simple code, BLS, model the data usign Pyaneti, save the data and figures, creata DV report
+
+    # only give the model option if pyaneti has been sucessfully installed
+    if pyaneti_installed == True:
+        var_ax = fig.add_axes([0.025, 0.52, 0.119, 0.19]) # x, y, width, height
+        save_var = CheckButtons(var_ax, ('Simple','Show plots', 'North', 'BLS', 'model', 'Save', 'Report'), (False, args.noshow, args.north, False, False, True, True))
+    else:
+        var_ax = fig.add_axes([0.025, 0.53, 0.119, 0.18]) # x, y, width, height
+        save_var = CheckButtons(var_ax, ('Simple','Show plots', 'North', 'BLS', 'Save', 'Report'), (False, args.noshow, args.north, False, True, True))
+
+    if len(in_sec) > 1:
+        sector_slider.on_changed(update_plotting_region)
+
+
+    '''
+    aster_ax = fig.add_axes([0.025, 0.23, 0.119, 0.045], facecolor='gold') # x, y, width, height
+
+    asteroseismic_button = Button(aster_ax, 'Seismology', color = 'white')
+
+    asteroseismic_colors = itertools.cycle(['gold','white'])
+    asteroseismic_status = itertools.cycle([True, False])
+
+    global asteroseismology
+    asteroseismology = False
+
+    def change_color(event):
+        global asteroseismology
+        asteroseismic_button.color = next(asteroseismic_colors)
+
+        asteroseismology = next(asteroseismic_status)
+
+        # If you want the button's color to change as soon as it's clicked, you'll
+        # need to set the hovercolor, as well, as the mouse is still over it
+        asteroseismic_button.hovercolor = asteroseismic_button.color
+        fig.canvas.draw()
+
+    asteroseismic_button.on_clicked(change_color)
+    '''
+
+    # Initial values for each option
+    simple = False
+    hide = args.noshow
+    north = args.north
+    BLS = False
+    model = False
+    save = True
+    DV = True
+
+    # function to get the status of each button and to save it
+    def variables(label):
+        status = save_var.get_status()
+        simple = status[0]
+        hide = not status[1]
+        north = status[2]
+        BLS = status[3]
+
+        if pyaneti_installed == True:
+            model = status[4]
+            save = status[5]
+            DV = status[6]
+        else:
+            model = False
+            save = status[4]
+            DV = status[5]
+
+    # ---------------
+
+    # ---------------
+
+    # define the paramaters of the plot
+    minf = np.nanmin(np.array(allflux))
+    maxf = np.nanmax(np.array(allflux))
+    height = maxf - minf
+
+    ax[0].tick_params(axis="y",direction="inout", labelsize = main_plot_fontsize) #, pad= -20)
+    ax[0].tick_params(axis="x",direction="inout", labelsize = main_plot_fontsize) #, pad= -17)
+    ax[0].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
+    ax[0].set_ylabel("Normalised Flux", fontsize = main_plot_fontsize)
+    ax[0].vlines(all_md, minf-1,minf + height*0.3 , colors = md_color, label = "Momentum Dump")
+
+    ax[1].tick_params(axis="y",direction="inout", labelsize = main_plot_fontsize) #, pad= -20)
+    ax[1].tick_params(axis="x",direction="inout", labelsize = main_plot_fontsize) #, pad= -17)
+    ax[1].tick_params(axis='both', length = 7, left='on', top='on', right='on', bottom='on')
+    ax[1].set_xlabel("Time (BJD-2457000)", fontsize = main_plot_fontsize)
+    ax[1].set_ylabel("Normalised Flux", fontsize = main_plot_fontsize)
+    ax[1].vlines(all_md, minf-1,minf + height*0.3, lw =1,  colors = md_color, label = "Momentum Dump")
+
+
+    # ---------------
+    # Create a label for the 'settings' box to clarify what it does
+
+    plt.text(0.25, 1.07, "Settings", fontsize=10, verticalalignment='center')
+
+    # ---------------
+    # Create a label for the 'quick look options'
+
+    plt.text(0.22, -0.35, "Quick look", fontsize=10, verticalalignment='center')
+
+    # define a box to enter the nickname of the target - this is useful if you analyse a lot of different candidates and you need a way of identifying them easily
+
+    # ---------------
+    # define a 'text box' that lets you enter the transit times
+
+    initial_text = ""  # no initial text (the text box is empty)
+    nick_name = []  # list of the entered transit times
+
+    # function to store the entererd transit times.
+    def submit(text):
+        nick_name.append(text)
+
+    axbox = plt.axes([0.24, 0.01, 0.22, 0.04]) # x, y, width, height
+    text_box = TextBox(axbox, 'Memorable name (optional): ', initial=initial_text)
+    text_box.on_submit(submit)
+    # ---------------
+
+
+    # Create a button to close the figure and more onto the next stage of the code.
+    ebx = plt.axes([0.77, 0.01, 0.13, 0.04])
+    exit = Button(ebx, 'Done', color=main_pot_color)
+
+    # make button to exit the plot and continue with the code.
+    # pop up warning if no transit time is entered
+
+    def close(event):
+
+        if len(transit_times) > 0:
+            plt.close('all')
+
+        else:
+            print ("Must enter at least one transit time!")
+            global deltxt
+
+            if len(in_sec) > 1:
+                deltxt = ax[1].text(3.7,-10.5,"Please enter at least one transit time!", color = 'red', size=9)
+            else:
+                deltxt = ax[1].text(3.7,-10,"Please enter at least one transit time!", color = 'red', size=9)
+
+            plt.draw()
+
+
+    exit.on_clicked(close)
+    # ---------------
+
+    global ttxt
+    global deltxt
+
+    if len(in_sec) > 1:
+        deltxt = plt.text(3.7,-10.5," ", color = 'red', size=9)
+    else:
+        deltxt = plt.text(3.7,-10," ", color = 'red', size=9)
+
+
+    # text that will be updated to list the 'wanted' transit event times
+    if len(in_sec) > 1:
+        ttxt = plt.text(-4.88,1.5, "Transit times: ", weight='bold')
+    else:
+        ttxt = plt.text(-4.88,2, "Transit times: ", weight='bold')
+
+    # Create a button to store the 'current' value of the slider
+    stx = plt.axes([0.53, 0.01, 0.11, 0.04])
+    store_val = Button(stx, 'Add time', color='gold')
+
+    transit_times = []
+
+    # function to store a transit event time using a button
+    def storeval(time):
+
+        storetime = (transit_slider.val)
+        transit_times.append(round(storetime,2))
+        global ttxt
+        global deltxt
+
+        ttxt.set_text("Transit times: {} ".format(str(transit_times)[1:-1]))
+        deltxt.set_text(" ")
+
+        plt.draw()
+
+
+    store_val.on_clicked(storeval)
+    # ---------------
+
+    # Create a button to delete the last entered value
+    delx = plt.axes([0.65, 0.01, 0.11, 0.04])
+    del_val = Button(delx, 'Remove time', color='grey')
+
+    transit_times = []
+
+    # function to delete the last entry if using a button
+    def deleval(time):
+        global ttxt
+        if len (transit_times)>0:
+            del transit_times[-1]
+
+            ttxt.set_text("Transit times: {} ".format(str(transit_times)[1:-1]))
+            plt.draw()
+
+
+    del_val.on_clicked(deleval)
+
+    # ---------------
+
+    # Make some quick look buttons to look at certain plots without having to run the program/make a report
+
+    if args.FFI == 'SPOC':
+        plotcentx = plt.axes([0.025, 0.45, 0.12, 0.025]) # x,y, xwidth, ywidth
+        plotcent = Button(plotcentx, 'Centroids', color='white')
+        plotcent.label.set_fontsize(10)
+
+    plotbgkx = plt.axes([0.025, 0.415, 0.12, 0.025]) # x,y, xwidth, ywidth
+    plotbgk = Button(plotbgkx, 'Background', color='white')
+    plotbgk.label.set_fontsize(10)
+
+    ploteepx = plt.axes([0.025, 0.38, 0.12, 0.025]) # x,y, xwidth, ywidth
+    ploteep = Button(ploteepx, 'Stellar tracks', color='white')
+    ploteep.label.set_fontsize(10)
+
+    plotperiodx = plt.axes([0.025, 0.345, 0.12, 0.025]) # x,y, xwidth, ywidth
+    plotperiod = Button(plotperiodx, 'Periodogram', color='white')
+    plotperiod.label.set_fontsize(10)
+
+    # ------
+    # these require a different data download of the TPFs
+
+    #plotapx = plt.axes([0.025, 0.3, 0.12, 0.03]) # x,y, xwidth, ywidth
+    #plotap = Button(plotapx, 'Ap. size', color='gold')
+
+    #plotpixlevelx = plt.axes([0.025, 0.25, 0.12, 0.03]) # x,y, xwidth, ywidth
+    #plotpixlevel = Button(plotpixlevelx, 'Pixel square', color='gold')
+
+    # - - - - - - - - - -
+    def quick_look_bkg(time):
+        global deltxt
+        if len (transit_times) > 0:
+
+            plot_background(tic, indir, alltime, allfbkg, transit_times, args, ql = True)
+        else:
+            deltxt = plt.text(3.7,-10,"Please enter at least one transit time!", color = 'red', size=9)
+            print ("select at least one transit time to run this")
+
+    plotbgk.on_clicked(quick_look_bkg)
+
+    # - - - - - - - - - -
+    def quick_look_centroid(time):
+        global deltxt
+        if len (transit_times) > 0:
+
+            plot_centroid(tic, indir, alltime12, allx1, ally1, allx2, ally2, transit_times, args, ql = True)
+        else:
+            deltxt = plt.text(3.7,-10,"Please enter at least one transit time!", color = 'red', size=9)
+            print ("select at least one transit time to run this")
+
+    if args.FFI == 'SPOC':
+        plotcent.on_clicked(quick_look_centroid)
+
+    # - - - - - - - - - -
+    def quick_look_eep(time):
+
+        eep_target(tic, indir, syspath,teff, srad, args, ql = True)
+
+    ploteep.on_clicked(quick_look_eep)
+
+    # - - - - - - - - - -
+
+    def quick_look_periodogram(time):
+
+        plot_periodogram(tic, indir, alltime, allflux, teff, 0, 0, args, ql = True)
+
+    plotperiod.on_clicked(quick_look_periodogram)
+
+    # - - - - - - - - - -
+
+    plt.show()
+    plt.close('all')
+
+    # ------ END OF INTERACTIVE PART OF CODE ------
+
+    # save the status of all the buttons
+    end_status = save_var.get_status()
+
+    if pyaneti_installed == True:
+        simple = end_status[0]
+        hide = not end_status[1]
+        north = end_status[2]
+        BLS = end_status[3]
+        model = end_status[4]
+        save = end_status[5]
+        DV = end_status[6]
+
+    else:
+        simple = end_status[0]
+        hide = not end_status[1]
+        north = end_status[2]
+        BLS = end_status[3]
+        model = False
+        save = end_status[4]
+        DV = end_status[5]
+
+
+    # ---------------
+
+    # update the arguments if they are different from the ones entered in the command line:
+    if args.noshow != hide:
+        args.noshow = hide
+
+    if args.north != north:
+        args.north = north
+
+    # if the save button was not selected, then change the iput argument to false
+    if save == False:
+        args.save = save
+
+    # check whether the user identified a nickname, or memorable name, for the candidate
+    if len(nick_name) != 0: # if the box was left untouched do nothing and continue without setting a new nickname - will be ignored
+        if len(nick_name[-1]) > 0: # [-1] in case the user pressed enter and then deleted the nickname again
+            args.nickname = str(nick_name[-1])
+
+    # ---------------
+
+    # get the entered transit times and make sure that all the values are floats
+    transit_list = transit_times
+
+    print ("Transit times : {} \n".format(str(transit_list)[1:-1]))
+
+    # get the final upper and lower axis limit - used for later plotting
+    upper_axis_lim_final = scale_slider_upper.val
+    lower_axis_lim_final = scale_slider_lower.val
+
+    #if asteroseismology == True:
+    #    interact_LATTE_asteroseismology(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, upper_axis_lim_final, lower_axis_lim_final, tessmag, teff, srad, ra, dec, args)
+    #else:
+
+
+    # ----------------------------------------
+    #               START BREWING ....
+    # ----------------------------------------
+
+    if args.FFI == 'SPOC':
+        print ("30 minute cadence SPOC data available")
+        # if the SPOC data is available we can run the 'normal' LATTE mode as they have all the same data products as the 2 minute SPOC data products
+        brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltime, allflux, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, upper_axis_lim_final, lower_axis_lim_final, tessmag, teff, srad, ra, dec, -999, -999, url_list, args)
+
+    else:
+        if args.FFI == 'QLP':
+            # if QLP data is available we have to extract the TPF data now, so that we can run the FFI
+            print ("30 minute cadence QLP data available")
+
+
+        brew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, upper_axis_lim_final, lower_axis_lim_final, args)
+
 
 # --------------------------------------------
 #         Download the data access files      #
@@ -2936,7 +3693,7 @@ def download_data(indir,sectors, tic, binfac = 5, test = 'no'):
         CCD column position of target’s flux-weighted centroid. In y direction
     ally2  :  list
         The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In y direction
-    alltimel2  :  list
+    alltime12  :  list
         time used for the x and y centroid position plottin
     allfbkg  :  list
         background flux
@@ -3054,7 +3811,7 @@ def download_data(indir,sectors, tic, binfac = 5, test = 'no'):
     allx2 = []
     ally1 = []
     ally2 = []
-    alltimel2 = []
+    alltime12 = []
     allfbkg = []
 
     start_sec = []
@@ -3068,6 +3825,7 @@ def download_data(indir,sectors, tic, binfac = 5, test = 'no'):
 
     failed_sectors = []
     # loop through all the download links - all the data that we want to access
+    print ("dwload_link")
 
     for lcfile in dwload_link:
 
@@ -3089,7 +3847,7 @@ def download_data(indir,sectors, tic, binfac = 5, test = 'no'):
 
         # open and view columns in lightcurve extension
         lcdata = lchdu[1].data
-        lchdu[1].columns
+
 
         f02 = lcdata['PDCSAP_FLUX'] # Presearch Data Conditioning
         f02_err = lcdata['PDCSAP_FLUX_ERR']
@@ -3153,7 +3911,7 @@ def download_data(indir,sectors, tic, binfac = 5, test = 'no'):
         allx2.append(list(x2[l2]))
         ally1.append(list(y1[l2]))
         ally2.append(list(y2[l2]))
-        alltimel2.append(list(time[l2]))
+        alltime12.append(list(time[l2]))
 
         allfbkg.append(fbkg)
 
@@ -3161,6 +3919,7 @@ def download_data(indir,sectors, tic, binfac = 5, test = 'no'):
         end_sec.append([time[-1]])
 
     # flatten lists of list
+
     alltime =       list(np.hstack(alltime)      )
     allflux =       list(np.hstack(allflux)      )
     allflux_err =   list(np.hstack(allflux_err)  )
@@ -3173,13 +3932,14 @@ def download_data(indir,sectors, tic, binfac = 5, test = 'no'):
     allx2 =         list(np.hstack(allx2)     )
     ally1 =         list(np.hstack(ally1)     )
     ally2 =         list(np.hstack(ally2)     )
-    alltimel2 =     list(np.hstack(alltimel2) )
+    alltime12 =     list(np.hstack(alltime12) )
     allfbkg =       list(np.hstack(allfbkg)   )
 
     if len (failed_sectors) != 0:
         print ("Failed sectors: {}    (These may be future sectors of may have only been observed in the FFIs".format(failed_sectors))
 
-    return alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltimel2, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad
+    return alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad
+
 
 def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
 
@@ -3219,7 +3979,7 @@ def download_data_FFI_interact(indir,sector, sectors_all, tic, save = False):
         CCD column position of target’s flux-weighted centroid. In y direction
     ally2  :  list
         The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In y direction
-    alltimel2  :  list
+    alltime12  :  list
         time used for the x and y centroid position plottin
     allfbkg  :  list
         background flux
@@ -3435,7 +4195,7 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
         CCD column position of target’s flux-weighted centroid. In y direction
     ally2  :  list
         The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects. In y direction
-    alltimel2  :  list
+    alltime12  :  list
         time used for the x and y centroid position plottin
     allfbkg  :  list
         background flux
@@ -3497,6 +4257,8 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
 
         # import the data
         print ("Importing FFI data sector {}...".format(sec), end =" ")
+
+        searchtic = 'TIC' + str(tic)
         search_result = lk.search_tesscut(searchtic, sector=sec)
 
         count = 0
@@ -3762,6 +4524,7 @@ def download_data_FFI(indir, sector, syspath, sectors_all, tic, save = False):
 
     return alltime_list, allflux, allflux_small, allflux_flat, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list
 
+
 def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
     ''''
     Dowloand the data for the 6 nearest neightbour target pixel LC - in the future want to
@@ -3925,7 +4688,404 @@ def download_data_neighbours(indir, sector, tics, distance, binfac = 5):
 
     return alltime, allflux, all_md, alltimebinned, allfluxbinned, outtics, tessmag_list, distance
 
-def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
+
+def check_FFI_data_products(tic,sector, args):
+    '''
+    Functino to check what data products are available for the FFIS.
+    '''
+
+    # query MAST to find out what data products are available
+    objectOfInterest = 'TIC {}'.format(tic)
+
+    resolverRequest = {'service':'Mast.Name.Lookup',
+                        'params':{'input':objectOfInterest,
+                                    'format':'json'}}
+
+    headers,resolvedObjectString = mastQuery(resolverRequest)
+
+    resolvedObject = json.loads(resolvedObjectString)
+
+    objRa = resolvedObject['resolvedCoordinate'][0]['ra']
+    objDec = resolvedObject['resolvedCoordinate'][0]['decl']
+
+
+    mastRequest = {'service':'Mast.Caom.Cone',
+                    'params':{'ra':objRa,
+                            'dec':objDec,
+                            'radius':0.01},
+                    'format':'json',
+                    'pagesize':2000,
+                    'page':1,
+                    'removenullcolumns':True,
+                    'cachebreaker':"2020-02-12T0749"}
+
+    headers,mastDataString = mastQuery(mastRequest)
+
+    mastData = json.loads(mastDataString)
+
+    # convert to a table that makes sense
+    mastDataTable = Table()
+
+
+    for col,atype in [(x['name'],x['type']) for x in mastData['fields']]:
+        if atype=="string":
+            atype="str"
+        if atype=="boolean":
+            atype="bool"
+        mastDataTable[col] = np.array([x.get(col,None) for x in mastData['data']],dtype=atype)
+
+    mastDataTable = mastDataTable.to_pandas()
+    # filter for the sectors that we want to look at
+    mastDataTable = mastDataTable[mastDataTable['sequence_number'].isin(sector)]
+
+    # filter for TESS-SPOC data products
+    TESSSPOC_mastDataTable  = mastDataTable[mastDataTable['provenance_name'] == 'TESS-SPOC']
+    QLP_mastDataTable  = mastDataTable[mastDataTable['provenance_name'] == 'QLP']
+
+    base_url = 'https://mast.stsci.edu/api/v0.1/Download/file/?uri='
+
+    if len(TESSSPOC_mastDataTable) > 0:
+        # this is the best option as the data are reduced using the PSOC pipeline so we have all of the same data products as for the 2 minute cadence.
+        args.FFI = 'SPOC'
+
+        # these are the data urls that we need to download the data reduced using the spoc tess pipeline (similar to 2 min candence data)
+        data_urls = list(TESSSPOC_mastDataTable['dataURL'])
+
+    elif len(QLP_mastDataTable) > 0:
+        # this is the best option as the data are reduced using the PSOC pipeline so we have all of the same data products as for the 2 minute cadence.
+        args.FFI = 'QLP'
+
+        # these are the data urls that we need to download the data reduced using the spoc tess pipeline (similar to 2 min candence data)
+        data_urls = QLP_mastDataTable['dataURL']
+
+
+    else:
+        args.FFI = True
+        data_urls = [-111]
+
+    return data_urls, args
+
+
+def download_data_FFI_SPOC(indir, sector, syspath, sectors_all, tic, args, data_urls, save = False):
+
+    allx1 = []
+    allx2 = []
+    ally1 = []
+    ally2 = []
+    alltime12 = []
+    allfbkg = []
+
+    start_sec = []
+    end_sec = []
+    in_sec = []
+
+    alltime = []
+    allflux = []
+    allflux_err = []
+    all_md = []
+
+    failed_sectors = []
+    # loop through all the download links - all the data that we want to access
+    base_url = 'https://mast.stsci.edu/api/v0.1/Download/file/?uri='
+
+    for lcfile in data_urls:
+
+        # !-!-!-!-!-!-!-
+        # if this a test run, download the file already on the system
+        #if test != 'no':
+        #    lchdu  = pf.open(lcfile)
+        ## !-!-!-!-!-!-!-
+
+        try:
+            # use the downlload link to download the file from the server - need an internet connection for this to work
+            response = requests.get("{}{}".format(base_url, lcfile))
+            # open the file using the response url
+            lchdu  = pf.open(response.url) # this needs to be a URL - not a file
+        except:
+            continue
+
+        # open and view columns in lightcurve extension
+        lcdata = lchdu[1].data
+
+        f02 = lcdata['PDCSAP_FLUX'] # Presearch Data Conditioning
+        f02_err = lcdata['PDCSAP_FLUX_ERR']
+
+        quality = lcdata['QUALITY']  # quality flags as determined by the SPOC pipeline
+        time    = lcdata['TIME']
+        f0     = lcdata['SAP_FLUX']  #
+        fbkg     = lcdata['SAP_BKG']  # background flux
+
+        med = np.nanmedian(f02)  # determine the median flux (ignore nan values)
+        f1 = f02/med  # normalize by dividing byt the median flux
+        f1_err = f02_err/med  # normalise the errors on the flux
+
+
+        x1      = lcdata['MOM_CENTR1']  # CCD column position of target’s flux-weighted centroid
+        x1      -= np.nanmedian(x1)
+        y1      = lcdata['MOM_CENTR2']
+        y1      -= np.nanmedian(y1)
+        x2      = lcdata['POS_CORR1'] # The CCD column local motion differential velocity aberration (DVA), pointing drift, and thermal effects.
+        x2      -= np.nanmedian(x2)
+        y2      = lcdata['POS_CORR2']
+        y2      -= np.nanmedian(y2)
+
+
+        l       = (quality>0)   # good quality data
+        l2      = (quality<=0)  # bad quality data
+        sec     = int(lchdu[0].header['SECTOR'])  # the TESS observational sector
+        tessmag = lchdu[0].header['TESSMAG']  # magnitude in the FITS header
+        teff    = lchdu[0].header['TEFF']     # effective temperature in the FITS header (kelvin)
+        srad    = lchdu[0].header['RADIUS']   # stellar radius in the FITS header (solar radii)
+
+        flux     = lcdata['SAP_FLUX']
+
+
+        allx1.append(list(x1[l2]))
+        allx2.append(list(x2[l2]))
+        ally1.append(list(y1[l2]))
+        ally2.append(list(y2[l2]))
+
+        lchdu.close()
+
+        # store the sector we are looking at
+        in_sec.append(sec)
+
+        # the time of the momentum dumps are indicated by the quality flag
+        mom_dump = np.bitwise_and(quality, 2**5) >= 1
+
+        # store the relevant information in the given list
+        alltime.append(list(time))
+        allflux.append(list(f1))
+        allflux_err.append(list(f1_err))
+        all_md.append(list(time[mom_dump]))
+
+        alltime12.append(list(time[l2]))
+
+        allfbkg.append(fbkg)
+
+        start_sec.append([time[0]])
+        end_sec.append([time[-1]])
+
+    # flatten lists of list
+    alltime =       list(np.hstack(alltime)      )
+    allflux =       list(np.hstack(allflux)      )
+    allflux_err =   list(np.hstack(allflux_err)  )
+    all_md =        list(np.hstack(all_md)       )
+
+    allx1 =         list(np.hstack(allx1)        )
+    allx2 =         list(np.hstack(allx2)        )
+    ally1 =         list(np.hstack(ally1)        )
+    ally2 =         list(np.hstack(ally2)        )
+    alltime12 =     list(np.hstack(alltime12)    )
+    allfbkg =       list(np.hstack(allfbkg)      )
+
+    if len (failed_sectors) != 0:
+        print ("Failed sectors: {}    (These may be future sectors of may have only been observed in the FFIs".format(failed_sectors))
+
+    return alltime, allflux, allflux_err, all_md, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, data_urls, args
+
+
+
+def download_data_FFI_QLP(indir, sector, syspath, sectors_all, tic, args, data_urls, save = False):
+
+
+    alltime12 = []
+    allfbkg = []
+
+    start_sec = []
+    end_sec = []
+    in_sec = []
+
+    alltime = []
+    allflux = []
+    allflux_err = []
+    allflux_small = []
+    allflux_large = []
+    all_md = []
+
+    X1_list = []
+    X4_list = []
+    arrshape_list = []
+    tpf_filt_list = []
+    t_list = []
+    tpf_list = []
+    bkg_list = []
+
+    failed_sectors = []
+    # loop through all the download links - all the data that we want to access
+
+    base_url = 'https://mast.stsci.edu/api/v0.1/Download/file/?uri='
+    searchtic = 'TIC' + str(tic)
+
+    for lcfile in data_urls:
+
+        # !-!-!-!-!-!-!-
+        # if this a test run, download the file already on the system
+        #if test != 'no':
+        #    lchdu  = pf.open(lcfile)
+        ## !-!-!-!-!-!-!-
+
+        #try:
+            # use the downlload link to download the file from the server - need an internet connection for this to work
+        response = requests.get("{}{}".format(base_url, lcfile))
+        # open the file using the response url
+        lchdu  = pf.open(response.url) # this needs to be a URL - not a file
+        #except:
+        #    continue
+
+        # open and view columns in lightcurve extension
+        lcdata = lchdu[1].data
+
+        f02 = lcdata['KSPSAP_FLUX'] # Presearch Data Conditioning
+        f02_small = lcdata['KSPSAP_FLUX_SML'] # Presearch Data Conditioning
+        f02_large = lcdata['KSPSAP_FLUX_LAG'] # Presearch Data Conditioning
+
+        f02_err = lcdata['KSPSAP_FLUX_ERR']
+
+        quality = lcdata['QUALITY']  # quality flags as determined by the SPOC pipeline
+        time    = lcdata['TIME']
+
+        f0     = lcdata['SAP_FLUX']  #
+        fbkg     = lcdata['SAP_BKG']  # background flux
+
+        f1 = f02/np.nanmedian(f02)  # normalize by dividing byt the median flux
+        f1_small = f02_small/np.nanmedian(f02_small)  # normalize by dividing byt the median flux
+        f1_large = f02_large/np.nanmedian(f02_large)  # normalize by dividing byt the median flux
+        f1_err = f02_err/np.nanmedian(f02)  # normalise the errors on the flux
+
+
+        l       = (quality>0)   # good quality data
+        l2      = (quality<=16)  # bad quality data
+        sec     = int(lchdu[0].header['SECTOR'])  # the TESS observational sector
+        tessmag = lchdu[0].header['TESSMAG']  # magnitude in the FITS header
+        teff    = lchdu[0].header['TEFF']     # effective temperature in the FITS header (kelvin)
+        srad    = lchdu[0].header['RADIUS']   # stellar radius in the FITS header (solar radii)
+
+        lchdu.close()
+
+        # store the sector we are looking at
+        in_sec.append(sec)
+
+        # the time of the momentum dumps are indicated by the quality flag
+        mom_dump = np.bitwise_and(quality, 2**5) >= 1
+
+        # store the relevant information in the given list
+        alltime.append(list(time))
+        allflux.append(list(f1))
+        allflux_small.append(list(f1_small))
+        allflux_large.append(list(f1_large))
+
+        allflux_err.append(list(f1_err))
+        all_md.append(list(time[mom_dump]))
+
+        alltime12.append(list(time[l2]))
+
+        allfbkg.append(fbkg)
+
+        start_sec.append([time[0]])
+        end_sec.append([time[-1]])
+
+    # flatten lists of list
+    alltime =              list(np.hstack(alltime)      )
+    allflux =              list(np.hstack(allflux)      )
+    allflux_small =        list(np.hstack(allflux_small)      )
+    allflux_large =        list(np.hstack(allflux_large)      )
+    allflux_err =          list(np.hstack(allflux_err)  )
+    all_md =               list(np.hstack(all_md)       )
+    allfbkg =              list(np.hstack(allfbkg)      )
+
+    # get the TP data (using lighktkurve)
+    for idx, sec in enumerate(sector):
+
+        # import the data
+        print ("Importing FFI data sector {}...".format(sec), end =" ")
+        search_result = lk.search_tesscut(searchtic, sector=sec)
+
+        count = 0
+        it_workd = False
+
+        while not it_workd and count < 5:  # try up to 4 times to download it
+            try:
+                tpf = search_result.download(cutout_size=15)
+                it_workd = True
+            except:
+                count += 1
+                continue
+
+        if count == 5: # if it fails 4 times, exit the program with an error message
+            print ("ERROR: Could not download the tpf file at this time. Please try again.")
+            sys.exit('')
+
+        # get rid of the 'bad' quality data - use the data flags and only take data where the quality = 0.
+        try:
+            quality = tpf.quality
+            tpf = tpf[quality == 0]
+        except:
+            print ('This file has no quality flag.')
+
+
+
+        X1 = tpf.flux
+        arrshape_list.append(X1.shape)
+
+        if not os.path.exists("{}/{}/".format(indir, tic)): # if this folder doesn't already exist, make it
+            os.makedirs("{}/{}/".format(indir, tic))
+
+        bkg = X1
+        bkg = np.nanmean(bkg,axis = 0)
+        bkg_list.append(bkg) # store the information in a list
+
+        # reshape the array in order to perform PCA on it.
+        s = X1.shape
+        X1 = X1.reshape(s[0],s[1]*s[2])
+
+        lkeep = np.isfinite(X1.sum(axis=1)) * (X1.sum(axis=1)>0)
+        X1 = X1[lkeep,:]
+        t=tpf.time[lkeep]
+
+        #X2 = np.zeros_like(X1)
+        #M = np.zeros(X1.shape[1])
+        #S = np.zeros(X1.shape[1])
+
+        #for n in range(X1.shape[1]):
+        #    a = X1[:,n]
+        #    x, m, s = norm(a)
+        #    X2[:,n]=x
+        #    M[n] = m
+        #    S[n] = s
+
+        #ncomp = 2
+        #pca = PCA(n_components=ncomp)
+        #trends = pca.fit_transform(X2)
+        #weights = pca.components_
+
+        #X3 = np.copy(X2)
+        #for n in range(X2.shape[1]):
+        #    for m in range(ncomp):
+        #        X3[:,n] -= trends[:,m] * weights[m,n]
+
+        #X4 = np.zeros_like(X3)
+        #for n in range(X2.shape[1]):
+        #    x = X3[:,n]
+        #    a = unnorm(x, M[n], S[n])
+        #    X4[:,n] = a
+
+
+        X1_list.append(X1) #  not corrected
+        X4_list.append(X1) #  PCA corrected
+        t_list.append(np.array(t))
+        tpf_list.append(tpf)
+        tpf_filt_list.append(X1.reshape(tpf.flux[lkeep,:,:].shape))
+
+
+    if len (failed_sectors) != 0:
+        print ("Failed sectors: {}    (These may be future sectors of may have only been observed in the FFIs".format(failed_sectors))
+
+    return alltime, allflux, allflux_small, allflux_err, all_md, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, X1_list, X4_list, bkg_list, t_list, tpf_list, tpf_filt_list, arrshape_list
+
+
+
+def download_tpf(indir, transit_sec, transit_list, tic, url_list, test = 'no'):
 
     '''
     Download the TPF LCs for the target star for all the indicated sectors. Not using Lightkurve
@@ -4001,16 +5161,22 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
     small_binned_l= []
     tpf_list = []
 
-
     # -!-!-!-!-!-!-!-
     # if this is a test run, download the file that's already on the system as to not rely on the server response
     if test != 'no':
         dwload_link_tp = [test]  # in the unittest define a link to a pre downloaded file
     # -!-!-!-!-!-!-!-
 
+    elif url_list != [-111]:
+        dwload_link_tp = []
+
+        for url in url_list:
+            for sector in transit_sec:
+                if "{}/target".format(sector) in (url):
+                    dwload_link_tp.append(url.replace('lc.fits', 'tp.fits'))
+
     # if not a test find the link needed to access the data
     else:
-
         dwload_link_tp = []
 
         sectorfile = "{}/data/sector_download_codes.txt".format(indir)
@@ -4045,7 +5211,8 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
 
     for idx, file in enumerate(dwload_link_tp):
         try:
-            tpf = pf.open(file)   # open the file
+            response = requests.get(file)
+            tpf = pf.open(response.url)   # open the file
 
         except:
             print ("\n !!! This target pixel file is corrupt and cannot be downloaded at this time. Please try again later or a different file. \n")
@@ -4177,7 +5344,6 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
                     X4[:,n] = a
 
 
-
                 tpf_filt = X4.reshape(tpf[1].data['FLUX'][lkeep,:,:].shape)
 
                 oot = (abs(T0-t) < 0.3) * (abs(T0-t) < 0.3)
@@ -4256,6 +5422,7 @@ def download_tpf(indir, transit_sec, transit_list, tic, test = 'no'):
 
 
     return X1_list, X4_list, oot_list, intr_list, bkg_list, apmask_list, arrshape_list, t_list, T0_list, tpf_filt_list,TESS_unbinned_t_l, TESS_binned_t_l, small_binned_t_l, TESS_unbinned_l, TESS_binned_l, small_binned_l, tpf_list
+
 
 def download_tpf_lightkurve(indir, transit_list, sector, tic, test = 'no'):
     '''
@@ -4960,7 +6127,7 @@ def plot_centroid(tic, indir, alltime12, allx1, ally1, allx2, ally2, transit_lis
         TIC (Tess Input Catalog) ID of the target
     indir   :   str
         path to where the data will be saved (defaul = "./LATTE_output")
-    alltimel2  :  list
+    alltime12  :  list
         time used for the x and y centroid position plotting
     allx1  :  list
         CCD column position of target’s flux-weighted centroid. In x direction
@@ -5157,9 +6324,8 @@ def plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binn
         else:
             plt.close()
 
-
+    else:
         plt.figure(figsize=(gs*6,4))
-
         for g,peak in enumerate(transit_list):
 
 
@@ -5210,6 +6376,7 @@ def plot_aperturesize(tic, indir, TESS_unbinned_t_l, TESS_binned_t_l, small_binn
             plt.show()
         else:
             plt.close()
+
 
 # plot the background flux around the time of the transit like event.
 def plot_background(tic, indir, alltime, allfbkg, transit_list, args, ql = False):
@@ -5392,7 +6559,7 @@ def plot_TESS_stars(tic,indir, transit_sec, tpf_list, args):
     for cat in catalogs:
         c_id = str(catalogData[0][cat])
         if c_id != '--':
-            cat_id = "{} {}".format(cat,c_id)
+            c_id = "{} {}".format(cat,c_id)
             break
         else:
             continue
@@ -5437,7 +6604,7 @@ def plot_TESS_stars(tic,indir, transit_sec, tpf_list, args):
 
     plt.title('Sector {}'.format(sector))
 
-    if args.FFI == False:
+    if (args.FFI == False) or (args.FFI == 'SPOC'):
         tpf_wcs = extract_wcs(tpf)
         tup = (np.nanmean(tpf[1].data['FLUX'], axis=0),tpf_wcs)
     else:
@@ -5581,7 +6748,7 @@ def plot_TESS_stars_not_proj(tic, indir, transit_list, transit_sec, tpf_list, ar
 
     # background is just the array of the flux of all the pixels (used for backrgoudn in pixel level LC plot so mildly confusing and should change)
 
-    if args.FFI == False: # SC data mode
+    if (args.FFI == False) or (args.FFI == 'SPOC'): # SC data mode
 
         for i, tpf in enumerate(tpf_list):
 
@@ -5709,19 +6876,23 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
     # loop through the transits and make plot for each ( only the first is currently displayed in the pdf report)
     for idx, X1 in enumerate(X1_list):
 
-        mapimg = np.flip(apmask_list[idx], axis = 0)
+
         X4 = X4_list[idx]
         oot = oot_list[idx]
         #intr = intr_list[n]
         bkg = np.flip(bkg_list[idx], axis = 0)
-        apmask = apmask_list[idx]
         arrshape = arrshape_list[idx]
         t = t_list[idx]
         peak = transit_list[idx]
         tpf = tpf_list[idx]
 
-        ver_seg = np.where(mapimg[:,1:] != mapimg[:,:-1])
-        hor_seg = np.where(mapimg[1:,:] != mapimg[:-1,:])
+        if args.FFI != 'QLP':
+            apmask = apmask_list[idx]
+
+            mapimg = np.flip(apmask_list[idx], axis = 0)
+
+            ver_seg = np.where(mapimg[:,1:] != mapimg[:,:-1])
+            hor_seg = np.where(mapimg[1:,:] != mapimg[:-1,:])
 
         fig, ax = plt.subplots(arrshape[1], arrshape[2], sharex = True, sharey = False, gridspec_kw={'hspace': 0 ,'wspace': 0}, figsize=(8,8))
 
@@ -5812,31 +6983,30 @@ def plot_pixel_level_LC(tic, indir, X1_list, X4_list, oot_list, intr_list, bkg_l
                 ax[ii,j].set_yticks([])
 
         # ------------------
+        if args.FFI != 'QLP':
+            print ("\n Calculating the Aperture Mask...", end =" ")
 
-        print ("\n Calculating the Aperture Mask...", end =" ")
+            for i in range(0,len(ver_seg[1])):
+                ax[ver_seg[0][i], ver_seg[1][i]].spines['right'].set_color('red')
+                ax[ver_seg[0][i], ver_seg[1][i]].spines['right'].set_linewidth(6)
 
-        for i in range(0,len(ver_seg[1])):
-            ax[ver_seg[0][i], ver_seg[1][i]].spines['right'].set_color('red')
-            ax[ver_seg[0][i], ver_seg[1][i]].spines['right'].set_linewidth(6)
+                top = (ax[ver_seg[0][i], ver_seg[1][i]].get_ylim()[1])
+                bottom= (ax[ver_seg[0][i], ver_seg[1][i]].get_ylim()[0])
 
-            top = (ax[ver_seg[0][i], ver_seg[1][i]].get_ylim()[1])
-            bottom= (ax[ver_seg[0][i], ver_seg[1][i]].get_ylim()[0])
+                change = top - bottom
 
-            change = top - bottom
+                ax[ver_seg[0][i], ver_seg[1][i]].spines['right'].set_bounds(bottom,top - (change*0.08) )
 
-            ax[ver_seg[0][i], ver_seg[1][i]].spines['right'].set_bounds(bottom,top - (change*0.08) )
-
-        for j in range(0,len(hor_seg[1])):
-            ax[hor_seg[0][j], hor_seg[1][j]].spines['bottom'].set_color('red')
-            ax[hor_seg[0][j], hor_seg[1][j]].spines['bottom'].set_linewidth(6)
-            ax[hor_seg[0][j], hor_seg[1][j]].spines['bottom'].set_bounds(peak-1.5,peak+1.3)
+                for j in range(0,len(hor_seg[1])):
+                    ax[hor_seg[0][j], hor_seg[1][j]].spines['bottom'].set_color('red')
+                    ax[hor_seg[0][j], hor_seg[1][j]].spines['bottom'].set_linewidth(6)
+                    ax[hor_seg[0][j], hor_seg[1][j]].spines['bottom'].set_bounds(peak-1.5,peak+1.3)
 
         print ("done.\n")
         # ------------------
 
         # label the pixels
-
-        if args.FFI == False:
+        if (args.FFI == False) or (args.FFI == 'SPOC'):
             start_column = tpf[1].header['1CRV5P']
             start_row = tpf[1].header['2CRV5P']
 
@@ -5913,7 +7083,7 @@ def plot_full_md_old(tic, indir, alltime, allflux, all_md, alltimebinned, allflu
     plt.figure(figsize=(15,10))
     plt.tight_layout()
 
-    if args.FFI == False:
+    if (args.FFI == False) or (args.FFI == 'SPOC'):
         # rename things so that the code didn't have to be changed - not a very 'tidy' solution.
         time_dd = alltime
         flux_dd = allflux
@@ -5947,6 +7117,7 @@ def plot_full_md_old(tic, indir, alltime, allflux, all_md, alltimebinned, allflu
         minf_list.append(minf0)
         maxf_list.append(maxf0)
 
+    print (transit_list, minf_list,maxf_list )
     minf = np.nanmin(minf_list)
     maxf = np.nanmax(maxf_list)
 
@@ -6087,6 +7258,7 @@ def plot_full_md(tic, indir, alltime, allflux, all_md, alltimebinned, allfluxbin
 
         minf_list.append(minf0)
         maxf_list.append(maxf0)
+
 
     minf = lower_axis_lim_final #np.nanmin(minf_list)
     maxf = upper_axis_lim_final #np.nanmin(maxf_list)
@@ -6597,7 +7769,7 @@ def plot_in_out_TPF_proj(tic, indir, X4_list, oot_list, t_list, intr_list, T0_li
         tpf_filt  =  tpf_filt_list[idx] # the filtered target pixel files
         tpf = tpf_list[idx]
 
-        if args.FFI == False:
+        if (args.FFI == False) or (args.FFI == 'SPOC'):
             tpf_wcs = extract_wcs(tpf)
         else:
             tpf_wcs = tpf.wcs
@@ -7053,18 +8225,24 @@ def eep_target(tic, indir, syspath, temp, rad, args, ql = False):
 
     plt.xlim(plt.xlim()[::-1]) # refert the axis.
 
-    if rad < 3:
-        plt.ylim(0.2,3.3)
-    else:
+    try:
+        if rad < 3:
+            plt.ylim(0.2,3.3)
+        else:
+            plt.ylim(0.2,5.3)
+    except:
         plt.ylim(0.2,5.3)
 
     plt.xlabel(r"${\rm T_{eff}~(K)}$", fontsize = 15)
     plt.ylabel(r"${\rm Radius~(R_{\odot})}$", fontsize = 15)
 
-    if temp < 8000:
-        plt.xlim(8000,3000)
-    else:
-        plt.xlim(12000,3000)
+    try:
+    	if temp < 8000:
+    	    plt.xlim(8000,3000)
+    	else:
+    	    plt.xlim(12000,3000)
+    except:
+    	plt.xlim(12000,3000)
 
     plt.subplots_adjust(hspace = 0, top=0.98, right = 0.965, bottom = 0.18, left = 0.1)
 
@@ -7825,7 +9003,6 @@ def interact_LATTE_test(tic, indir, syspath, sectors_all, sectors, ra, dec, args
             args.nickname = str(nick_name[-1])
 
     # ---------------
-
     # get the entered transit times and make sure that all the values are floats
     transit_list = transit_times
 
@@ -7833,4 +9010,4 @@ def interact_LATTE_test(tic, indir, syspath, sectors_all, sectors, ra, dec, args
         print ("Transit times : {}".format(str(transit_list)[1:-1]))
 
     #  -----  BREW  ------
-    brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
+    brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, [-111], args)

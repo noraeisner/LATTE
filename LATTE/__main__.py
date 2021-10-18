@@ -68,7 +68,6 @@ if __name__ == '__main__':
 
 	args = ap.parse_args()
 
-
 	# ------------------------------------------------
 	# Check what the current path is - when the program is first downloaded the path is set to 'no/path/set/yet' and the user is automatically prompted to change'no/path/set/yet'
 	# Get the path to where the package is installed. This is where the configuration file and the images (for the DV report are stored)
@@ -273,17 +272,17 @@ if __name__ == '__main__':
 
 	'''
 	This section starts the interactive versio of the code:
-
+	
 	1) asks to enter the TIC ID
 	2) identifies in which sectors the target was observed and asks the user to identify which sectors should be analysed
-
+	
 	NOTE: this part of the code requires you to have Tkinter installed. Tkinter currently does not work with certain new Mac operating systems.
 	In order to run LATTE with an input list and not interatcively, state the path to the csv file when running the program.
 	csv file must have format: "TICID, sectors, transits, BLS, model" - see example.
 	The TIC ID and Sectors to look at can also be stated in the command line as an argument to save time
 	The interactive tool is for ease of use and to avoid having to understand how to use the command line.
 	'''
-
+	
 	# Check whether the a target list has been defined in the command line. If so, the code will not ask for a TIC ID or a sector
 	# as these would be listed in the input file and the code will run automatically.
 	if args.targetlist == 'no':
@@ -370,6 +369,7 @@ if __name__ == '__main__':
 						ROOT.form=(self.FFIbox.get())
 						tkTIC = (self.e1.get())
 						tkFFI =  (self.FFIbox.get())
+				
 				# -----------
 
 				TICprompt(ROOT)
@@ -414,6 +414,7 @@ if __name__ == '__main__':
 				# Run a function called TESS-point. This returns the sectors in which the target has
 				# been observed as well as the RA and DEC of the target.
 
+	
 				starTics = np.array(["{}".format(tic)], dtype=np.int64)
 				ticStringList = ["{0:d}".format(x) for x in starTics]
 
@@ -531,15 +532,15 @@ if __name__ == '__main__':
 
 		# print out the information that has been chosen to the command line.
 		if (sectors == 'all') and (args.FFI == False):
-			print ("Will look at sector(s): {}    (the files are opened but not stored locally) \n ".format(str(available_SC_sectors)[1:-1]))
+			print ("Will look at sector(s): {}	(the files are opened but not stored locally) \n ".format(str(available_SC_sectors)[1:-1]))
 			sectors = available_SC_sectors
 
 		elif (sectors == 'all') and (args.FFI == True):
-			print ("Will look at sector(s): {}    (the files are opened but not stored locally) \n ".format(str(available_SC_sectors)[1:-1]))
+			print ("Will look at sector(s): {}	(the files are opened but not stored locally) \n ".format(str(available_SC_sectors)[1:-1]))
 			sectors = available_LC_sectors
 
 		else:
-			print ("Will look at sector(s):  {}     (the files are opened but not stored locally) \n ".format(str(sectors)[1:-1]))
+			print ("Will look at sector(s):  {}	 (the files are opened but not stored locally) \n ".format(str(sectors)[1:-1]))
 
 
 		# -------------------------------------
@@ -737,11 +738,11 @@ if __name__ == '__main__':
 						transit_list_in_data = []
 
 						for t in transit_list:
-						    in_data_mask = (np.array(alltime) < (t + 0.02)) & (np.array(alltime) > (t - 0.02))
-						    if (np.sum(in_data_mask)) != 0: # if there is data around the chosen transit time , keep it
-						    	transit_list_in_data.append(t)
-						    else:
-						    	print (" \n Transit time {}  is not within the available data. Skip this time. ".format(t))
+							in_data_mask = (np.array(alltime) < (t + 0.02)) & (np.array(alltime) > (t - 0.02))
+							if (np.sum(in_data_mask)) != 0: # if there is data around the chosen transit time , keep it
+								transit_list_in_data.append(t)
+							else:
+								print (" \n Transit time {}  is not within the available data. Skip this time. ".format(t))
 
 						if len(transit_list_in_data) == 0:
 							print ("\n TIC {} failed to complete. None of the chosen transit times are within the limits of the data. Check the times and the chosen sectors.".format(tic))
@@ -752,7 +753,7 @@ if __name__ == '__main__':
 						#			   START BREWING ....
 						# ----------------------------------------
 
-						brew.brew_LATTE(tic, indir, syspath,transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, args)
+						brew.brew_LATTE(tic, indir, syspath,transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, [-111], args)
 					except:
 
 					 	failed_tics.append(tic)
@@ -763,18 +764,41 @@ if __name__ == '__main__':
 						# ----------------------------------------
 						# 			 DOWNLOAD DATA
 						# ----------------------------------------
+						# see whether ther eis SPOC-TESS or QLP data
+						alltime, allflux, allflux_err, all_md, allx1, allx2, ally1, ally2, alltimel2, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, url_list, args = utils.download_data_FFI_products(indir, sector, syspath, sectors_all, tic, args, save = False)
 
-						alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = utils.download_data_FFI(indir, sectors, syspath, sectors_all, tic, args)
+						print ("________")
+						print ( )
+						print (args.FII)
+						print ()
+
+						if args.FFI == 'SPOC':
+                            # if the SPOC data is available we can run the 'normal' LATTE mode as they have all the same data products as the 2 minute SPOC data products
+							print ("30 minute cadence SPOC data available")
+
+						elif args.FFI == 'QLP':
+							# if QLP data is available we have to extract the TPF data now, so that we can run the FFI
+							print ("30 minute cadence QLP data available")
+
+						if alltime == [-111]:
+							alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t,start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list = utils.download_data_FFI(indir, sectors, syspath, sectors_all, tic, args)
 
 						# ----------------------------------------
 						#			   START BREWING ....
 						# ----------------------------------------
-						brew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args)
+						if args.FFI == 'SPOC':
+							print ("20 minute cadence SPOC data available")
+							# if the SPOC data is available, you can use run the normal report
+							brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, url_list, args)
+
+						else:
+							brew.brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime0, allflux_list, allflux_small, allflux0, all_md, allfbkg, allfbkg_t, start_sec, end_sec, in_sec, X1_list, X4_list, apmask_list, arrshape_list, tpf_filt_list, t_list, bkg_list, tpf_list, ra, dec, args)
+
+
 					except:
 						failed_tics.append(tic)
 						print ("TIC {} failed to complete. Continue anyway. You can find a list of the failed IDs stored in the output folder.".format(tic))
 						continue
-
 
 		# ----- ALL FILES IN INFILE PROCESSED -----
 		# save a list of the failed TIC IDs
