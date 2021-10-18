@@ -90,7 +90,10 @@ Settings:
 - Report: Generate a pdf file at the end of the code to summarise the findings (default this is already checked).
 
 Quick look:
-- 
+- Generate 'quick look' plots if the background flux and centroid positions around the time of any marked transit events. This function will not work if no transit events have been selected.
+- Quick look of the stellar tracks and the periodogram.
+
+
 Finally, there is an optional box to enter a 'Memorable name' for the candidate. This name is used to store the data at the end in order to make identifying certain targets easier.
 
 Once all the options have been chosen and the transit times stored (you have to enter at least one transit time), press the orange 'Done' button to continue.

@@ -701,9 +701,7 @@ def interact_LATTE(tic, indir, syspath, sectors_all, sectors, ra, dec, args):
     def quick_look_bkg(time):
         global deltxt
         if len (transit_times) > 0:
-
             plot_background(tic, indir, alltime, allfbkg, transit_times, args, ql = True)
-            plt.show()
         else:
             deltxt = plt.text(3.7,-10,"Please enter at least one transit time!", color = 'red', size=9)
             print ("select at least one transit time to run this")
@@ -6428,11 +6426,11 @@ def plot_background(tic, indir, alltime, allfbkg, transit_list, args, ql = False
             plt.ylabel('Flux')
             plt.title('Background Flux, Transit {}'.format(g+1))
 
-        if args.save == True:
+        if (args.save == True) and (ql == False):
             plt.subplots_adjust(bottom = 0.13, right = 0.97, top = 0.94)
             plt.savefig('{}/{}/{}_background.png'.format(indir, tic, tic), format='png')
 
-        if args.noshow == False:
+        if (args.noshow == False) or (ql == True):
             plt.show()
         else:
             plt.close()
