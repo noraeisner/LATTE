@@ -137,7 +137,6 @@ For a transiting planet, the transit shape and depth are expected to remain cons
 
 - The apertures used for the extraction. Please note that for very bright and very faint stars the aperture selection for the smaller aperture may not work correctly so these should be checked in order to correctly interpret the results.
 
-
 ![Apertures](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_apertures_0.png)
 
 - The average flux in and out of the marked event(s) and the differences between the two.
@@ -166,6 +165,14 @@ A plot showing lightcurves extracted for each individual pixel around the target
 
 - (optional) Two simple BLS plots that look for periodic signals in the data. The second with the highest detected signal-to-noise transits from the initial run removed.
 - (in progress, will be available in next release of LATTE) Modelling of the signal using a Bayesian approach with an MCMC sampling. This makes use of the Pyaneti code (Barragan et al. 2017).
+
+![Periodogram](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_periodogram.png)
+
+A plot showing a periodogram of the lightcurve made using the lightkurve tool.
+
+![Evolution tracks](https://github.com/noraeisner/LATTE/blob/master/example/example_output/94986319_eep.png)
+
+A plot showing the equivalent evolutionary phase (eep) tracks for main sequence evolution (solid lines) and post main-sequence evolution (dashed lines) for masses ranging from 0.3 to 1.6 solar masses (from right to left). The 1 Solar Mass track is shown in maroon. The blue points show the TOIs and the magenta point of the targets star.
 
 **FFI Mode**
 

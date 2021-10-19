@@ -3823,7 +3823,7 @@ def download_data(indir,sectors, tic, binfac = 5, test = 'no'):
 
     failed_sectors = []
     # loop through all the download links - all the data that we want to access
-    print ("dwload_link")
+    print ("download_link")
 
     for lcfile in dwload_link:
 

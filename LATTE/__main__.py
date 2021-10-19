@@ -272,17 +272,17 @@ if __name__ == '__main__':
 
 	'''
 	This section starts the interactive versio of the code:
-	
+
 	1) asks to enter the TIC ID
 	2) identifies in which sectors the target was observed and asks the user to identify which sectors should be analysed
-	
+
 	NOTE: this part of the code requires you to have Tkinter installed. Tkinter currently does not work with certain new Mac operating systems.
 	In order to run LATTE with an input list and not interatcively, state the path to the csv file when running the program.
 	csv file must have format: "TICID, sectors, transits, BLS, model" - see example.
 	The TIC ID and Sectors to look at can also be stated in the command line as an argument to save time
 	The interactive tool is for ease of use and to avoid having to understand how to use the command line.
 	'''
-	
+
 	# Check whether the a target list has been defined in the command line. If so, the code will not ask for a TIC ID or a sector
 	# as these would be listed in the input file and the code will run automatically.
 	if args.targetlist == 'no':
@@ -369,7 +369,7 @@ if __name__ == '__main__':
 						ROOT.form=(self.FFIbox.get())
 						tkTIC = (self.e1.get())
 						tkFFI =  (self.FFIbox.get())
-				
+
 				# -----------
 
 				TICprompt(ROOT)
@@ -414,7 +414,7 @@ if __name__ == '__main__':
 				# Run a function called TESS-point. This returns the sectors in which the target has
 				# been observed as well as the RA and DEC of the target.
 
-	
+
 				starTics = np.array(["{}".format(tic)], dtype=np.int64)
 				ticStringList = ["{0:d}".format(x) for x in starTics]
 

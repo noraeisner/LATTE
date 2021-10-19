@@ -9,6 +9,8 @@ LATTE/__main__.py
 LATTE/filters.py
 LATTE/norm.py
 LATTE/pyaneti_LATTE.py
+LATTE/LATTE_eep_data/eep_phase0.csv
+LATTE/LATTE_eep_data/eep_phase2.csv
 LATTE/LATTE_imgs/.DS_Store
 LATTE/LATTE_imgs/LATTE_logo.jpeg
 LATTE/LATTE_imgs/LATTE_logo.jpg
