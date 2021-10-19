@@ -69,7 +69,7 @@ The program will skip targets that have already been analysed by you, so if you 
 
 ### Transit time selection
 
-Once you have identified the TIC ID, the observational sectors and the aperture sizes (*FFI mode* only), you will see a screen that has the full lightcurve as well as a zoom in of the lightcurve (see figure below). The solid red line across the full lightcurve lets you know where on the lightcurve you are zooming in on. Click on the top (full) or bottom (zoomed in) plots to change the location of the zoom in until the red vertical line is centred on the mid-point of a transit-event. When you are happy with the location press the 'Add Time' button below the plots in order to record this time (in TBJD). You can delete wrongly entered times with the 'Delete time'. The saved times will be shown on the screen. The position of the red line can also be changed by dragging the teal coloured 'Transit' slider with your mouse. The y-scale of the plots can be changed with the grey coloured slider.
+Once you have identified the TIC ID, the observational sectors and the aperture sizes (*FFI mode* only), you will see a screen that has the full lightcurve as well as a zoom in of the lightcurve (see figure below). The solid red line across the full lightcurve lets you know where on the lightcurve you are zooming in on. Click on the top (full) or bottom (zoomed in) plots to change the location of the zoom in until the red vertical line is centred on the mid-point of a transit-event. When you are happy with the location press the 'Add Time' button below the plots in order to record this time (in TBJD). You can delete wrongly entered times with the 'Delete time'. The saved times will be shown on the screen. The position of the red line can also be changed by clicking on the top ot bottom lightcurve. The y-scale of the plots can be changed with the grey coloured slider.
 
 ![Interface Example](https://github.com/noraeisner/LATTE/blob/master/paper/interface_explained.png)
 
@@ -82,7 +82,7 @@ Binning Factor:
 - change the binning of the top plot (only available in the normal and not FFI mode)
 
 Settings:
-- Simple: only run the most basic diagnostic tests (not suing TPF). This is for a very quick analysis.
+- Simple: only run the most basic diagnostic tests (not using tpfs). This is for a very quick analysis.
 - Show Plots: Display the plots after they are made. This slows down the code but allows you to see and analyse them as they are being made.
 - North: Align all the images due North (this slows down the code).
 - BLS: Run a Box-Least-Squares algorithm that searches for periodic signals in the lightcurve.
@@ -90,7 +90,7 @@ Settings:
 - Report: Generate a pdf file at the end of the code to summarise the findings (default this is already checked).
 
 Quick look:
-- Generate 'quick look' plots if the background flux and centroid positions around the time of any marked transit events. This function will not work if no transit events have been selected.
+- Generate 'quick look' plots of the background flux and centroid positions around the time of any marked transit events. This function will not work if no transit events have been selected.
 - Quick look of the stellar tracks and the periodogram.
 
 
