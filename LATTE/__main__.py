@@ -767,11 +767,6 @@ if __name__ == '__main__':
 						# see whether ther eis SPOC-TESS or QLP data
 						alltime, allflux, allflux_err, all_md, allx1, allx2, ally1, ally2, alltimel2, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, url_list, args = utils.download_data_FFI_products(indir, sector, syspath, sectors_all, tic, args, save = False)
 
-						print ("________")
-						print ( )
-						print (args.FII)
-						print ()
-
 						if args.FFI == 'SPOC':
                             # if the SPOC data is available we can run the 'normal' LATTE mode as they have all the same data products as the 2 minute SPOC data products
 							print ("30 minute cadence SPOC data available")
@@ -787,7 +782,7 @@ if __name__ == '__main__':
 						#			   START BREWING ....
 						# ----------------------------------------
 						if args.FFI == 'SPOC':
-							print ("20 minute cadence SPOC data available")
+							print ("30 minute cadence SPOC data available")
 							# if the SPOC data is available, you can use run the normal report
 							brew.brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, sectors, sectors_all, alltime, allflux, allflux_err, all_md, alltimebinned, allfluxbinned, allx1, allx2, ally1, ally2, alltime12, allfbkg, start_sec, end_sec, in_sec, tessmag, teff, srad, ra, dec, url_list, args)
 

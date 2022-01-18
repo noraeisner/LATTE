@@ -1869,7 +1869,7 @@ def interact_LATTE_FFI_aperture(tic, indir, sectors_all, sectors, ra, dec, args)
 
         T_dur = 0.7  #The transit duration - may need to change but this is a good average duration
 
-        nmed = int(48*3*T_dur)  # 144 because the data is binned to 10 minutes and 24 hours / 10 mins = 144 data points
+        nmed = int(48*3*T_dur)  # 48 because the data has a cadence of 30 minutes and 24 hours / 30 mins = 48 data points
         nmed = 2*int(nmed/2)+1 # make it an odd number
         ff = filters.NIF(np.array(fr_inj),nmed,10,fill=True,verbose=True)
         # ^ first number (nmed) should be roughly three time transit durations, the second quite small (10,20)
@@ -2469,7 +2469,7 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
     print (args.FFI)
     print ("- - - - - - - - - - - - - - -")
 
-    if (args.FFI != 'SPOC'):
+    if (args.FFI != 'SPOC') and (args.FFI != 'QLP'):
         MAD = median_absolute_deviation(allflux0, ignore_nan = True)
 
         madrange = (50 * MAD)
@@ -2485,12 +2485,21 @@ def interact_LATTE_FFI(tic, indir, syspath, sectors_all, sectors, ra, dec, args)
         fluxmin = np.nanmin(allflux)
         fluxmax = np.nanmax(allflux)
         flux_diff = fluxmax - fluxmin
+    
+
+    if args.FFI == 'QLP':
+        alltime = np.array(alltime0)
+        allflux = np.array(allflux0)
+
+        fluxmin = np.nanmin(allflux)
+        fluxmax = np.nanmax(allflux)
+        flux_diff = fluxmax - fluxmin
 
     # function to define the plotting area around the transit event.
     # this needs to be in a function as the area changes with the interactive slider.
     fig, ax = plt.subplots(2, 1, figsize=(11,7.5))
     plt.tight_layout()
-
+    
     # Adjust the plots region to leave some space for the sliders and buttons
     fig.subplots_adjust(left=0.24, bottom=0.3)
 
@@ -4736,6 +4745,7 @@ def check_FFI_data_products(tic,sector, args):
     # filter for the sectors that we want to look at
     mastDataTable = mastDataTable[mastDataTable['sequence_number'].isin(sector)]
 
+
     # filter for TESS-SPOC data products
     TESSSPOC_mastDataTable  = mastDataTable[mastDataTable['provenance_name'] == 'TESS-SPOC']
     QLP_mastDataTable  = mastDataTable[mastDataTable['provenance_name'] == 'QLP']
@@ -4753,9 +4763,12 @@ def check_FFI_data_products(tic,sector, args):
         # this is the best option as the data are reduced using the PSOC pipeline so we have all of the same data products as for the 2 minute cadence.
         args.FFI = 'QLP'
 
+        if len(mastDataTable) > len(sector):
+            QLP_mastDataTable_df = pd.DataFrame(QLP_mastDataTable)
+            QLP_mastDataTable = QLP_mastDataTable_df.drop_duplicates(subset ='sequence_number')
+            
         # these are the data urls that we need to download the data reduced using the spoc tess pipeline (similar to 2 min candence data)
         data_urls = QLP_mastDataTable['dataURL']
-
 
     else:
         args.FFI = True
@@ -5039,7 +5052,7 @@ def download_data_FFI_QLP(indir, sector, syspath, sectors_all, tic, args, data_u
 
         lkeep = np.isfinite(X1.sum(axis=1)) * (X1.sum(axis=1)>0)
         X1 = X1[lkeep,:]
-        t=tpf.time[lkeep]
+        t=tpf.time[lkeep].value
 
         #X2 = np.zeros_like(X1)
         #M = np.zeros(X1.shape[1])
@@ -5165,13 +5178,14 @@ def download_tpf(indir, transit_sec, transit_list, tic, url_list, test = 'no'):
         dwload_link_tp = [test]  # in the unittest define a link to a pre downloaded file
     # -!-!-!-!-!-!-!-
 
+
     elif url_list != [-111]:
         dwload_link_tp = []
 
         for url in url_list:
             for sector in transit_sec:
                 if "{}/target".format(sector) in (url):
-                    dwload_link_tp.append(url.replace('lc.fits', 'tp.fits'))
+                    dwload_link_tp.append('https://mast.stsci.edu/api/v0.1/Download/file/?uri=' + url.replace('lc.fits', 'tp.fits'))
 
     # if not a test find the link needed to access the data
     else:

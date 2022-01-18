@@ -110,7 +110,7 @@ def brew_LATTE(tic, indir, syspath, transit_list, simple, BLS, model, save, DV, 
 	# -------------------
 	# SAVE THE DATA FILES
 	# -------------------
-
+	
 	if (save == True) or (DV == True):
 		save = True
 		# if this folder doesn't exist then create it. These are the folder where the images, data and reports for each TIC ID will be stored.
@@ -724,7 +724,6 @@ def brew_LATTE_FFI(tic, indir, syspath, transit_list, simple, BLS, model, save, 
 	tpf_list_n = []
 
 	T0_list = []  # list of the transit times - make a new list to ensure that thet are in the same order.
-
 
 	for T0 in transit_list:
 		for idx,t in enumerate(t_list):
