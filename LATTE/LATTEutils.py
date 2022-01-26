@@ -8189,6 +8189,10 @@ def plot_echelle(tic, indir, seis, args, smooth_filter_width=.3, cmap='Greys', q
 # plot the equivilaten evolutionary phase tracks
 def eep_target(tic, indir, syspath, temp, rad, args, ql = False):
 
+    if temp is None or rad is None:
+        print(f"eep_target(): missing stellar temperature and/or radius ({temp} / {rad}). Skip it.")
+        return
+
     # the eep tracks are downloaded when you install the code. These files are not large ~70 KB each
     phase0 = pd.read_csv('{}/LATTE_eep_data/eep_phase0.csv'.format(syspath)) # these are the main-sequence tracks
     phase2 = pd.read_csv('{}/LATTE_eep_data/eep_phase2.csv'.format(syspath)) # these are the post main-sequence tracks
