@@ -26,7 +26,7 @@ The code is designed to be fully interactive and does not require any prior know
 
 ### Installation
 
-LATTE requires python3 to be installed on your computer, which can be download from https://www.python.org/downloads/. Once you have python3, you can download the code directly from github. Alternatively, you can install LATTE using pip (https://pypi.org/project/tessLATTE/) via your command line with:
+LATTE requires python3 (*recommendation: `python==3.7`*) to be installed on your computer, which can be download from https://www.python.org/downloads/. Once you have python3, you can download the code directly from github. Alternatively, you can install LATTE using pip (https://pypi.org/project/tessLATTE/) via your command line with:
 
 	pip3 install tessLATTE      
 

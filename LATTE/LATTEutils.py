@@ -5824,6 +5824,7 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
         two lists of the statistics of the to BLS runs. Each list contains:
     stats_period
     stats_t0
+    stats_duration
     stats_depth
     stats_depth_phased
     stats_depth_half
@@ -5909,6 +5910,7 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
 
     stats_period = period
     stats_t0 = mid_transit_t0
+    stats_duration = duration
     stats_depth = model.compute_stats(period, duration, t0)['depth']
     stats_depth_phased = model.compute_stats(period, duration, t0)['depth_phased']
     stats_depth_half = model.compute_stats(period, duration, t0)['depth_half']
@@ -5917,7 +5919,7 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
 
 
     if (2*duration) >= period: # if the 'found' events are very short period, don't rn the BLS twice as the code would crash.
-        return [stats_period, stats_t0, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [-999]
+        return [stats_period, stats_t0, stats_duration, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [-999]
 
     # Find the in-transit points using a longer duration as a buffer to avoid ingress and egress
     in_transit = model.transit_mask(alltimebinned, period, 2*duration, t0)
@@ -5939,13 +5941,14 @@ def data_bls(tic, indir, alltime, allflux, allfluxbinned, alltimebinned, args):
 
     stats2_period = period2
     stats2_t0 = mid_transit_t02
+    stats2_duration = duration2
     stats2_depth = model2.compute_stats(period2, duration2, t0)['depth']
     stats2_depth_phased = model2.compute_stats(period2, duration2, t0)['depth_phased']
     stats2_depth_half = model2.compute_stats(period2, duration2, t0)['depth_half']
     stats2_depth_odd = model2.compute_stats(period2, duration2, t0)['depth_odd']
     stats2_depth_even = model2.compute_stats(period2, duration2, t0)['depth_even']
 
-    return [stats_period, stats_t0, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [stats2_period, stats2_t0, stats2_depth, stats2_depth_phased, stats2_depth_half, stats2_depth_odd, stats2_depth_even]
+    return [stats_period, stats_t0, stats_duration, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [stats2_period, stats2_t0, stats2_duration, stats2_depth, stats2_depth_phased, stats2_depth_half, stats2_depth_odd, stats2_depth_even]
 
 def data_bls_FFI(tic, indir, alltime, allflux, args):
     '''
@@ -5967,6 +5970,7 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
         two lists of the statistics of the to BLS runs. Each list contains:
     stats_period
     stats_t0
+    stats_duration
     stats_depth
     stats_depth_phased
     stats_depth_half
@@ -6004,6 +6008,7 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
 
     stats_period = period
     stats_t0 = t0
+    stats_duration = duration
     stats_depth = model.compute_stats(period, duration, t0)['depth']
     stats_depth_phased = model.compute_stats(period, duration, t0)['depth_phased']
     stats_depth_half = model.compute_stats(period, duration, t0)['depth_half']
@@ -6012,7 +6017,7 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
 
 
     if (2*duration) >= period: # if the 'found' events are very short period, don't rn the BLS twice as the code would crash.
-        return [stats_period, stats_t0, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [-999]
+        return [stats_period, stats_t0, stats_duration, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [-999]
 
 
     # Find the in-transit points using a longer duration as a buffer to avoid ingress and egress
@@ -6033,13 +6038,14 @@ def data_bls_FFI(tic, indir, alltime, allflux, args):
 
     stats2_period = period2
     stats2_t0 = t02
+    stats2_duration = duration2
     stats2_depth = model2.compute_stats(period2, duration2, t0)['depth']
     stats2_depth_phased = model2.compute_stats(period2, duration2, t0)['depth_phased']
     stats2_depth_half = model2.compute_stats(period2, duration2, t0)['depth_half']
     stats2_depth_odd = model2.compute_stats(period2, duration2, t0)['depth_odd']
     stats2_depth_even = model2.compute_stats(period2, duration2, t0)['depth_even']
 
-    return [stats_period, stats_t0, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [stats2_period, stats2_t0, stats2_depth, stats2_depth_phased, stats2_depth_half, stats2_depth_odd, stats2_depth_even]
+    return [stats_period, stats_t0, stats_duration, stats_depth, stats_depth_phased, stats_depth_half, stats_depth_odd, stats_depth_even], [stats2_period, stats2_t0, stats2_duration, stats2_depth, stats2_depth_phased, stats2_depth_half, stats2_depth_odd, stats2_depth_even]
 
 # --------------------------------------------
 #                    plots                   #

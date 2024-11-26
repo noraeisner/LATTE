@@ -33,13 +33,14 @@ setup(
     "matplotlib == 3.2.0",
     "astroplan",
     "astroquery",
-    "sklearn", 
+    "scikit-learn",
     "scipy", 
     "tess-point", 
     "reproject > 0.7", 
     "reportlab", 
     "astropy <= 4.0",
-    "mock > 2.0.0"],
+    "mock > 2.0.0",
+    "urllib3==1.26.6"],
     entry_points={
         "console_scripts": [
             "LATTE=LATTE.__main__:main",

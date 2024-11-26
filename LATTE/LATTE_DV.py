@@ -685,18 +685,19 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 				data_bls= [['Parameter',				  "bls1",														"bls2"],
 							   ['period',			    "{:.3f}".format(bls_stats1[0]),	         						 "{:.3f}".format(bls_stats2[0])],
 							   ['t0',			        "{:.2f}".format(bls_stats1[1]),	         						 "{:.2f}".format(bls_stats2[1])],
-							   ['depth',			    "{:.5f} ± {:.5f}".format(bls_stats1[2][0],bls_stats1[2][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[2][0],bls_stats2[2][1]) ],
-							   ['depth phased',			"{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[3][0],bls_stats2[3][1]) ],
-							   ['depth half',			"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[4][0],bls_stats2[4][1]) ],
-							   ['depth odd',			"{:.5f} ± {:.5f}".format(bls_stats1[5][0],bls_stats1[5][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[5][0],bls_stats2[5][1]) ],
-							   ['depth even',			"{:.5f} ± {:.5f}".format(bls_stats1[6][0],bls_stats1[6][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[6][0],bls_stats2[6][1]) ],
+						       ['duration',             "{:.5f}".format(bls_stats1[2]),	         						 "{:.5f}".format(bls_stats2[2])],
+							   ['depth',			    "{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[3][0],bls_stats2[3][1]) ],
+							   ['depth phased',			"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[4][0],bls_stats2[4][1]) ],
+							   ['depth half',			"{:.5f} ± {:.5f}".format(bls_stats1[5][0],bls_stats1[5][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[5][0],bls_stats2[5][1]) ],
+							   ['depth odd',			"{:.5f} ± {:.5f}".format(bls_stats1[6][0],bls_stats1[6][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[6][0],bls_stats2[6][1]) ],
+							   ['depth even',			"{:.5f} ± {:.5f}".format(bls_stats1[7][0],bls_stats1[7][1]),	 "{:.5f} ± {:.5f}".format(bls_stats2[7][0],bls_stats2[7][1]) ],
 							   ]
 
 				table_bls=Table(data_bls)
 				table_bls=Table(data_bls,colWidths=width * 0.2, style=[
 									('LINEABOVE',(0,1),(-1,1),1,colors.black),
-									('LINEABOVE',(0,8),(-1,8),1,colors.black),
-									('FONTSIZE', (0,0),(-1,7), 8),
+									('LINEABOVE',(0,9),(-1,9),1,colors.black),
+									('FONTSIZE', (0,0),(-1,8), 8),
 									])
 
 			else: # if the first BLS returned a period that was very short such that the second one didn't work.
@@ -738,17 +739,18 @@ def LATTE_DV(tic, indir, syspath, transit_list, sectors_all, target_ra, target_d
 				data_bls= [['Parameter',				  "bls1"													 ],
 							   ['period',			    "{:.3f}".format(bls_stats1[0])	         					 ],
 							   ['t0',			        "{:.2f}".format(bls_stats1[1])	         					 ],
-							   ['depth',			    "{:.5f} ± {:.5f}".format(bls_stats1[2][0],bls_stats1[2][1])	 ],
-							   ['depth phased',			"{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1])	 ],
-							   ['depth half',			"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1])	 ],
-							   ['depth odd',			"{:.5f} ± {:.5f}".format(bls_stats1[5][0],bls_stats1[5][1])	 ],
-							   ['depth even',			"{:.5f} ± {:.5f}".format(bls_stats1[6][0],bls_stats1[6][1])	 ],
+							   ['duration',			    "{:.5f}".format(bls_stats1[2])	         					 ],
+							   ['depth',			    "{:.5f} ± {:.5f}".format(bls_stats1[3][0],bls_stats1[3][1])	 ],
+							   ['depth phased',			"{:.5f} ± {:.5f}".format(bls_stats1[4][0],bls_stats1[4][1])	 ],
+							   ['depth half',			"{:.5f} ± {:.5f}".format(bls_stats1[5][0],bls_stats1[5][1])	 ],
+							   ['depth odd',			"{:.5f} ± {:.5f}".format(bls_stats1[6][0],bls_stats1[6][1])	 ],
+							   ['depth even',			"{:.5f} ± {:.5f}".format(bls_stats1[7][0],bls_stats1[7][1])	 ],
 							   ]
 
 				table_bls=Table(data_bls)
 				table_bls=Table(data_bls,colWidths=width * 0.25, style=[
 									('LINEABOVE',(0,1),(-1,1),1,colors.black),
-									('LINEABOVE',(0,8),(-1,8),1,colors.black),
+									('LINEABOVE',(0,9),(-1,9),1,colors.black),
 									('FONTSIZE', (0,0),(-1,7), 8),
 									])
 
